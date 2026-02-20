@@ -1,0 +1,827 @@
+import { useState, useRef, useEffect } from 'react';
+import { 
+  User, 
+  Mail, 
+  Phone, 
+  Calendar, 
+  MapPin, 
+  GraduationCap,
+  Building2,
+  Save,
+  Camera,
+  Settings,
+  Shield,
+  Bell,
+  Lock,
+  Download,
+  AlertTriangle,
+  X,
+  Eye,
+  EyeOff
+} from 'lucide-react';
+import { Button } from './Button';
+import { FormInput } from './FormInput';
+import { useUserData } from '@/context/UserDataContext';
+
+interface StudentProfilePageProps {
+  onNavigate: (page: string) => void;
+  userName?: string;
+  authEmail?: string;
+  authFirstName?: string;
+  authLastName?: string;
+}
+
+export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstName, authLastName }: StudentProfilePageProps) {
+  const [activeTab, setActiveTab] = useState<'profile' | 'privacy' | 'notifications'>('profile');
+  const [isEditing, setIsEditing] = useState(false);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showPasswordFields, setShowPasswordFields] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // TODO: Remplacer par Supabase - Utilisation du contexte pour récupérer les données d'onboarding
+  const { userProfile, statistics, modules } = useUserData();
+  
+  // État local pour le mot de passe
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  });
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  
+  // TODO: Remplacer par les données Supabase + données d'onboarding
+  const [profileData, setProfileData] = useState({
+    firstName: authFirstName || userProfile?.firstName || 'Candidat',
+    lastName: authLastName || userProfile?.lastName || '',
+    email: authEmail || 'Non renseigné',
+    phone: userProfile?.phone || '',
+    birthDate: userProfile?.birthDate || '',
+    address: '',
+    city: userProfile?.city || '',
+    postalCode: userProfile?.postalCode || '',
+    school: '',
+    program: userProfile?.fieldOfInterest || '',
+    level: userProfile?.currentLevel || '',
+    targetLevel: userProfile?.targetLevel || '',
+    mobilityRadius: userProfile?.mobilityRadius || null,
+    rqth: userProfile?.hasRQTH || false,
+    rqthDetails: ''
+  });
+
+  const [notificationSettings, setNotificationSettings] = useState({
+    emailNotifications: true,
+    moduleUpdates: true,
+    progressReports: true,
+    tips: false
+  });
+
+  // ============================================
+  // GESTION DE L'UPLOAD DE PHOTO
+  // ============================================
+  const handlePhotoClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validation du fichier
+      if (!file.type.startsWith('image/')) {
+        alert('Veuillez sélectionner une image valide');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) { // 5MB max
+        alert('L\'image ne doit pas dépasser 5MB');
+        return;
+      }
+
+      // Créer une preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const imageData = reader.result as string;
+        setProfileImage(imageData);
+        // TODO: Upload vers Supabase Storage
+        // const { data, error } = await supabase.storage
+        //   .from('profile-pictures')
+        //   .upload(`${userId}/${file.name}`, file);
+        // Puis sauvegarder l'URL dans le profil utilisateur
+        localStorage.setItem('tbee_profile_image', imageData);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Charger la photo depuis localStorage au montage
+  useEffect(() => {
+    const savedImage = localStorage.getItem('tbee_profile_image');
+    if (savedImage) {
+      setProfileImage(savedImage);
+    }
+  }, []);
+
+  // ============================================
+  // GESTION DE LA SAUVEGARDE DU PROFIL
+  // ============================================
+  const handleSave = () => {
+    // TODO: Sauvegarder dans Supabase
+    // await supabase.from('user_profiles').update(profileData).eq('id', userId);
+    
+    // Sauvegarde temporaire en localStorage
+    const onboardingData = JSON.parse(localStorage.getItem('tbee_onboarding_data') || '{}');
+    onboardingData.step1 = {
+      ...onboardingData.step1,
+      firstName: profileData.firstName,
+      lastName: profileData.lastName,
+      phone: profileData.phone,
+      birthDate: profileData.birthDate,
+      hasRQTH: profileData.rqth
+    };
+    onboardingData.step2 = {
+      ...onboardingData.step2,
+      currentLevel: profileData.level,
+      targetLevel: profileData.targetLevel,
+      fieldOfInterest: profileData.program,
+      city: profileData.city,
+      postalCode: profileData.postalCode,
+      mobilityRadius: profileData.mobilityRadius
+    };
+    localStorage.setItem('tbee_onboarding_data', JSON.stringify(onboardingData));
+    
+    setIsEditing(false);
+    alert('✅ Profil mis à jour avec succès !');
+  };
+
+  const handleInputChange = (field: string, value: string | boolean | number) => {
+    setProfileData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleNotificationChange = (field: string, value: boolean) => {
+    setNotificationSettings(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    // TODO: Sauvegarder dans Supabase
+    // await supabase.from('user_settings').update({ [field]: value }).eq('user_id', userId);
+  };
+
+  // ============================================
+  // GESTION DU MOT DE PASSE
+  // ============================================
+  const handlePasswordChange = async () => {
+    setPasswordError('');
+    setPasswordSuccess(false);
+
+    // Validation
+    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      setPasswordError('Tous les champs sont requis');
+      return;
+    }
+
+    if (passwordData.newPassword.length < 8) {
+      setPasswordError('Le nouveau mot de passe doit contenir au moins 8 caractères');
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError('Les mots de passe ne correspondent pas');
+      return;
+    }
+
+    // TODO: Appel à Supabase pour changer le mot de passe
+    // const { error } = await supabase.auth.updateUser({
+    //   password: passwordData.newPassword
+    // });
+    // if (error) {
+    //   setPasswordError(error.message);
+    //   return;
+    // }
+
+    // Simulation de succès
+    setPasswordSuccess(true);
+    setPasswordData({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
+    setShowPasswordFields(false);
+    
+    setTimeout(() => {
+      setPasswordSuccess(false);
+    }, 3000);
+  };
+
+  // ============================================
+  // TÉLÉCHARGEMENT DES DONNÉES (RGPD)
+  // ============================================
+  const handleDownloadData = () => {
+    // TODO: Récupérer toutes les données depuis Supabase
+    // const { data: userData } = await supabase.from('user_profiles').select('*').eq('id', userId).single();
+    // const { data: statsData } = await supabase.from('user_statistics').select('*').eq('user_id', userId).single();
+    // const { data: modulesData } = await supabase.from('user_module_progress').select('*').eq('user_id', userId);
+    // const { data: offersData } = await supabase.from('user_tracked_offers').select('*').eq('user_id', userId);
+
+    const exportData = {
+      profile: profileData,
+      statistics: statistics,
+      modules: modules,
+      notificationSettings: notificationSettings,
+      exportDate: new Date().toISOString(),
+      exportedBy: 'TBEE Platform'
+    };
+
+    // Créer un fichier JSON
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `tbee-donnees-${profileData.firstName}-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    alert('✅ Vos données ont été téléchargées avec succès !');
+  };
+
+  // ============================================
+  // SUPPRESSION DU COMPTE
+  // ============================================
+  const handleDeleteAccount = () => {
+    // TODO: Suppression dans Supabase
+    // 1. Supprimer toutes les données utilisateur
+    // await supabase.from('user_profiles').delete().eq('id', userId);
+    // await supabase.from('user_statistics').delete().eq('user_id', userId);
+    // await supabase.from('user_module_progress').delete().eq('user_id', userId);
+    // await supabase.from('user_tracked_offers').delete().eq('user_id', userId);
+    // 2. Supprimer l'utilisateur de Supabase Auth
+    // await supabase.auth.admin.deleteUser(userId);
+
+    // Suppression locale pour la démo
+    localStorage.clear();
+    alert('Votre compte a été supprimé. Vous allez être redirigé vers la page d\'accueil.');
+    onNavigate('landing');
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F8F9FD] pb-16">
+      {/* Header */}
+      <div className="bg-white border-b border-[rgba(30,21,72,0.08)] sticky top-0 z-30">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex items-start gap-3 sm:gap-6">
+            <button
+              onClick={() => onNavigate('student-dashboard')}
+              className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
+              aria-label="Retour"
+            >
+              <User className="w-5 h-5 text-[#1E1548]" />
+            </button>
+            
+            <div className="flex-1 min-w-0">
+              <h1 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold leading-tight text-[#1E1548] mb-1 sm:mb-2">
+                Mon profil
+              </h1>
+              <p className="text-[14px] sm:text-[16px] leading-[20px] sm:leading-[24px] text-[#6B7280]">
+                Gérez vos informations personnelles et vos préférences
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8 lg:pt-8 lg:pb-8 space-y-6 lg:space-y-8">
+        {/* Profile Card with Avatar */}
+        <div className="bg-gradient-to-br from-primary/10 to-secondary rounded-2xl p-6 lg:p-8">
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+            <div className="relative">
+              {/* Hidden File Input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoChange}
+                className="hidden"
+              />
+              
+              {/* Avatar Display */}
+              {profileImage ? (
+                <img
+                  src={profileImage}
+                  alt="Photo de profil"
+                  className="w-24 h-24 lg:w-32 lg:h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                />
+              ) : (
+                <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-full bg-foreground flex items-center justify-center text-background border-4 border-white shadow-lg">
+                  <span className="text-3xl lg:text-4xl font-bold">
+                    {profileData.firstName[0]}{profileData.lastName[0] || ''}
+                  </span>
+                </div>
+              )}
+              
+              {/* Camera Button */}
+              <button
+                onClick={handlePhotoClick}
+                className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-primary text-foreground flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
+                aria-label="Changer la photo de profil"
+              >
+                <Camera className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 text-center sm:text-left">
+              <h3>{profileData.firstName} {profileData.lastName}</h3>
+              <p className="text-muted-foreground mb-2">{profileData.email}</p>
+              <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                <span className="px-3 py-1 bg-primary/20 rounded-full text-sm font-medium">
+                  {profileData.level}
+                </span>
+                <span className="px-3 py-1 bg-secondary rounded-full text-sm font-medium">
+                  Étudiant actif
+                </span>
+                {profileData.rqth && (
+                  <span className="px-3 py-1 bg-accent rounded-full text-sm font-medium flex items-center gap-1">
+                    <Shield className="w-4 h-4" />
+                    RQTH
+                  </span>
+                )}
+              </div>
+            </div>
+            <Button
+              onClick={() => setIsEditing(!isEditing)}
+              variant={isEditing ? 'default' : 'outline'}
+              className="w-full sm:w-auto"
+            >
+              {isEditing ? '✓ Mode édition' : 'Modifier le profil'}
+            </Button>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="border-b border-border overflow-x-auto">
+          <div className="flex gap-2 min-w-max">
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`px-4 py-3 font-medium transition-all border-b-2 whitespace-nowrap ${
+                activeTab === 'profile'
+                  ? 'border-primary text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <User className="w-4 h-4 inline mr-2" />
+              Informations personnelles
+            </button>
+            <button
+              onClick={() => setActiveTab('privacy')}
+              className={`px-4 py-3 font-medium transition-all border-b-2 whitespace-nowrap ${
+                activeTab === 'privacy'
+                  ? 'border-primary text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Lock className="w-4 h-4 inline mr-2" />
+              Confidentialité
+            </button>
+            <button
+              onClick={() => setActiveTab('notifications')}
+              className={`px-4 py-3 font-medium transition-all border-b-2 whitespace-nowrap ${
+                activeTab === 'notifications'
+                  ? 'border-primary text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Bell className="w-4 h-4 inline mr-2" />
+              Notifications
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'profile' && (
+          <div className="space-y-6 lg:space-y-8">
+            {/* Personal Information */}
+            <div className="bg-card border border-border rounded-2xl p-6">
+              <div className="flex items-center gap-2 mb-6">
+                <User className="w-5 h-5 text-primary" />
+                <h4>Informations personnelles</h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormInput
+                  label="Prénom"
+                  type="text"
+                  value={profileData.firstName}
+                  onChange={(e) => handleInputChange('firstName', e.target.value)}
+                  disabled={!isEditing}
+                  icon={<User className="w-4 h-4" />}
+                />
+                <FormInput
+                  label="Nom"
+                  type="text"
+                  value={profileData.lastName}
+                  onChange={(e) => handleInputChange('lastName', e.target.value)}
+                  disabled={!isEditing}
+                  icon={<User className="w-4 h-4" />}
+                />
+                <FormInput
+                  label="Email"
+                  type="email"
+                  value={profileData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  disabled={!isEditing}
+                  icon={<Mail className="w-4 h-4" />}
+                />
+                <FormInput
+                  label="Téléphone"
+                  type="tel"
+                  value={profileData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  disabled={!isEditing}
+                  icon={<Phone className="w-4 h-4" />}
+                />
+                <FormInput
+                  label="Date de naissance"
+                  type="date"
+                  value={profileData.birthDate}
+                  onChange={(e) => handleInputChange('birthDate', e.target.value)}
+                  disabled={!isEditing}
+                  icon={<Calendar className="w-4 h-4" />}
+                />
+              </div>
+            </div>
+
+            {/* Address */}
+            <div className="bg-card border border-border rounded-2xl p-6">
+              <div className="flex items-center gap-2 mb-6">
+                <MapPin className="w-5 h-5 text-primary" />
+                <h4>Adresse</h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                  <FormInput
+                    label="Adresse"
+                    type="text"
+                    value={profileData.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    disabled={!isEditing}
+                    icon={<MapPin className="w-4 h-4" />}
+                  />
+                </div>
+                <FormInput
+                  label="Ville"
+                  type="text"
+                  value={profileData.city}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
+                  disabled={!isEditing}
+                />
+                <FormInput
+                  label="Code postal"
+                  type="text"
+                  value={profileData.postalCode}
+                  onChange={(e) => handleInputChange('postalCode', e.target.value)}
+                  disabled={!isEditing}
+                />
+              </div>
+            </div>
+
+            {/* Education */}
+            <div className="bg-card border border-border rounded-2xl p-6">
+              <div className="flex items-center gap-2 mb-6">
+                <GraduationCap className="w-5 h-5 text-primary" />
+                <h4>Formation</h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormInput
+                  label="Établissement"
+                  type="text"
+                  value={profileData.school}
+                  onChange={(e) => handleInputChange('school', e.target.value)}
+                  disabled={!isEditing}
+                  icon={<Building2 className="w-4 h-4" />}
+                />
+                <FormInput
+                  label="Niveau d'études"
+                  type="text"
+                  value={profileData.level}
+                  onChange={(e) => handleInputChange('level', e.target.value)}
+                  disabled={!isEditing}
+                  icon={<GraduationCap className="w-4 h-4" />}
+                />
+                <div className="md:col-span-2">
+                  <FormInput
+                    label="Programme"
+                    type="text"
+                    value={profileData.program}
+                    onChange={(e) => handleInputChange('program', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* RQTH Information */}
+            <div className="bg-gradient-to-br from-accent/50 to-secondary rounded-2xl p-6 border border-border">
+              <div className="flex items-center gap-2 mb-4">
+                <Shield className="w-5 h-5 text-primary" />
+                <h4>Reconnaissance RQTH</h4>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="rqth"
+                    checked={profileData.rqth}
+                    onChange={(e) => handleInputChange('rqth', e.target.checked)}
+                    disabled={!isEditing}
+                    className="w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-ring disabled:opacity-50"
+                  />
+                  <label htmlFor="rqth" className="font-medium">
+                    Je bénéficie d'une reconnaissance RQTH
+                  </label>
+                </div>
+                {profileData.rqth && (
+                  <div>
+                    <label className="block mb-2 text-sm font-medium">
+                      Détails (optionnel)
+                    </label>
+                    <textarea
+                      value={profileData.rqthDetails}
+                      onChange={(e) => handleInputChange('rqthDetails', e.target.value)}
+                      disabled={!isEditing}
+                      rows={3}
+                      className="w-full px-4 py-3 bg-input-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 resize-none"
+                      placeholder="Informations complémentaires..."
+                    />
+                  </div>
+                )}
+                <p className="text-sm text-muted-foreground">
+                  Ces informations sont confidentielles et utilisées uniquement pour personnaliser votre accompagnement.
+                </p>
+              </div>
+            </div>
+
+            {/* Save Button */}
+            {isEditing && (
+              <div className="flex justify-end gap-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditing(false)}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  className="gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  Enregistrer les modifications
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'privacy' && (
+          <div className="space-y-6">
+            {/* Password Change */}
+            <div className="bg-card border border-border rounded-2xl p-6">
+              <div className="flex items-center gap-2 mb-6">
+                <Lock className="w-5 h-5 text-primary" />
+                <h4>Modifier le mot de passe</h4>
+              </div>
+              <div className="space-y-4 max-w-lg">
+                <FormInput
+                  label="Mot de passe actuel"
+                  type={showPasswords.current ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={passwordData.currentPassword}
+                  onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                  icon={
+                    <button
+                      className="absolute right-3 top-3"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
+                    >
+                      {showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  }
+                />
+                <FormInput
+                  label="Nouveau mot de passe"
+                  type={showPasswords.new ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={passwordData.newPassword}
+                  onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                  icon={
+                    <button
+                      className="absolute right-3 top-3"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
+                    >
+                      {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  }
+                />
+                <FormInput
+                  label="Confirmer le nouveau mot de passe"
+                  type={showPasswords.confirm ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={passwordData.confirmPassword}
+                  onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                  icon={
+                    <button
+                      className="absolute right-3 top-3"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
+                    >
+                      {showPasswords.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  }
+                />
+                <Button
+                  className="w-full sm:w-auto"
+                  onClick={handlePasswordChange}
+                >
+                  Mettre à jour le mot de passe
+                </Button>
+                {passwordError && (
+                  <p className="text-sm text-red-500 mt-2">
+                    {passwordError}
+                  </p>
+                )}
+                {passwordSuccess && (
+                  <p className="text-sm text-green-500 mt-2">
+                    Mot de passe mis à jour avec succès !
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Data Export */}
+            <div className="bg-card border border-border rounded-2xl p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Settings className="w-5 h-5 text-primary" />
+                <h4>Mes données</h4>
+              </div>
+              <p className="text-muted-foreground mb-6">
+                Vous pouvez télécharger une copie de toutes vos données personnelles.
+              </p>
+              <Button
+                variant="outline"
+                onClick={handleDownloadData}
+              >
+                Télécharger mes données
+              </Button>
+            </div>
+
+            {/* Delete Account */}
+            <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-2xl p-6 border border-red-200">
+              <h4 className="mb-2 text-red-900">⚠️ Zone dangereuse</h4>
+              <p className="text-sm text-red-900 mb-6">
+                La suppression de votre compte est définitive et irréversible. Toutes vos données seront supprimées.
+              </p>
+              <Button
+                variant="outline"
+                className="border-red-300 text-red-700 hover:bg-red-100"
+                onClick={() => setShowDeleteModal(true)}
+              >
+                Supprimer mon compte
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'notifications' && (
+          <div className="space-y-6">
+            {/* Email Notifications */}
+            <div className="bg-card border border-border rounded-2xl p-6">
+              <div className="flex items-center gap-2 mb-6">
+                <Bell className="w-5 h-5 text-primary" />
+                <h4>Préférences de notification</h4>
+              </div>
+              <div className="space-y-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <p className="font-medium mb-1">Notifications par email</p>
+                    <p className="text-sm text-muted-foreground">
+                      Recevez des emails pour les mises à jour importantes
+                    </p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={notificationSettings.emailNotifications}
+                      onChange={(e) => handleNotificationChange('emailNotifications', e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-muted peer-focus:ring-2 peer-focus:ring-ring rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
+                </div>
+
+                <div className="h-px bg-border"></div>
+
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <p className="font-medium mb-1">Mises à jour des modules</p>
+                    <p className="text-sm text-muted-foreground">
+                      Soyez notifié quand de nouveaux modules sont disponibles
+                    </p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={notificationSettings.moduleUpdates}
+                      onChange={(e) => handleNotificationChange('moduleUpdates', e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-muted peer-focus:ring-2 peer-focus:ring-ring rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
+                </div>
+
+                <div className="h-px bg-border"></div>
+
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <p className="font-medium mb-1">Rapports de progression</p>
+                    <p className="text-sm text-muted-foreground">
+                      Recevez un récapitulatif hebdomadaire de votre progression
+                    </p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={notificationSettings.progressReports}
+                      onChange={(e) => handleNotificationChange('progressReports', e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-muted peer-focus:ring-2 peer-focus:ring-ring rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
+                </div>
+
+                <div className="h-px bg-border"></div>
+
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <p className="font-medium mb-1">Conseils et astuces</p>
+                    <p className="text-sm text-muted-foreground">
+                      Conseils personnalisés pour améliorer votre parcours
+                    </p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={notificationSettings.tips}
+                      onChange={(e) => handleNotificationChange('tips', e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-muted peer-focus:ring-2 peer-focus:ring-ring rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Save Notification Settings */}
+            <div className="flex justify-end">
+              <Button>
+                Enregistrer les préférences
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Delete Account Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-card border border-border rounded-2xl p-6 w-96">
+            <div className="flex items-center gap-4 mb-4">
+              <AlertTriangle className="w-6 h-6 text-red-500" />
+              <h3 className="text-lg font-medium">Supprimer votre compte</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-6">
+              Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible et supprimera toutes vos données.
+            </p>
+            <div className="flex justify-end gap-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteModal(false)}
+              >
+                Annuler
+              </Button>
+              <Button
+                variant="outline"
+                className="border-red-300 text-red-700 hover:bg-red-100"
+                onClick={handleDeleteAccount}
+              >
+                Supprimer
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

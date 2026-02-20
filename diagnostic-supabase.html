@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic Supabase - TBEE</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 { color: #FFD600; }
+        .test { 
+            background: #2a2a2a; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-left: 4px solid #00ff00;
+        }
+        .success { border-left-color: #00ff00; }
+        .error { border-left-color: #ff0000; color: #ff6b6b; }
+        .warning { border-left-color: #FFD600; color: #FFD600; }
+        button {
+            background: #FFD600;
+            color: #1E1548;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 4px;
+        }
+        button:hover { background: #ffc400; }
+        pre { 
+            background: #000; 
+            padding: 10px; 
+            overflow-x: auto;
+            border-radius: 4px;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        input {
+            padding: 8px;
+            width: 300px;
+            margin: 5px;
+            border: 1px solid #FFD600;
+            background: #2a2a2a;
+            color: #00ff00;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 DIAGNOSTIC SUPABASE - TBEE</h1>
+    <p>Ce script va tester votre connexion Supabase étape par étape.</p>
+
+    <div id="results"></div>
+
+    <hr style="border-color: #FFD600; margin: 30px 0;">
+
+    <h2>📝 TESTS INTERACTIFS</h2>
+    
+    <div class="test">
+        <h3>Test 1 : Connexion</h3>
+        <div class="input-group">
+            <input type="email" id="loginEmail" placeholder="Email" value="test@example.com">
+            <input type="password" id="loginPassword" placeholder="Mot de passe" value="password123">
+            <button onclick="testLogin()">Se connecter</button>
+        </div>
+        <div id="loginResult"></div>
+    </div>
+
+    <div class="test">
+        <h3>Test 2 : Inscription</h3>
+        <div class="input-group">
+            <input type="email" id="signupEmail" placeholder="Email" value="nouveau@example.com">
+            <input type="password" id="signupPassword" placeholder="Mot de passe" value="password123">
+            <input type="text" id="signupFirstName" placeholder="Prénom" value="Jean">
+            <input type="text" id="signupLastName" placeholder="Nom" value="Dupont">
+            <button onclick="testSignup()">Créer un compte</button>
+        </div>
+        <div id="signupResult"></div>
+    </div>
+
+    <div class="test">
+        <h3>Test 3 : Récupérer le profil</h3>
+        <button onclick="testGetProfile()">Récupérer mon profil</button>
+        <div id="profileResult"></div>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+        const results = document.getElementById('results');
+
+        function log(message, type = 'success') {
+            const div = document.createElement('div');
+            div.className = `test ${type}`;
+            div.innerHTML = `<pre>${message}</pre>`;
+            results.appendChild(div);
+            console.log(message);
+        }
+
+        // ========================================
+        // TEST 1 : VARIABLES D'ENVIRONNEMENT
+        // ========================================
+        log('=== TEST 1 : VARIABLES D\'ENVIRONNEMENT ===', 'warning');
+
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+        if (!supabaseUrl) {
+            log('❌ ERREUR : VITE_SUPABASE_URL non défini !', 'error');
+            log('👉 Vérifiez que le fichier .env.local existe et contient:\nVITE_SUPABASE_URL=https://votre-projet.supabase.co', 'warning');
+        } else {
+            log(`✅ VITE_SUPABASE_URL trouvé : ${supabaseUrl}`);
+        }
+
+        if (!supabaseKey) {
+            log('❌ ERREUR : VITE_SUPABASE_ANON_KEY non défini !', 'error');
+            log('👉 Vérifiez que le fichier .env.local existe et contient:\nVITE_SUPABASE_ANON_KEY=eyJhbGc...', 'warning');
+        } else {
+            log(`✅ VITE_SUPABASE_ANON_KEY trouvé : ${supabaseKey.substring(0, 30)}...`);
+        }
+
+        if (!supabaseUrl || !supabaseKey) {
+            log('\n⚠️ ARRÊT DU DIAGNOSTIC : Variables d\'environnement manquantes\n\n📋 SOLUTION :\n1. Créez le fichier .env.local à la racine du projet\n2. Ajoutez :\nVITE_SUPABASE_URL=https://votre-projet.supabase.co\nVITE_SUPABASE_ANON_KEY=eyJhbGc...\n3. Relancez npm run dev\n4. Rechargez cette page', 'error');
+            throw new Error('Variables manquantes');
+        }
+
+        // ========================================
+        // TEST 2 : CRÉATION DU CLIENT SUPABASE
+        // ========================================
+        log('\n=== TEST 2 : CRÉATION DU CLIENT SUPABASE ===', 'warning');
+
+        let supabase;
+        try {
+            supabase = createClient(supabaseUrl, supabaseKey);
+            log('✅ Client Supabase créé avec succès');
+            window.supabase = supabase; // Exposer globalement pour les tests
+        } catch (error) {
+            log(`❌ ERREUR lors de la création du client : ${error.message}`, 'error');
+            throw error;
+        }
+
+        // ========================================
+        // TEST 3 : CONNEXION RÉSEAU
+        // ========================================
+        log('\n=== TEST 3 : CONNEXION RÉSEAU À SUPABASE ===', 'warning');
+
+        try {
+            const { data, error } = await supabase.auth.getSession();
+            if (error) {
+                log(`⚠️ Erreur getSession : ${error.message}`, 'warning');
+            } else {
+                log(`✅ Connexion réseau OK`);
+                log(`Session actuelle : ${data.session ? 'Connecté' : 'Non connecté'}`);
+                if (data.session) {
+                    log(`   Email : ${data.session.user.email}`);
+                }
+            }
+        } catch (error) {
+            log(`❌ ERREUR de connexion : ${error.message}`, 'error');
+            log('👉 Vérifiez que votre URL Supabase est correcte et que le projet existe', 'warning');
+        }
+
+        // ========================================
+        // TEST 4 : STRUCTURE DE LA BASE DE DONNÉES
+        // ========================================
+        log('\n=== TEST 4 : STRUCTURE BASE DE DONNÉES ===', 'warning');
+
+        try {
+            // Tester si la table profiles existe
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('id')
+                .limit(1);
+
+            if (error) {
+                log(`❌ ERREUR : Table "profiles" introuvable ou inaccessible`, 'error');
+                log(`   Message : ${error.message}`, 'error');
+                log(`   Code : ${error.code}`, 'error');
+                log('\n👉 SOLUTIONS :\n1. Vérifiez que la table "profiles" existe dans Supabase\n2. Vérifiez les politiques RLS (Row Level Security)\n3. Exécutez le script SQL de création (voir ci-dessous)', 'warning');
+            } else {
+                log(`✅ Table "profiles" accessible`);
+                log(`   Nombre d'enregistrements trouvés : ${data?.length || 0}`);
+            }
+        } catch (error) {
+            log(`❌ ERREUR lors du test de la table : ${error.message}`, 'error');
+        }
+
+        // ========================================
+        // TEST 5 : POLITIQUES RLS
+        // ========================================
+        log('\n=== TEST 5 : POLITIQUES RLS (Row Level Security) ===', 'warning');
+        log('Les politiques RLS contrôlent qui peut lire/écrire les données.\nSi elles sont mal configurées, les requêtes échouent silencieusement.', 'warning');
+
+        // ========================================
+        // FONCTIONS DE TEST INTERACTIVES
+        // ========================================
+        window.testLogin = async function() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const resultDiv = document.getElementById('loginResult');
+
+            resultDiv.innerHTML = '<p>⏳ Connexion en cours...</p>';
+
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password
+                });
+
+                if (error) {
+                    resultDiv.innerHTML = `<pre style="color: #ff6b6b;">❌ ERREUR : ${error.message}\nCode : ${error.status || 'N/A'}</pre>`;
+                    log(`❌ Échec de connexion pour ${email} : ${error.message}`, 'error');
+                } else {
+                    resultDiv.innerHTML = `<pre style="color: #00ff00;">✅ CONNEXION RÉUSSIE !
+Email : ${data.user.email}
+ID : ${data.user.id}
+Session : Oui</pre>`;
+                    log(`✅ Connexion réussie pour ${email}`, 'success');
+                    
+                    // Tester la récupération du profil
+                    setTimeout(() => testGetProfile(), 500);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<pre style="color: #ff6b6b;">❌ EXCEPTION : ${error.message}</pre>`;
+                log(`❌ Exception lors de la connexion : ${error.message}`, 'error');
+            }
+        };
+
+        window.testSignup = async function() {
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const firstName = document.getElementById('signupFirstName').value;
+            const lastName = document.getElementById('signupLastName').value;
+            const resultDiv = document.getElementById('signupResult');
+
+            resultDiv.innerHTML = '<p>⏳ Création du compte...</p>';
+
+            try {
+                const { data, error } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: {
+                            first_name: firstName,
+                            last_name: lastName,
+                            role: 'student'
+                        }
+                    }
+                });
+
+                if (error) {
+                    resultDiv.innerHTML = `<pre style="color: #ff6b6b;">❌ ERREUR : ${error.message}\nCode : ${error.status || 'N/A'}</pre>`;
+                    log(`❌ Échec d'inscription pour ${email} : ${error.message}`, 'error');
+                } else if (data.user) {
+                    resultDiv.innerHTML = `<pre style="color: #00ff00;">✅ COMPTE CRÉÉ !
+Email : ${data.user.email}
+ID : ${data.user.id}
+Confirmation email : ${data.user.confirmed_at ? 'Oui' : 'En attente'}
+
+⚠️ Vérifiez votre boîte mail pour confirmer le compte (si activé dans Supabase)</pre>`;
+                    log(`✅ Inscription réussie pour ${email}`, 'success');
+                    
+                    // Attendre et tester le profil
+                    setTimeout(() => {
+                        resultDiv.innerHTML += '<p>⏳ Vérification du profil créé automatiquement...</p>';
+                        testGetProfile();
+                    }, 2000);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<pre style="color: #ff6b6b;">❌ EXCEPTION : ${error.message}</pre>`;
+                log(`❌ Exception lors de l'inscription : ${error.message}`, 'error');
+            }
+        };
+
+        window.testGetProfile = async function() {
+            const resultDiv = document.getElementById('profileResult');
+            resultDiv.innerHTML = '<p>⏳ Récupération du profil...</p>';
+
+            try {
+                // D'abord, récupérer l'utilisateur connecté
+                const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+                if (userError || !user) {
+                    resultDiv.innerHTML = `<pre style="color: #ff6b6b;">❌ Aucun utilisateur connecté\n\n👉 Connectez-vous d'abord avec le Test 1</pre>`;
+                    return;
+                }
+
+                log(`🔍 Utilisateur connecté : ${user.email} (${user.id})`, 'success');
+
+                // Maintenant, récupérer le profil
+                const { data: profile, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profileError) {
+                    resultDiv.innerHTML = `<pre style="color: #ff6b6b;">❌ ERREUR : ${profileError.message}
+Code : ${profileError.code}
+Détails : ${profileError.details || 'N/A'}
+Hint : ${profileError.hint || 'N/A'}
+
+👉 CAUSES POSSIBLES :
+1. Le profil n'existe pas (trigger non activé)
+2. Les politiques RLS bloquent l'accès
+3. La table "profiles" n'existe pas</pre>`;
+                    log(`❌ Échec récupération profil : ${profileError.message}`, 'error');
+                } else if (!profile) {
+                    resultDiv.innerHTML = `<pre style="color: #FFD600;">⚠️ PROFIL NON TROUVÉ pour ${user.email}
+
+👉 SOLUTIONS :
+1. Vérifiez que le trigger "on_auth_user_created" est actif
+2. Créez manuellement le profil via SQL
+3. Vérifiez les logs Supabase</pre>`;
+                    log(`⚠️ Profil non trouvé pour ${user.email}`, 'warning');
+                } else {
+                    resultDiv.innerHTML = `<pre style="color: #00ff00;">✅ PROFIL TROUVÉ !
+
+${JSON.stringify(profile, null, 2)}</pre>`;
+                    log(`✅ Profil récupéré avec succès`, 'success');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<pre style="color: #ff6b6b;">❌ EXCEPTION : ${error.message}</pre>`;
+                log(`❌ Exception lors de la récupération du profil : ${error.message}`, 'error');
+            }
+        };
+
+        // ========================================
+        // RÉSUMÉ FINAL
+        // ========================================
+        log('\n=== ✅ DIAGNOSTIC TERMINÉ ===', 'success');
+        log('\n👉 Utilisez les tests interactifs ci-dessus pour tester la connexion/inscription.', 'warning');
+        log('\n📋 Si des erreurs persistent, consultez le script SQL ci-dessous.', 'warning');
+
+    </script>
+
+    <hr style="border-color: #FFD600; margin: 30px 0;">
+
+    <h2>📜 SCRIPT SQL - CONFIGURATION SUPABASE</h2>
+    <p>Si des erreurs persistent, exécutez ce script dans Supabase SQL Editor :</p>
+    <pre style="background: #000; color: #00ff00; padding: 20px;">
+-- ========================================
+-- SCRIPT COMPLET DE CONFIGURATION TBEE
+-- ========================================
+
+-- 1. Créer la table profiles (si elle n'existe pas)
+CREATE TABLE IF NOT EXISTS public.profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    email TEXT NOT NULL,
+    first_name TEXT,
+    last_name TEXT,
+    role TEXT NOT NULL DEFAULT 'student' CHECK (role IN ('student', 'admin')),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. Activer Row Level Security
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+-- 3. Supprimer les anciennes politiques (au cas où)
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Enable insert for authenticated users only" ON public.profiles;
+
+-- 4. Créer les nouvelles politiques (PERMISSIVES)
+CREATE POLICY "Users can view own profile"
+    ON public.profiles FOR SELECT
+    USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile"
+    ON public.profiles FOR UPDATE
+    USING (auth.uid() = id);
+
+CREATE POLICY "Enable insert for authenticated users only"
+    ON public.profiles FOR INSERT
+    WITH CHECK (auth.uid() = id);
+
+-- 5. Créer le trigger pour auto-créer les profils
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.profiles (id, email, first_name, last_name, role)
+    VALUES (
+        NEW.id,
+        NEW.email,
+        COALESCE(NEW.raw_user_meta_data->>'first_name', ''),
+        COALESCE(NEW.raw_user_meta_data->>'last_name', ''),
+        COALESCE(NEW.raw_user_meta_data->>'role', 'student')
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 6. Activer le trigger
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_new_user();
+
+-- 7. Vérifier que tout fonctionne
+SELECT 'Configuration terminée !' AS status;
+    </pre>
+
+    <hr style="border-color: #FFD600; margin: 30px 0;">
+
+    <h2>🆘 GUIDE DE DÉPANNAGE</h2>
+    
+    <div class="test warning">
+        <h3>❌ Erreur : "Table profiles not found"</h3>
+        <p><strong>Cause :</strong> La table n'existe pas dans Supabase</p>
+        <p><strong>Solution :</strong> Exécutez le script SQL ci-dessus dans Supabase → SQL Editor</p>
+    </div>
+
+    <div class="test warning">
+        <h3>❌ Erreur : "new row violates row-level security policy"</h3>
+        <p><strong>Cause :</strong> Les politiques RLS bloquent l'accès</p>
+        <p><strong>Solution :</strong> Exécutez les étapes 3-4 du script SQL (politiques RLS)</p>
+    </div>
+
+    <div class="test warning">
+        <h3>❌ Profil non créé après inscription</h3>
+        <p><strong>Cause :</strong> Le trigger n'est pas activé</p>
+        <p><strong>Solution :</strong> Exécutez les étapes 5-6 du script SQL (trigger)</p>
+    </div>
+
+    <div class="test warning">
+        <h3>❌ Variables d'environnement non trouvées</h3>
+        <p><strong>Cause :</strong> Le fichier .env.local n'est pas au bon endroit ou mal nommé</p>
+        <p><strong>Solution :</strong></p>
+        <ol>
+            <li>Créez le fichier <code>.env.local</code> à la RACINE du projet (même niveau que package.json)</li>
+            <li>Pas d'espace dans le nom : <code>.env.local</code> (pas <code>.env .local</code>)</li>
+            <li>Redémarrez le serveur : <code>Ctrl+C</code> puis <code>npm run dev</code></li>
+        </ol>
+    </div>
+
+</body>
+</html>

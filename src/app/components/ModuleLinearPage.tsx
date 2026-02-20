@@ -1,0 +1,727 @@
+import { useState, useEffect } from 'react';
+import { CheckCircle2, ChevronLeft, Clock, FileText, Lock, Play, Upload, Video } from 'lucide-react';
+import { useUserData } from '@/context/UserDataContext';
+
+interface ModuleLinearPageProps {
+  moduleId: string;
+  onNavigate: (page: string) => void;
+}
+
+// Helper: Convertir durée en minutes (ex: "8min" -> 8)
+const parseDuration = (duration: string): number => {
+  const match = duration.match(/(\d+)min/);
+  return match ? parseInt(match[1]) : 0;
+};
+
+// Structure statique des contenus de modules (sera remplacé par Supabase)
+const moduleStaticContent: Record<string, any> = {
+  'week1': {
+    weekNumber: 1,
+    title: 'Identifier mon projet',
+    description: 'Clarifier tes objectifs et découvrir les formations The Bridge',
+    estimatedHours: '4h',
+    steps: [
+      {
+        id: 'step1',
+        type: 'video',
+        title: 'Bienvenue dans ton parcours',
+        description: 'Introduction au programme et à la plateforme',
+        duration: '8min',
+        content: { videoUrl: '#', pdfUrl: null }
+      },
+      {
+        id: 'step2',
+        type: 'video',
+        title: 'Les formations The Bridge',
+        description: 'Découvre tous les domaines proposés',
+        duration: '15min',
+        content: { videoUrl: '#', pdfUrl: '/pdf/formations.pdf' }
+      },
+      {
+        id: 'step3',
+        type: 'exercise',
+        title: 'Test de positionnement',
+        description: 'Évalue tes compétences et objectifs',
+        duration: '20min',
+        content: { questions: ['Question 1...', 'Question 2...'] }
+      },
+      {
+        id: 'step4',
+        type: 'upload',
+        title: 'Questionnaire projet',
+        description: 'Partage ton projet professionnel',
+        duration: '15min',
+        content: { acceptedFormats: ['.pdf', '.doc', '.docx'] }
+      },
+      {
+        id: 'step5',
+        type: 'video',
+        title: 'Plan d\'action personnalisé',
+        description: 'Validation de ton parcours',
+        duration: '10min',
+        content: { videoUrl: '#' }
+      }
+    ]
+  },
+  'week2': {
+    weekNumber: 2,
+    title: 'Construire mon CV',
+    description: 'CV, LinkedIn et stratégies de recherche',
+    estimatedHours: '6h',
+    steps: [
+      {
+        id: 'step1',
+        type: 'video',
+        title: 'Les fondamentaux du CV',
+        description: 'Structure, mise en page et contenu',
+        duration: '12min',
+        content: { videoUrl: '#', pdfUrl: '/pdf/cv-guide.pdf' }
+      },
+      {
+        id: 'step2',
+        type: 'upload',
+        title: 'Upload ton CV',
+        description: 'Envoie ton CV pour validation',
+        duration: '5min',
+        reviewStatus: 'pending',
+        content: { acceptedFormats: ['.pdf'] }
+      },
+      {
+        id: 'step3',
+        type: 'video',
+        title: 'Optimiser son LinkedIn',
+        description: 'Bonnes pratiques et visibilité',
+        duration: '15min',
+        content: { videoUrl: '#', pdfUrl: '/pdf/linkedin-guide.pdf' }
+      },
+      {
+        id: 'step4',
+        type: 'text',
+        title: 'Lien LinkedIn',
+        description: 'Renseigne l\'URL de ton profil',
+        duration: '2min',
+        reviewStatus: null,
+        content: { placeholder: 'https://linkedin.com/in/...' }
+      },
+      {
+        id: 'step5',
+        type: 'video',
+        title: 'Le marché caché',
+        description: 'Stratégies de recherche efficaces',
+        duration: '18min',
+        content: { videoUrl: '#' }
+      },
+      {
+        id: 'step6',
+        type: 'exercise',
+        title: 'Identifier 5 offres pertinentes',
+        description: 'Alimentation de ta base de candidatures',
+        duration: '30min',
+        content: {}
+      },
+      {
+        id: 'step7',
+        type: 'video',
+        title: 'Lettres de motivation efficaces',
+        description: 'Personnalisation et impact',
+        duration: '12min',
+        content: { videoUrl: '#' }
+      },
+      {
+        id: 'step8',
+        type: 'exercise',
+        title: 'Rédiger ta première lettre',
+        description: 'Exercice pratique',
+        duration: '25min',
+        content: {}
+      }
+    ]
+  },
+  'week3': {
+    weekNumber: 3,
+    title: 'Rechercher mon entreprise',
+    description: 'Apprends à chercher et cibler les bonnes entreprises',
+    estimatedHours: '5h',
+    steps: [
+      {
+        id: 'step1',
+        type: 'video',
+        title: 'Comprendre le marché de l\'alternance',
+        description: 'Vue d\'ensemble des opportunités',
+        duration: '15min',
+        content: { videoUrl: '#' }
+      },
+      {
+        id: 'step2',
+        type: 'video',
+        title: 'Identifier les entreprises cibles',
+        description: 'Méthodologie de recherche',
+        duration: '12min',
+        content: { videoUrl: '#' }
+      },
+      {
+        id: 'step3',
+        type: 'exercise',
+        title: 'Créer ta liste d\'entreprises',
+        description: 'Exercice pratique de ciblage',
+        duration: '30min',
+        content: {}
+      },
+      {
+        id: 'step4',
+        type: 'video',
+        title: 'Utiliser les réseaux sociaux',
+        description: 'LinkedIn, Twitter et autres plateformes',
+        duration: '18min',
+        content: { videoUrl: '#' }
+      },
+      {
+        id: 'step5',
+        type: 'text',
+        title: 'Préparer ton approche',
+        description: 'Template de message de prise de contact',
+        duration: '20min',
+        content: {}
+      }
+    ]
+  },
+  'week4': {
+    weekNumber: 4,
+    title: 'Réussir mon entretien',
+    description: 'Maîtrise les techniques d\'entretien et décroche ton contrat',
+    estimatedHours: '4h',
+    steps: [
+      {
+        id: 'step1',
+        type: 'video',
+        title: 'Les fondamentaux de l\'entretien',
+        description: 'Comprendre les attentes des recruteurs',
+        duration: '15min',
+        content: { videoUrl: '#' }
+      },
+      {
+        id: 'step2',
+        type: 'video',
+        title: 'Construire son pitch',
+        description: 'Structure et contenu',
+        duration: '12min',
+        content: { videoUrl: '#' }
+      },
+      {
+        id: 'step3',
+        type: 'exercise',
+        title: 'Rédiger ton pitch',
+        description: 'Exercice de préparation',
+        duration: '20min',
+        content: {}
+      }
+    ]
+  }
+};
+
+export function ModuleLinearPage({ moduleId, onNavigate }: ModuleLinearPageProps) {
+  // -------------------- HOOKS --------------------
+  const {
+    modules,
+    startModule,
+    updateModuleProgress,
+    completeModule,
+    incrementStudyTime,
+    updateStreak
+  } = useUserData();
+
+  // Trouver le module dans le contexte UserData
+  const userModule = modules.find(m => m.id === `module-${moduleId}`);
+  const staticModule = moduleStaticContent[moduleId];
+
+  // États locaux pour la page
+  const [completedStepsLocal, setCompletedStepsLocal] = useState<string[]>([]);
+  const [activeStepId, setActiveStepId] = useState<string | null>(null);
+
+  // -------------------- INITIALIZATION --------------------
+
+  useEffect(() => {
+    if (userModule && staticModule) {
+      // Démarrer le module s'il est disponible mais pas encore commencé
+      if (userModule.status === 'available') {
+        startModule(userModule.id);
+        updateStreak(); // Mettre à jour la série
+      }
+
+      // Initialiser l'étape active (première non complétée ou première)
+      if (!activeStepId) {
+        setActiveStepId(staticModule.steps[0]?.id || null);
+      }
+    }
+  }, [userModule, staticModule, startModule, updateStreak, activeStepId]);
+
+  // -------------------- HANDLERS --------------------
+
+  const handleCompleteStep = async (stepId: string) => {
+    if (!userModule || !staticModule) return;
+
+    const step = staticModule.steps.find((s: any) => s.id === stepId);
+    if (!step) return;
+
+    // Ajouter aux étapes complétées localement
+    if (!completedStepsLocal.includes(stepId)) {
+      setCompletedStepsLocal(prev => [...prev, stepId]);
+
+      // Incrémenter le temps d'étude
+      const minutes = parseDuration(step.duration);
+      await incrementStudyTime(minutes);
+
+      // Calculer la nouvelle progression
+      const totalSteps = staticModule.steps.length;
+      const completedCount = completedStepsLocal.length + 1;
+      const newProgress = Math.round((completedCount / totalSteps) * 100);
+
+      // Mettre à jour la progression du module
+      await updateModuleProgress(userModule.id, newProgress);
+
+      // Si toutes les étapes sont complétées, marquer le module comme terminé
+      if (completedCount === totalSteps) {
+        await completeModule(userModule.id);
+      }
+
+      // Passer à l'étape suivante
+      const currentIndex = staticModule.steps.findIndex((s: any) => s.id === stepId);
+      if (currentIndex < staticModule.steps.length - 1) {
+        setActiveStepId(staticModule.steps[currentIndex + 1].id);
+      }
+    }
+  };
+
+  // -------------------- RENDER HELPERS --------------------
+
+  const getStepIcon = (type: string) => {
+    switch (type) {
+      case 'video': return <Video className="w-5 h-5" />;
+      case 'exercise': return <FileText className="w-5 h-5" />;
+      case 'upload': return <Upload className="w-5 h-5" />;
+      case 'text': return <FileText className="w-5 h-5" />;
+      default: return <Play className="w-5 h-5" />;
+    }
+  };
+
+  const getStepStatus = (stepId: string, index: number) => {
+    if (completedStepsLocal.includes(stepId)) return 'completed';
+    if (index === 0 || completedStepsLocal.includes(staticModule.steps[index - 1]?.id)) {
+      return 'available';
+    }
+    return 'locked';
+  };
+
+  // -------------------- GUARDS --------------------
+
+  if (!staticModule) {
+    return (
+      <div className="min-h-screen bg-[#ffffff] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-[16px] text-[#6B7280]">Module non trouvé</p>
+          <button
+            onClick={() => onNavigate('student-dashboard')}
+            className="mt-4 text-[#FFD600] hover:underline"
+          >
+            Retour au dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userModule) {
+    return (
+      <div className="min-h-screen bg-[#ffffff] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-[16px] text-[#6B7280]">Ce module n'est pas encore disponible</p>
+          <button
+            onClick={() => onNavigate('student-dashboard')}
+            className="mt-4 text-[#FFD600] hover:underline"
+          >
+            Retour au dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // -------------------- COMPUTED VALUES --------------------
+
+  const completedCount = completedStepsLocal.length;
+  const totalSteps = staticModule.steps.length;
+  const progress = userModule.progress || 0;
+  const activeStep = staticModule.steps.find((s: any) => s.id === activeStepId);
+
+  // -------------------- RENDER --------------------
+
+  return (
+    <div className="min-h-screen bg-[#F8F9FD] pb-16">
+      {/* Header */}
+      <div className="bg-white border-b border-[rgba(30,21,72,0.08)] sticky top-0 z-30">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex items-start gap-3 sm:gap-6">
+            <button
+              onClick={() => onNavigate('student-dashboard')}
+              className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
+              aria-label="Retour"
+            >
+              <ChevronLeft className="w-5 h-5 text-[#1E1548]" />
+            </button>
+            
+            <div className="flex-1 min-w-0">
+              <h1 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold leading-tight text-[#1E1548] mb-1 sm:mb-2">
+                {staticModule.title}
+              </h1>
+              <p className="text-[14px] sm:text-[16px] leading-[20px] sm:leading-[24px] text-[#6B7280]">
+                {staticModule.description}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-[1152px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8 lg:pt-8 lg:pb-8">
+        {/* Progress Bar */}
+        <div className="relative w-full h-3 bg-[#E8ECFF] rounded-full overflow-hidden mb-6 sm:mb-8">
+          <div 
+            className="absolute left-0 top-0 h-full bg-[#FFD600] rounded-full transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+
+        {/* Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+          {/* Steps List (Sidebar) */}
+          <div className="lg:col-span-1 order-2 lg:order-1">
+            <div className="bg-white border border-[rgba(30,21,72,0.1)] rounded-[16px] p-4 sm:p-6 lg:sticky lg:top-8">
+              <h4 className="text-[16px] sm:text-[18px] font-semibold text-[#1E1548] mb-4">
+                Étapes du module
+              </h4>
+              <div className="space-y-2">
+                {staticModule.steps.map((step: any, index: number) => {
+                  const status = getStepStatus(step.id, index);
+                  const isLocked = status === 'locked';
+                  const isCompleted = status === 'completed';
+                  const isActive = step.id === activeStepId;
+                  const isAvailable = status === 'available';
+
+                  return (
+                    <button
+                      key={step.id}
+                      onClick={() => !isLocked && setActiveStepId(step.id)}
+                      disabled={isLocked}
+                      className={`
+                        w-full text-left p-3 sm:p-4 rounded-[12px] transition-all
+                        ${isActive 
+                          ? 'bg-[#FFD600] shadow-sm' 
+                          : isCompleted
+                          ? 'bg-[#D1FAE5] hover:bg-[#D1FAE5]/80'
+                          : isAvailable
+                          ? 'bg-[#E8ECFF] hover:bg-[#E8ECFF]/80'
+                          : 'bg-[#F8F9FD] opacity-60 cursor-not-allowed'
+                        }
+                      `}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 mt-0.5">
+                          {isCompleted ? (
+                            <CheckCircle2 className={`w-5 h-5 ${isActive ? 'text-[#1E1548]' : 'text-[#10B981]'}`} />
+                          ) : isLocked ? (
+                            <Lock className="w-5 h-5 text-[#6B7280]" />
+                          ) : (
+                            <div className={`w-5 h-5 rounded-full border-2 ${
+                              isActive ? 'border-[#1E1548]' : 'border-[#6B7280]'
+                            }`} />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-[13px] sm:text-[14px] font-medium leading-[18px] sm:leading-[20px] mb-1 ${
+                            isActive ? 'text-[#1E1548]' : isLocked ? 'text-[#6B7280]' : 'text-[#1E1548]'
+                          }`}>
+                            {step.title}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <div className={isActive ? 'text-[#1E1548]' : 'text-[#6B7280]'}>
+                              {getStepIcon(step.type)}
+                            </div>
+                            <span className={`text-[11px] sm:text-[12px] font-normal ${
+                              isActive ? 'text-[#1E1548]' : 'text-[#6B7280]'
+                            }`}>
+                              {step.duration}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-2 order-1 lg:order-2">
+            {activeStep && (
+              <div className="space-y-4 sm:space-y-6">
+                {/* Step Header */}
+                <div className="bg-white border border-[rgba(30,21,72,0.1)] rounded-[16px] p-4 sm:p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#E8ECFF] rounded-full flex items-center justify-center">
+                          {getStepIcon(activeStep.type)}
+                        </div>
+                        <span className="text-[12px] sm:text-[14px] font-medium text-[#6B7280]">
+                          {activeStep.type === 'video' && 'Vidéo'}
+                          {activeStep.type === 'exercise' && 'Exercice'}
+                          {activeStep.type === 'upload' && 'Upload'}
+                          {activeStep.type === 'text' && 'Saisie'}
+                        </span>
+                      </div>
+                      <h3 className="text-[20px] sm:text-[24px] font-semibold leading-[28px] sm:leading-[32px] text-[#1E1548] mb-2">
+                        {activeStep.title}
+                      </h3>
+                      <p className="text-[13px] sm:text-[14px] font-normal leading-[18px] sm:leading-[20px] text-[#6B7280] mb-4">
+                        {activeStep.description}
+                      </p>
+                      <div className="flex items-center gap-2 text-[12px] sm:text-[14px] text-[#6B7280]">
+                        <Clock className="w-4 h-4" />
+                        <span>{activeStep.duration}</span>
+                      </div>
+                    </div>
+                    {completedStepsLocal.includes(activeStep.id) && (
+                      <div className="flex items-center gap-2 text-[#10B981] bg-[#D1FAE5] px-3 py-1.5 rounded-full">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span className="text-[12px] sm:text-[14px] font-medium">Terminé</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Step Content */}
+                {activeStep.type === 'video' && (
+                  <div className="space-y-4 sm:space-y-6">
+                    {/* Video Player */}
+                    <div className="bg-[#1E1548] rounded-[16px] overflow-hidden aspect-video flex items-center justify-center relative">
+                      <div className="absolute inset-0" style={{
+                        background: 'linear-gradient(135deg, rgba(255, 214, 0, 0.1) 0%, rgba(232, 236, 255, 0.1) 100%)'
+                      }} />
+                      <div className="relative z-10">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[rgba(255,214,0,0.2)] rounded-full flex items-center justify-center backdrop-blur-sm mb-4">
+                          <Play className="w-8 h-8 sm:w-10 sm:h-10 text-[#FFD600]" fill="#FFD600" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* PDF Resources */}
+                    {activeStep.content.pdfUrl && (
+                      <div className="bg-white border border-[rgba(30,21,72,0.1)] rounded-[16px] p-4 sm:p-6">
+                        <h4 className="text-[16px] sm:text-[18px] font-semibold text-[#1E1548] mb-4">
+                          Ressources
+                        </h4>
+                        <div className="space-y-3">
+                          <button className="w-full flex items-center justify-between p-3 sm:p-4 bg-[#E8ECFF] rounded-[12px] hover:bg-[#E8ECFF]/80 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[rgba(255,214,0,0.1)] rounded-full flex items-center justify-center">
+                                <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-[#FFD600]" />
+                              </div>
+                              <span className="text-[13px] sm:text-[14px] font-medium text-[#1E1548]">
+                                Guide PDF
+                              </span>
+                            </div>
+                            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-[#6B7280]" />
+                          </button>
+                          
+                          {/* Templates CV Section (Module 2, Step 1 only) */}
+                          {moduleId === 'week2' && activeStep.id === 'step1' && (
+                            <>
+                              <div className="pt-2">
+                                <p className="text-[13px] sm:text-[14px] font-semibold text-[#1E1548] mb-3">
+                                  Templates CV prêts à utiliser
+                                </p>
+                              </div>
+                              <button className="w-full flex items-center justify-between p-3 sm:p-4 bg-[#E8ECFF] rounded-[12px] hover:bg-[#E8ECFF]/80 transition-colors">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[rgba(255,214,0,0.1)] rounded-full flex items-center justify-center">
+                                    <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-[#FFD600]" />
+                                  </div>
+                                  <div className="text-left">
+                                    <p className="text-[13px] sm:text-[14px] font-medium text-[#1E1548]">
+                                      Template CV - Moderne
+                                    </p>
+                                    <p className="text-[11px] sm:text-[12px] text-[#6B7280]">
+                                      Design épuré et professionnel
+                                    </p>
+                                  </div>
+                                </div>
+                                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-[#6B7280]" />
+                              </button>
+                              <button className="w-full flex items-center justify-between p-3 sm:p-4 bg-[#E8ECFF] rounded-[12px] hover:bg-[#E8ECFF]/80 transition-colors">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[rgba(255,214,0,0.1)] rounded-full flex items-center justify-center">
+                                    <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-[#FFD600]" />
+                                  </div>
+                                  <div className="text-left">
+                                    <p className="text-[13px] sm:text-[14px] font-medium text-[#1E1548]">
+                                      Template CV - Créatif
+                                    </p>
+                                    <p className="text-[11px] sm:text-[12px] text-[#6B7280]">
+                                      Pour les profils UX/Design
+                                    </p>
+                                  </div>
+                                </div>
+                                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-[#6B7280]" />
+                              </button>
+                              <button className="w-full flex items-center justify-between p-3 sm:p-4 bg-[#E8ECFF] rounded-[12px] hover:bg-[#E8ECFF]/80 transition-colors">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[rgba(255,214,0,0.1)] rounded-full flex items-center justify-center">
+                                    <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-[#FFD600]" />
+                                  </div>
+                                  <div className="text-left">
+                                    <p className="text-[13px] sm:text-[14px] font-medium text-[#1E1548]">
+                                      Template CV - Tech
+                                    </p>
+                                    <p className="text-[11px] sm:text-[12px] text-[#6B7280]">
+                                      Optimisé pour profils techniques
+                                    </p>
+                                  </div>
+                                </div>
+                                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-[#6B7280]" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="bg-white border border-[rgba(30,21,72,0.1)] rounded-[16px] p-4 sm:p-6">
+                      <button 
+                        onClick={() => handleCompleteStep(activeStep.id)}
+                        disabled={completedStepsLocal.includes(activeStep.id)}
+                        className={`
+                          w-full h-10 sm:h-12 rounded-[12px] text-[14px] sm:text-[16px] font-semibold transition-colors
+                          ${completedStepsLocal.includes(activeStep.id)
+                            ? 'bg-[#D1FAE5] text-[#10B981] cursor-not-allowed'
+                            : 'bg-[#FFD600] text-[#1E1548] hover:bg-[#FDC700]'
+                          }
+                        `}
+                      >
+                        {completedStepsLocal.includes(activeStep.id) ? '✓ Terminé' : 'Marquer comme terminé'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {activeStep.type === 'upload' && (
+                  <div className="bg-white border border-[rgba(30,21,72,0.1)] rounded-[16px] p-4 sm:p-6">
+                    <h4 className="text-[16px] sm:text-[18px] font-semibold text-[#1E1548] mb-4">
+                      Upload de fichier
+                    </h4>
+                    
+                    {/* Upload Review Status */}
+                    {activeStep.reviewStatus && (
+                      <div className={`
+                        p-3 sm:p-4 rounded-[12px] mb-4
+                        ${activeStep.reviewStatus === 'pending' ? 'bg-[#FEF3C7] border border-[#F59E0B]' : ''}
+                        ${activeStep.reviewStatus === 'approved' ? 'bg-[#D1FAE5] border border-[#10B981]' : ''}
+                        ${activeStep.reviewStatus === 'revision' ? 'bg-[#FEE2E2] border border-[#EF4444]' : ''}
+                      `}>
+                        <p className="text-[13px] sm:text-[14px] font-medium text-[#1E1548]">
+                          {activeStep.reviewStatus === 'pending' && '⏳ En cours de révision par l\'équipe Admission'}
+                          {activeStep.reviewStatus === 'approved' && '✅ Validé par l\'équipe Admission'}
+                          {activeStep.reviewStatus === 'revision' && '⚠️ Corrections demandées'}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Upload Area */}
+                    <div className="border-2 border-dashed border-[#E8ECFF] rounded-[16px] p-6 sm:p-8 text-center mb-4">
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#E8ECFF] rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-[#FFD600]" />
+                      </div>
+                      <p className="text-[14px] sm:text-[16px] font-medium text-[#1E1548] mb-2">
+                        Glisse ton fichier ici ou clique pour parcourir
+                      </p>
+                      <p className="text-[12px] sm:text-[14px] text-[#6B7280] mb-4">
+                        Formats acceptés: {activeStep.content.acceptedFormats.join(', ')}
+                      </p>
+                      <button 
+                        onClick={() => handleCompleteStep(activeStep.id)}
+                        className="h-10 sm:h-12 px-4 sm:px-6 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#FDC700] transition-colors"
+                      >
+                        Choisir un fichier
+                      </button>
+                    </div>
+
+                    <p className="text-[11px] sm:text-[12px] text-[#6B7280] text-center">
+                      💡 Tu pourras continuer aux étapes suivantes même pendant la révision
+                    </p>
+                  </div>
+                )}
+
+                {activeStep.type === 'exercise' && (
+                  <div className="bg-white border border-[rgba(30,21,72,0.1)] rounded-[16px] p-4 sm:p-6">
+                    <h4 className="text-[16px] sm:text-[18px] font-semibold text-[#1E1548] mb-4">
+                      Exercice pratique
+                    </h4>
+                    <textarea
+                      className="w-full h-40 sm:h-48 p-3 sm:p-4 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[12px] text-[13px] sm:text-[14px] text-[#1E1548] resize-none focus:outline-none focus:ring-2 focus:ring-[#FFD600]"
+                      placeholder="Écris ta réponse ici..."
+                    />
+                    <div className="flex gap-3 mt-4">
+                      <button className="flex-1 h-10 sm:h-12 bg-white border border-[rgba(30,21,72,0.1)] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#F8F9FD] transition-colors">
+                        Sauvegarder brouillon
+                      </button>
+                      <button 
+                        onClick={() => handleCompleteStep(activeStep.id)}
+                        className="flex-1 h-10 sm:h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#FDC700] transition-colors"
+                      >
+                        Soumettre
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {activeStep.type === 'text' && (
+                  <div className="bg-white border border-[rgba(30,21,72,0.1)] rounded-[16px] p-4 sm:p-6">
+                    <h4 className="text-[16px] sm:text-[18px] font-semibold text-[#1E1548] mb-4">
+                      Renseigner une information
+                    </h4>
+                    
+                    {/* Review Status for LinkedIn */}
+                    {activeStep.reviewStatus && (
+                      <div className={`
+                        p-3 sm:p-4 rounded-[12px] mb-4
+                        ${activeStep.reviewStatus === 'pending' ? 'bg-[#FEF3C7] border border-[#F59E0B]' : ''}
+                        ${activeStep.reviewStatus === 'approved' ? 'bg-[#D1FAE5] border border-[#10B981]' : ''}
+                      `}>
+                        <p className="text-[13px] sm:text-[14px] font-medium text-[#1E1548]">
+                          {activeStep.reviewStatus === 'pending' && '⏳ En cours de révision'}
+                          {activeStep.reviewStatus === 'approved' && '✅ Validé'}
+                        </p>
+                      </div>
+                    )}
+
+                    <input
+                      type="url"
+                      className="w-full h-10 sm:h-12 px-3 sm:px-4 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[12px] text-[13px] sm:text-[14px] text-[#1E1548] focus:outline-none focus:ring-2 focus:ring-[#FFD600]"
+                      placeholder={activeStep.content.placeholder}
+                    />
+                    <button 
+                      onClick={() => handleCompleteStep(activeStep.id)}
+                      className="w-full h-10 sm:h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#FDC700] transition-colors mt-4"
+                    >
+                      Enregistrer
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

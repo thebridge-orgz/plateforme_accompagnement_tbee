@@ -1,0 +1,7 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background avec bords arrondis -->
+  <rect width="180" height="180" rx="40" fill="#1E1548"/>
+  
+  <!-- Lettre T en Poppins Bold, centrée et grande -->
+  <text x="90" y="125" font-family="Poppins, sans-serif" font-size="100" font-weight="700" fill="white" text-anchor="middle">T</text>
+</svg>
