@@ -1,23 +1,23 @@
 import { ArrowLeft, Heart, Users, Accessibility, Shield, Target, Sparkles } from "lucide-react";
+import { Link } from 'react-router-dom';
+import { ROUTES } from '../routes';
+import { Footer } from "../components/Footer";
 
-interface EngagementsProps {
-  onNavigate: (page: 'landing') => void;
-}
-
-export function Engagements({ onNavigate }: EngagementsProps) {
+function Commitments() {
   return (
     <div className="w-full bg-white">
       {/* Header */}
       <div className="w-full border-b border-[#E5E7EB]">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-24 py-4 sm:py-6">
-          <button
-            onClick={() => onNavigate('landing')}
-            className="flex items-center gap-2 text-[#1E1548] hover:text-[#1E1548]/80 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD600] rounded px-2 sm:px-3 py-2"
-            style={{ fontSize: '13px', fontWeight: 500 }}
-          >
-            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-            Retour à l'accueil
-          </button>
+          <Link to={ROUTES.Home}>
+            <button
+              className="flex items-center gap-2 text-[#1E1548] hover:text-[#1E1548]/80 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD600] rounded px-2 sm:px-3 py-2"
+              style={{ fontSize: '13px', fontWeight: 500 }}
+            >
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+              Retour à l'accueil
+            </button>
+          </Link>
         </div>
       </div>
 
@@ -321,14 +321,10 @@ export function Engagements({ onNavigate }: EngagementsProps) {
                   </li>
                 </ul>
                 <p className="text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px] text-[#6B7280] mt-4">
-                  Pour en savoir plus, consultez notre{" "}
-                  <a 
-                    href="#confidentialite"
-                    className="text-[#155dfc] hover:underline"
-                    style={{ fontWeight: 500 }}
-                  >
+                  Pour en savoir plus, consultez notre {" "}
+                  <Link to={ROUTES.PrivacyPolicy} className="text-[#155dfc] hover:underline" style={{ fontWeight: 500 }}>
                     Politique de confidentialité
-                  </a>.
+                  </Link>.
                 </p>
               </div>
             </div>
@@ -339,7 +335,7 @@ export function Engagements({ onNavigate }: EngagementsProps) {
             <h2 className="mb-4 sm:mb-6 text-[20px] sm:text-[24px] font-semibold leading-[28px] sm:leading-[32px] text-[#1E1548]">
               Nos indicateurs d'engagement
             </h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
               <div className="p-4 sm:p-6 bg-gradient-to-br from-[#E8ECFF] to-white rounded-xl sm:rounded-2xl text-center border border-[#E8ECFF]">
                 <div className="mb-2 text-[32px] sm:text-[40px] leading-[40px] sm:leading-[48px] font-bold text-[#155dfc]">
@@ -380,7 +376,7 @@ export function Engagements({ onNavigate }: EngagementsProps) {
                 Nous sommes constamment à l'écoute de vos retours pour améliorer nos services et notre accessibilité.
               </p>
               <a
-                href="mailto:contact@tbee.fr"
+                href="mailto:contact@the-bridge-ecole.fr"
                 className="inline-block px-5 sm:px-6 py-2.5 sm:py-3 bg-[#FFD600] text-[#1E1548] rounded-lg hover:bg-[#FFD600]/90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white text-[14px] sm:text-[16px] font-semibold"
               >
                 Nous contacter
@@ -396,6 +392,9 @@ export function Engagements({ onNavigate }: EngagementsProps) {
           </section>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
+
+export default Commitments;

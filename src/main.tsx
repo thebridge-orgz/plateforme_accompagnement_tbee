@@ -1,9 +1,11 @@
 import { BrowserRouter } from 'react-router-dom';
 import App from './app/App'
 import './styles/index.css'
-import * as ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+const domNode = document.getElementById('root') as HTMLElement;
+const root = createRoot(domNode);
+root.render(
   <BrowserRouter>
     <App />
   </BrowserRouter>

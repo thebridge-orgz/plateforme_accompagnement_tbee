@@ -1,8 +1,7 @@
-/*interface FooterProps {
-  onNavigate?: (page: 'mentions-legales' | 'confidentialite' | 'engagements') => void;
-}*/
+import { Link } from 'react-router-dom';
+import { ROUTES } from '../routes';
 
-export function Footer(/*{ onNavigate }: FooterProps = {}*/) {
+export function Footer() {
   return (
     <footer className="w-full bg-[#101828] text-white">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-24 py-8 sm:py-12 md:py-16">
@@ -28,28 +27,19 @@ export function Footer(/*{ onNavigate }: FooterProps = {}*/) {
             </h4>
             <ul className="flex flex-col gap-2 sm:gap-3">
               <li>
-                <a
-                  href="#services"
-                  className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]"
-                >
+                <Link to={`${ROUTES.Home}#services`} className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]">
                   Nos services
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#accompagnement"
-                  className="text-white hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]"
-                >
+                <Link to={`${ROUTES.Home}#accompagnement`} className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]">
                   Accompagnement
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#inscription"
-                  className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]"
-                >
+                <Link to={`${ROUTES.Home}#inscription`} className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]">
                   Inscription
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -61,37 +51,19 @@ export function Footer(/*{ onNavigate }: FooterProps = {}*/) {
             </h4>
             <ul className="flex flex-col gap-2 sm:gap-3">
               <li>
-                <button
-                  /*onClick={(e) => {
-                    e.preventDefault();
-                    onNavigate?.('engagements');
-                  }}*/
-                  className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-left text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]"
-                >
-                  Nos engagements à tous
-                </button>
+                <Link to={ROUTES.Commitments} className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-left text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]">
+                  Nos engagements
+                </Link>
               </li>
               <li>
-                <button
-                  /*onClick={(e) => {
-                    e.preventDefault();
-                    onNavigate?.('confidentialite');
-                  }}*/
-                  className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-left text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]"
-                >
-                  Confidentialité
-                </button>
+                <Link to={ROUTES.PrivacyPolicy} className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-left text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]">
+                  Politique de confidentialité
+                </Link>
               </li>
               <li>
-                <button
-                  /*onClick={(e) => {
-                    e.preventDefault();
-                    onNavigate?.('mentions-legales');
-                  }}*/
-                  className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-left text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]"
-                >
+                <Link to={ROUTES.LegalNotice} className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-left text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]">
                   Mentions légales
-                </button>
+                </Link>
               </li>
             </ul>
           </div>

@@ -1,21 +1,14 @@
-import { User, Video, Heart, TrendingUp, Accessibility, Wrench, MessageCircle } from "lucide-react";
+import { Users, Video, TrendingUp, Target, Wrench, MessageCircle } from "lucide-react";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
-/*import { ImageWithFallback } from "../components/ImageWithFallback.tsx";
-import svgPathsPersonnalise from "@/imports/svg-vgm47l5syf";
-import svgPathsRQTH from "@/imports/svg-muo3edbfh1";
-import svgPathsProgression from "@/imports/svg-j8c5v10lsn";
-import svgPathsVector from "@/imports/svg-niuycgewqj";
-import imgPortraitCTA from "figma:asset/e91350ab2d432cc3f38f97f1e81fde1448a7c5b9.png";*/
+import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { Link } from 'react-router-dom';
+import { ROUTES } from '../routes';
 
-/*interface LandingPageProps {
-  onNavigate?: (page: 'signup') => void;
-}*/
-
-function Home(/*{ onNavigate }: LandingPageProps*/) {
+function Home() {
   return (
     <div className="w-full">
-        <Navbar />
+      <Navbar />
       {/* Hero Section */}
       <section className="w-full bg-white py-6 sm:py-10 md:py-12 lg:py-16">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-24">
@@ -44,50 +37,49 @@ function Home(/*{ onNavigate }: LandingPageProps*/) {
                 </span>{" "}
                 sur-mesure
               </h1>
-              
+
               <p className="text-[#6B7280] mb-6 sm:mb-8 text-[14px] sm:text-[16px] leading-[22px] sm:leading-[26px]">
-                Une plateforme d'accompagnement dédiée aux étudiants, avec une attention particulière 
+                Une plateforme d'accompagnement dédiée aux étudiants, avec une attention particulière
                 pour les personnes RQTH. Formations vidéo, outils personnalisés et ressources adaptées.
               </p>
 
               {/* Image on Mobile - Hidden on Desktop */}
               <div className="flex justify-center lg:hidden mb-6">
                 <div className="w-full max-w-[500px] aspect-[4/3] rounded-2xl overflow-hidden">
-                  {/*<ImageWithFallback
+                  <ImageWithFallback
                     src="https://images.unsplash.com/photo-1765648684644-cdda3340263f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoYXBweSUyMHlvdW5nJTIwd29tYW4lMjBwcm9mZXNzaW9uYWwlMjBjYXJlZXJ8ZW58MXx8fHwxNzY5NTIyMTg2fDA&ixlib=rb-4.1.0&q=80&w=1080"
                     alt="Jeune professionnelle souriante"
                     className="w-full h-full object-cover"
-                  />*/}
+                  />
                 </div>
               </div>
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 md:justify-center lg:justify-start">
-                <button
-                  /*onClick={handleCTAClick}*/
-                  className="w-full sm:w-auto px-3 sm:px-4 md:px-5 h-[44px] bg-[#FFD600] text-[#1E1548] rounded-lg font-medium hover:bg-[#FFD600]/90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD600] text-[12px] sm:text-[13px] md:text-[14px] flex items-center justify-center whitespace-nowrap"
-                  style={{ fontWeight: 600 }}
-                >
-                  Commencer gratuitement
-                </button>
-                <a
-                  href="#services"
-                  className="w-full sm:w-auto px-3 sm:px-4 md:px-5 h-[44px] border-2 border-[#E8ECFF] text-[#1E1548] rounded-lg font-medium hover:bg-[#E8ECFF]/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E1548] flex items-center justify-center text-[12px] sm:text-[13px] md:text-[14px] whitespace-nowrap"
+                <Link to={ROUTES.SignUp}>
+                  <button
+                    className="w-full sm:w-auto px-3 sm:px-4 md:px-5 h-[44px] bg-[#FFD600] text-[#1E1548] rounded-lg font-medium hover:bg-[#FFD600]/90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD600] text-[12px] sm:text-[13px] md:text-[14px] flex items-center justify-center whitespace-nowrap"
+                    style={{ fontWeight: 600 }}
+                  >
+                    Commencer gratuitement
+                  </button>
+                </Link>
+                <Link to={`${ROUTES.Home}#services`} className="w-full sm:w-auto px-3 sm:px-4 md:px-5 h-[44px] border-2 border-[#E8ECFF] text-[#1E1548] rounded-lg font-medium hover:bg-[#E8ECFF]/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E1548] flex items-center justify-center text-[12px] sm:text-[13px] md:text-[14px] whitespace-nowrap"
                   style={{ fontWeight: 600 }}
                 >
                   Découvrir la plateforme
-                </a>
+                </Link>
               </div>
             </div>
 
             {/* Right Image - Hidden on Mobile */}
             <div className="hidden lg:flex items-center justify-center">
               <div className="w-full max-w-[500px] aspect-[4/3] rounded-2xl overflow-hidden">
-                {/*<ImageWithFallback
+                <ImageWithFallback
                   src="https://images.unsplash.com/photo-1765648684644-cdda3340263f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoYXBweSUyMHlvdW5nJTIwd29tYW4lMjBwcm9mZXNzaW9uYWwlMjBjYXJlZXJ8ZW58MXx8fHwxNzY5NTIyMTg2fDA&ixlib=rb-4.1.0&q=80&w=1080"
                   alt="Jeune professionnelle souriante"
                   className="w-full h-full object-cover"
-                />*/}
+                />
               </div>
             </div>
           </div>
@@ -101,11 +93,11 @@ function Home(/*{ onNavigate }: LandingPageProps*/) {
             {/* Card 1 - Parcours structuré */}
             <div className="bg-white border border-[#E5E7EB] rounded-2xl overflow-hidden hover:shadow-lg transition-shadow">
               <div className="aspect-[16/10] w-full overflow-hidden">
-                {/*<ImageWithFallback
+                <ImageWithFallback
                   src="https://images.unsplash.com/photo-1614492898637-435e0f87cef8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600"
                   alt="Parcours d'apprentissage structuré"
                   className="w-full h-full object-cover"
-                />*/}
+                />
               </div>
               <div className="p-4 sm:p-6">
                 <h3 className="mb-2 text-[16px] sm:text-[18px] font-semibold leading-[24px] sm:leading-[28px] text-[#1E1548]">
@@ -120,11 +112,11 @@ function Home(/*{ onNavigate }: LandingPageProps*/) {
             {/* Card 2 - Vidéos quotidiennes */}
             <div className="bg-white border border-[#E5E7EB] rounded-2xl overflow-hidden hover:shadow-lg transition-shadow">
               <div className="aspect-[16/10] w-full overflow-hidden">
-                {/*<ImageWithFallback
+                <ImageWithFallback
                   src="https://images.unsplash.com/photo-1627231603574-03e182d67e4b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600"
                   alt="Personne regardant des vidéos de formation"
                   className="w-full h-full object-cover"
-                />*/}
+                />
               </div>
               <div className="p-4 sm:p-6">
                 <h3 className="mb-2 text-[16px] sm:text-[18px] font-semibold leading-[24px] sm:leading-[28px] text-[#1E1548]">
@@ -139,11 +131,11 @@ function Home(/*{ onNavigate }: LandingPageProps*/) {
             {/* Card 3 - Accompagnement RQTH */}
             <div className="bg-white border border-[#E5E7EB] rounded-2xl overflow-hidden hover:shadow-lg transition-shadow">
               <div className="aspect-[16/10] w-full overflow-hidden">
-                {/*<ImageWithFallback
+                <ImageWithFallback
                   src="https://images.unsplash.com/photo-1553445166-aa556685625c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=600"
                   alt="Accompagnement inclusif et bienveillant"
                   className="w-full h-full object-cover"
-                />*/}
+                />
               </div>
               <div className="p-4 sm:p-6">
                 <h3 className="mb-2 text-[16px] sm:text-[18px] font-semibold leading-[24px] sm:leading-[28px] text-[#1E1548]">
@@ -211,11 +203,7 @@ function Home(/*{ onNavigate }: LandingPageProps*/) {
             {/* Feature 1 - Bleu */}
             <div className="bg-[#E8ECFF] rounded-2xl p-6 sm:p-8">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#155dfc] rounded-full flex items-center justify-center mb-3 sm:mb-4">
-                {/*<svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24">
-                  <path d={svgPathsPersonnalise.pace200} stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                  <path d={svgPathsPersonnalise.p3c6311f0} stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                  <path d={svgPathsPersonnalise.p3d728000} stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                </svg>*/}
+                <Target className="w-5 h-5 sm:w-6 sm:h-6 text-[#FFFFFF]" />
               </div>
               <h3 className="mb-2 sm:mb-3 text-[18px] sm:text-[20px] font-semibold leading-[26px] sm:leading-[28px] text-[#1E1548]">
                 Parcours personnalisé
@@ -240,14 +228,9 @@ function Home(/*{ onNavigate }: LandingPageProps*/) {
 
             {/* Feature 3 - Bleu */}
             <div className="bg-[#E8ECFF] rounded-2xl p-6 sm:p-8">
-              {/*<div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#155dfc] rounded-full flex items-center justify-center mb-3 sm:mb-4">
-                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24">
-                  <path d={svgPathsRQTH.p1d820380} stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                  <path d={svgPathsRQTH.p161d4800} stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                  <path d={svgPathsRQTH.p2981fe00} stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                  <path d={svgPathsRQTH.p13e20900} stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                </svg>
-              </div>*/}
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#155dfc] rounded-full flex items-center justify-center mb-3 sm:mb-4">
+                <Users className="w-5 h-5 sm:w-6 sm:h-6 text-[#FFFFFF]" />
+              </div>
               <h3 className="mb-2 sm:mb-3 text-[18px] sm:text-[20px] font-semibold leading-[26px] sm:leading-[28px] text-[#1E1548]">
                 Accessibilité RQTH
               </h3>
@@ -272,10 +255,7 @@ function Home(/*{ onNavigate }: LandingPageProps*/) {
             {/* Feature 5 - Bleu */}
             <div className="bg-[#E8ECFF] rounded-2xl p-6 sm:p-8">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#155dfc] rounded-full flex items-center justify-center mb-3 sm:mb-4">
-                {/*<svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24">
-                  <path d={svgPathsProgression.p13253c0} stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                  <path d="M16 7H22V13" stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                </svg>*/}
+                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-[#FFFFFF]" />
               </div>
               <h3 className="mb-2 sm:mb-3 text-[18px] sm:text-[20px] font-semibold leading-[26px] sm:leading-[28px] text-[#1E1548]">
                 Suivi de progression
@@ -326,13 +306,14 @@ function Home(/*{ onNavigate }: LandingPageProps*/) {
                   />
                 </div>
               </div>
-              
-              <button
-                /*onClick={handleCTAClick}*/
-                className="px-5 sm:px-6 h-[44px] sm:h-[48px] bg-[#fdc700] text-[#364153] rounded-lg hover:bg-[#fdc700]/90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fdc700] w-full lg:w-auto lg:self-start text-[14px] sm:text-[16px] font-semibold"
-              >
-                Créer mon compte gratuitement →
-              </button>
+
+              <Link to={ROUTES.SignUp}>
+                <button
+                  className="px-5 sm:px-6 h-[44px] sm:h-[48px] bg-[#fdc700] text-[#364153] rounded-lg hover:bg-[#fdc700]/90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fdc700] w-full lg:w-auto lg:self-start text-[14px] sm:text-[16px] font-semibold"
+                >
+                  Créer mon compte gratuitement →
+                </button>
+              </Link>
             </div>
 
             {/* Right Image - Hidden on Mobile */}
@@ -348,7 +329,7 @@ function Home(/*{ onNavigate }: LandingPageProps*/) {
           </div>
         </div>
       </section>
-      <Footer/>
+      <Footer />
     </div>
   );
 }
