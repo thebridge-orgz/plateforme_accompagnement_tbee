@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff, Lock } from "lucide-react";
-//import { useAuth } from "../../hooks/useAuth";
-import { UserRole } from "../../lib/supabase";
-import { Navbar } from "../components/Navbar";
-import { Footer } from "../components/Footer";
-import { Link } from 'react-router-dom';
-import { ROUTES } from '../routes';
+import { useAuth } from "../../auth/AuthContext";
+import { UserRole } from '../../../types/user';
+import { Navbar } from "../../components/Navbar";
+import { Footer } from "../../components/Footer";
+import { Link, useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../routes';
 
 function SignIn() {
-    //const { signIn } = useAuth();
+    const { user, signIn, loading: authLoading } = useAuth();
+    const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -16,19 +17,30 @@ function SignIn() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
+    // Rediriger si l'utilisateur est déjà connecté
+    useEffect(() => {
+        if (user) {
+            console.log('User detected, redirecting...', user.role);
+            if (user.role === 'admin') {
+                navigate(ROUTES.AdminDashboard, { replace: true });
+            } else {
+                navigate(ROUTES.StudentDashboard, { replace: true });
+            }
+        }
+    }, [user, navigate]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
         setLoading(true);
 
         try {
-            //await signIn(email, password, userType);
-            // signIn réussi → le listener onAuthStateChange met à jour le user partagé
-            // → App.tsx détecte le changement et redirige automatiquement
-            // On remet loading à false car la redirection est gérée par App.tsx
-            setLoading(false);
+            await signIn(email, password, userType);
+            // La redirection se fera via l'useEffect ci-dessus
+            // quand user sera mis à jour
         } catch (err: any) {
             setError(err.message || "Erreur de connexion. Vérifiez vos identifiants.");
+        } finally {
             setLoading(false);
         }
     };
@@ -138,7 +150,7 @@ function SignIn() {
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="ton.email@exemple.fr"
                                     required
-                                    disabled={loading}
+                                    disabled={loading || authLoading}
                                     className="w-full h-12 px-4 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[12px] text-[14px] text-[#1E1548] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#FFD600] focus:border-transparent transition-all disabled:opacity-50"
                                 />
                             </div>
@@ -156,7 +168,7 @@ function SignIn() {
                                         onChange={(e) => setPassword(e.target.value)}
                                         placeholder="••••••••"
                                         required
-                                        disabled={loading}
+                                        disabled={loading || authLoading}
                                         className="w-full h-12 px-4 pr-12 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[12px] text-[14px] text-[#1E1548] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#FFD600] focus:border-transparent transition-all disabled:opacity-50"
                                     />
                                     <button
@@ -183,7 +195,7 @@ function SignIn() {
                             {/* Submit Button */}
                             <button
                                 type="submit"
-                                disabled={loading}
+                                disabled={loading || authLoading}
                                 className="w-full h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[16px] font-semibold hover:bg-[#FDC700] transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-[#FFD600] focus:ring-offset-2 shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? "Connexion en cours..." : "Se connecter →"}

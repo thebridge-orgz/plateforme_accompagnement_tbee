@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff, Info } from "lucide-react";
-//import { useAuth } from "../../hooks/useAuth";
-import { Navbar } from "../components/Navbar";
-import { Footer } from "../components/Footer";
-import { Link } from 'react-router-dom';
-import { ROUTES } from '../routes';
+import { useAuth } from "../../auth/AuthContext";
+import { Navbar } from "../../components/Navbar";
+import { Footer } from "../../components/Footer";
+import { Link, useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../routes';
 
 function SignUp() {
-
-    //const { signUp } = useAuth();
+    const { user, signUp, loading: authLoading } = useAuth();
+    const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [hasRQTH, setHasRQTH] = useState<boolean | null>(null);
@@ -16,6 +16,18 @@ function SignUp() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+
+    // Rediriger si l'utilisateur est déjà connecté
+    useEffect(() => {
+        if (user) {
+            console.log('User detected, redirecting...', user.role);
+            if (user.role === 'admin') {
+                navigate(ROUTES.AdminDashboard, { replace: true });
+            } else {
+                navigate(ROUTES.StudentDashboard, { replace: true });
+            }
+        }
+    }, [user, navigate]);
 
     const [formData, setFormData] = useState({
         firstName: "",
@@ -47,14 +59,26 @@ function SignUp() {
             return;
         }
 
+        if (hasRQTH === null) {
+            setError("Veuillez indiquer si vous bénéficiez d'une reconnaissance RQTH");
+            return;
+        }
+
         setLoading(true);
 
         try {
-            //await signUp(formData.email, formData.password, formData.firstName, formData.lastName, 'student');
+            await signUp(
+                formData.email,
+                formData.password,
+                formData.firstName,
+                formData.lastName,
+                hasRQTH
+            );
             setSuccess(true);
-            // La redirection est gérée automatiquement par App.tsx via le contexte auth partagé.
-            // Si l'auto-login est activé dans Supabase, SIGNED_IN se déclenche → redirect auto.
-            // Sinon, l'utilisateur voit l'écran de succès et peut cliquer "Se connecter".
+            // Optionnel : rediriger vers la page de connexion après quelques secondes
+            setTimeout(() => {
+                navigate(ROUTES.SignIn);
+            }, 5000);
         } catch (err: any) {
             setError(err.message || "Erreur lors de l'inscription. Veuillez réessayer.");
         } finally {
@@ -68,7 +92,7 @@ function SignUp() {
 
     if (success) {
         return (
-            <div className="w-full min-h-[calc(100vh-80px)] bg-[#F8F9FD] flex items-center justify-center py-12 px-4">
+            <div className="w-full min-h-screen bg-[#F8F9FD] flex items-center justify-center py-12 px-4">
                 <div className="max-w-[520px] bg-white border border-[rgba(30,21,72,0.08)] rounded-[24px] p-10 shadow-[0_4px_24px_rgba(30,21,72,0.08)] text-center">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#FFD600] flex items-center justify-center">
                         <svg className="w-8 h-8 text-[#1E1548]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -81,12 +105,16 @@ function SignUp() {
                     <p className="text-[16px] text-[#6B7280] mb-6">
                         Ton compte a été créé avec succès. Vérifie ton email pour confirmer ton inscription, puis connecte-toi pour commencer ton parcours.
                     </p>
-                    <button
-                        //onClick={() => onNavigate && onNavigate('login')}
-                        className="w-full h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[16px] font-semibold hover:bg-[#FDC700] transition-all"
-                    >
-                        Se connecter →
-                    </button>
+                    <p className="text-[14px] text-[#6B7280] mb-4">
+                        Redirection vers la page de connexion dans quelques secondes...
+                    </p>
+                    <Link to={ROUTES.SignIn}>
+                        <button
+                            className="w-full h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[16px] font-semibold hover:bg-[#FDC700] transition-all"
+                        >
+                            Se connecter maintenant →
+                        </button>
+                    </Link>
                 </div>
             </div>
         );
@@ -95,7 +123,7 @@ function SignUp() {
     return (
         <>
             <Navbar />
-            <div className="w-full min-h-[calc(100vh-80px)] bg-[#F8F9FD] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+            <div className="w-full min-h-screen bg-[#F8F9FD] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
                 {/* Decorative Donut Shape */}
                 <div className="absolute top-12 sm:top-20 right-0 w-48 sm:w-64 lg:w-80 h-48 sm:h-64 lg:h-80 opacity-70">
                     <svg width="100%" height="100%" viewBox="0 0 320 320" fill="none">
@@ -159,7 +187,7 @@ function SignUp() {
                                             onChange={(e) => handleChange("firstName", e.target.value)}
                                             placeholder="Jean"
                                             required
-                                            disabled={loading}
+                                            disabled={loading || authLoading}
                                             className="w-full h-12 px-4 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[12px] text-[14px] text-[#1E1548] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#FFD600] focus:border-transparent transition-all disabled:opacity-50" />
                                     </div>
 
@@ -175,7 +203,7 @@ function SignUp() {
                                             onChange={(e) => handleChange("lastName", e.target.value)}
                                             placeholder="Dupont"
                                             required
-                                            disabled={loading}
+                                            disabled={loading || authLoading}
                                             className="w-full h-12 px-4 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[12px] text-[14px] text-[#1E1548] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#FFD600] focus:border-transparent transition-all disabled:opacity-50" />
                                     </div>
                                 </div>
@@ -192,7 +220,7 @@ function SignUp() {
                                         onChange={(e) => handleChange("email", e.target.value)}
                                         placeholder="jean.dupont@exemple.fr"
                                         required
-                                        disabled={loading}
+                                        disabled={loading || authLoading}
                                         className="w-full h-12 px-4 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[12px] text-[14px] text-[#1E1548] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#FFD600] focus:border-transparent transition-all disabled:opacity-50" />
                                 </div>
 
@@ -210,7 +238,7 @@ function SignUp() {
                                                 onChange={(e) => handleChange("password", e.target.value)}
                                                 placeholder="••••••••"
                                                 required
-                                                disabled={loading}
+                                                disabled={loading || authLoading}
                                                 className="w-full h-12 px-4 pr-12 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[12px] text-[14px] text-[#1E1548] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#FFD600] focus:border-transparent transition-all disabled:opacity-50" />
                                             <button
                                                 type="button"
@@ -235,7 +263,7 @@ function SignUp() {
                                                 onChange={(e) => handleChange("confirmPassword", e.target.value)}
                                                 placeholder="••••••••"
                                                 required
-                                                disabled={loading}
+                                                disabled={loading || authLoading}
                                                 className="w-full h-12 px-4 pr-12 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[12px] text-[14px] text-[#1E1548] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#FFD600] focus:border-transparent transition-all disabled:opacity-50" />
                                             <button
                                                 type="button"
@@ -310,13 +338,13 @@ function SignUp() {
                                         required />
                                     <label htmlFor="acceptTerms" className="text-[14px] sm:text-[16px] text-[#1E1548] leading-[24px]">
                                         J'accepte les{" "}
-                                        <a href="#conditions" className="text-[#1E1548] font-semibold underline hover:text-[#FFD600]">
+                                        <Link to={ROUTES.LegalNotice} className="text-[#1E1548] font-semibold underline hover:text-[#FFD600]">
                                             conditions d'utilisation
-                                        </a>{" "}
+                                        </Link>{" "}
                                         et la{" "}
-                                        <a href="#privacy" className="text-[#1E1548] font-semibold underline hover:text-[#FFD600]">
+                                        <Link to={ROUTES.PrivacyPolicy} className="text-[#1E1548] font-semibold underline hover:text-[#FFD600]">
                                             politique de confidentialité
-                                        </a>
+                                        </Link>
                                     </label>
                                 </div>
                             </div>
@@ -324,7 +352,7 @@ function SignUp() {
                             {/* Submit Button */}
                             <button
                                 type="submit"
-                                disabled={loading || hasRQTH === null}
+                                disabled={loading || authLoading || hasRQTH === null}
                                 className="w-full h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[16px] font-semibold hover:bg-[#FDC700] transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-[#FFD600] focus:ring-offset-2 shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? "Création du compte..." : "Créer mon compte →"}

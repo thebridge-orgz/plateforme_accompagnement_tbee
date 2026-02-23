@@ -1,9 +1,9 @@
 import { Users, Video, TrendingUp, Target, Wrench, MessageCircle } from "lucide-react";
-import { Navbar } from "../components/Navbar";
-import { Footer } from "../components/Footer";
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { Navbar } from "../../components/Navbar";
+import { Footer } from "../../components/Footer";
+import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
 import { Link } from 'react-router-dom';
-import { ROUTES } from '../routes';
+import { ROUTES } from '../../routes';
 
 function Home() {
   return (

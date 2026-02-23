@@ -1,7 +1,7 @@
 import { ArrowLeft, Heart, Users, Accessibility, Shield, Target, Sparkles } from "lucide-react";
 import { Link } from 'react-router-dom';
-import { ROUTES } from '../routes';
-import { Footer } from "../components/Footer";
+import { ROUTES } from '../../routes';
+import { Footer } from "../../components/Footer";
 
 function Commitments() {
   return (
