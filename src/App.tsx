@@ -1,21 +1,21 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
-import { routes, ROUTES } from './routes';
-import { ScrollToAnchor } from './components/ScrollToAnchor';
+import { routes, ROUTES } from './app/router/routes';
+import { ScrollToAnchor } from './app/components/ScrollToAnchor';
 import { useEffect } from 'react';
-import { AuthProvider } from '../app/auth/AuthContext';
-import { ProtectedRoute } from './auth/ProtectedRoute';
+import { AuthProvider } from './app/auth/AuthContext';
+import { ProtectedRoute } from './app/auth/ProtectedRoute';
 
 // Importer les composants directement pour les routes protégées
-import Home from './pages/public/Home';
-import Commitments from './pages/public/Commitments';
-import PrivacyPolicy from './pages/public/PrivacyPolicy';
-import LegalNotice from './pages/public/LegalNotice';
-import SignUp from './pages/public/SignUp';
-import SignIn from './pages/public/SignIn';
-import NotFound from './pages/NotFound';
-import StudentDashboard from './pages/student/Dashboard';
-import AdminDashboard from './pages/admin/Dashboard';
-import Onboarding from './pages/student/Onboarding';
+import Home from './app/pages/public/Home';
+import Commitments from './app/pages/public/Commitments';
+import PrivacyPolicy from './app/pages/public/PrivacyPolicy';
+import LegalNotice from './app/pages/public/LegalNotice';
+import SignUp from './app/pages/public/SignUp';
+import SignIn from './app/pages/public/SignIn';
+import NotFound from './app/pages/NotFound';
+import StudentDashboard from './app/pages/student/Dashboard';
+import AdminDashboard from './app/pages/admin/Dashboard';
+import Onboarding from './app/pages/student/Onboarding';
 
 function App() {
   const location = useLocation();
