@@ -5,7 +5,7 @@ import { UserRole } from '../../types/user';
 import { Navbar } from "../../components/Navbar";
 import { Footer } from "../../components/Footer";
 import { Link, useNavigate } from 'react-router-dom';
-import { ROUTES } from '../../routes';
+import { ROUTES } from '../../router/routes';
 
 function SignIn() {
     const { user, signIn, loading: authLoading } = useAuth();

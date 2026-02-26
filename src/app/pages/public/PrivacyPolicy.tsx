@@ -1,6 +1,6 @@
 import { ArrowLeft, Shield, Lock, Eye, Database, UserCheck, AlertCircle } from "lucide-react";
 import { Link } from 'react-router-dom';
-import { ROUTES } from '../../routes';
+import { ROUTES } from '../../router/routes';
 import { Footer } from "../../components/Footer";
 
 function PrivacyPolicy() {
