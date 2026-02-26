@@ -4,7 +4,7 @@ import { useAuth } from "../../auth/AuthContext";
 import { Navbar } from "../../components/Navbar";
 import { Footer } from "../../components/Footer";
 import { Link, useNavigate } from 'react-router-dom';
-import { ROUTES } from '../../routes';
+import { ROUTES } from '../../router/routes';
 
 function SignUp() {
     const { user, signUp, loading: authLoading } = useAuth();

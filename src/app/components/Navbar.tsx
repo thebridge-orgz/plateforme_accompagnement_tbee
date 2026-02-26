@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ROUTES } from '../routes';
+import { ROUTES } from '..//router/routes';
 import { useAuth } from '../auth/AuthContext';
 import { useState, useRef, useEffect } from 'react';
 import { User, LogOut, ChevronDown } from 'lucide-react';

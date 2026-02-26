@@ -3,7 +3,7 @@ import { Navbar } from "../../components/Navbar";
 import { Footer } from "../../components/Footer";
 import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
 import { Link } from 'react-router-dom';
-import { ROUTES } from '../../routes';
+import { ROUTES } from '../../router/routes';
 
 function Home() {
   return (

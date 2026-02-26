@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '../../routes';
+import { ROUTES } from '../../router/routes';
 import { OnboardingStep1 } from '../../components/onboarding/OnboardingStep1';
 import { OnboardingStep2 } from '../../components/onboarding/OnboardingStep2';
 import { Navbar } from '../../components/Navbar';

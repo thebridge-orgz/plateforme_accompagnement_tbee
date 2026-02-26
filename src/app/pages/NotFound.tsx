@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ROUTES } from '../routes';
+import { ROUTES } from '../router/routes';
 import { Home as HomeIcon, ArrowLeft } from "lucide-react";
 
 function NotFound() {
