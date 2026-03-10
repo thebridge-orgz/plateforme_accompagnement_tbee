@@ -1,10 +1,10 @@
 import { Award, BookOpen, Clock, Target, TrendingUp } from 'lucide-react';
 import { StatCard } from './StatCard';
-import { ModuleCard } from './ModuleCard';
-import { ProgressBar } from './ProgressBar';
-import { Button } from './Button';
-import { useUserData } from '@/context/UserDataContext';
-import { formatStudyTime } from '@/utils/initialState';
+import { ModuleCard } from '../parcours/ModuleCard';
+import { ProgressBar } from '../ui/ProgressBar';
+import { Button } from '../ui/button';
+import { useUserData } from '../../../context/UserDataContext';
+import { formatStudyTime } from '../../../utils/initialState';
 
 interface StudentDashboardProps {
   onNavigate: (page: string) => void;
@@ -67,13 +67,9 @@ export function StudentDashboard({ onNavigate }: StudentDashboardProps) {
               ? 'Commence ton parcours pour trouver ton alternance'
               : 'Continue ton parcours vers l\'alternance. Tu es sur la bonne voie !'}
           </p>
-          <div className="max-w-2xl">
-            <ProgressBar 
-              progress={globalProgress} 
-              showLabel 
-              size="lg"
-            />
-          </div>
+         <div className="w-full max-w-none">
+         <ProgressBar progress={globalProgress} showLabel size="lg" className="w-full" />
+         </div>
           {isNewUser && (
             <p className="text-sm text-muted-foreground mt-3">
               💡 Commence pour débloquer tes statistiques et suivre ta progression

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Eye, EyeOff, Lock } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
-import { UserRole } from '../../types/user';
+import { UserRole } from '../../../types/user';
 import { Navbar } from "../../components/Navbar";
 import { Footer } from "../../components/Footer";
 import { Link, useNavigate } from 'react-router-dom';
