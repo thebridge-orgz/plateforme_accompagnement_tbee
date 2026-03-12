@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ArrowLeft, CheckCircle2, FileText, Download, Eye, Upload } from 'lucide-react';
 import { Button } from './Button';
 import { FileUploader } from './FileUploader';
-import { useUserData } from '@/context/UserDataContext';
+import { useUserData } from '../../context/UserDataContext';
 
 interface CVUploadPageProps {
   onNavigate: (page: string) => void;

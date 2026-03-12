@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import StudentLayout from '../../layouts/StudentLayout';
-import { StudentJourneyPage } from '../student/StudentJourneyPage';
+import { CVUploadPage } from '../../components/CVUploadPage';
 
-export default function ParcoursPage() {
+export default function CvPage() {
   const navigate = useNavigate();
 
   const handleNavigate = (page: string) => {
@@ -20,12 +20,12 @@ export default function ParcoursPage() {
       return;
     }
 
-    navigate(routeMap[page] || '/student/parcours');
+    navigate(routeMap[page] || '/student/cv');
   };
 
   return (
-    <StudentLayout currentPage="student-modules">
-      <StudentJourneyPage onNavigate={handleNavigate} />
+    <StudentLayout currentPage="student-cv">
+      <CVUploadPage onNavigate={handleNavigate} />
     </StudentLayout>
   );
 }

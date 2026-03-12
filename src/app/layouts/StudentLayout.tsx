@@ -1,12 +1,6 @@
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-
-// ⚠️ IMPORTANT : adapte l’import selon ton export dans DashboardSidebar.tsx
-// - Si tu as: export function DashboardSidebar(...) { ... }
-//   => garde l'import { DashboardSidebar }
-// - Si tu as: export default function DashboardSidebar(...) { ... }
-//   => remplace par: import DashboardSidebar from '../components/navigation/DashboardSidebar';
 import { DashboardSidebar } from '../components/navigation/DashboardSidebar';
 
 import { navIdToPath } from '../router/navMap';

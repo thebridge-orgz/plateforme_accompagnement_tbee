@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import StudentLayout from '../../layouts/StudentLayout';
-import { StudentJourneyPage } from '../student/StudentJourneyPage';
+import { PracticalCasePage } from '../../components/PracticalCasePage';
 
-export default function ParcoursPage() {
+export default function PracticalCasePageWrapper() {
   const navigate = useNavigate();
 
   const handleNavigate = (page: string) => {
@@ -20,12 +20,12 @@ export default function ParcoursPage() {
       return;
     }
 
-    navigate(routeMap[page] || '/student/parcours');
+    navigate(routeMap[page] || '/student/cas-pratiques');
   };
 
   return (
-    <StudentLayout currentPage="student-modules">
-      <StudentJourneyPage onNavigate={handleNavigate} />
+    <StudentLayout currentPage="student-practical">
+      <PracticalCasePage onNavigate={handleNavigate} />
     </StudentLayout>
   );
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ArrowLeft, Briefcase, Clock, CheckCircle2, Trophy, Star } from 'lucide-react';
 import { Button } from './Button';
-import { ProgressBar } from './ProgressBar';
+import { ProgressBar } from './ui/ProgressBar';
 
 interface PracticalCasePageProps {
   onNavigate: (page: string) => void;
