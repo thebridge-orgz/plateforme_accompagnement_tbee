@@ -10,7 +10,7 @@ import type {
   ModuleWithProgress,
   CVData,
   UserTrackedOffer 
-} from '@/types';
+} from '../types/index';
 
 // -------------------- USER PROFILE --------------------
 

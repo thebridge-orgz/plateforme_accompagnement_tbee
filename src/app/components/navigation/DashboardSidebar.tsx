@@ -1,10 +1,9 @@
 import { ReactNode } from 'react';
-import { 
-  Home, 
-  BookOpen, 
-  FileText, 
-  Briefcase, 
-  User, 
+import {
+  Home,
+  FileText,
+  Briefcase,
+  User,
   Settings,
   Users,
   BarChart3,
@@ -18,6 +17,9 @@ import {
   UserCog
 } from 'lucide-react';
 import { useState } from 'react';
+import { useAuth } from '../../auth/AuthContext';
+import { ROUTES } from '../../router/routes';
+import { Link } from 'react-router-dom';
 
 interface DashboardSidebarProps {
   currentPage: string;
@@ -28,31 +30,10 @@ interface DashboardSidebarProps {
 }
 
 interface NavItem {
-  id: string;
   label: string;
   icon: ReactNode;
-  role: 'student' | 'admin' | 'both';
+  path: string;
 }
-
-const navItems: NavItem[] = [
-  // Student items
-  { id: 'student-dashboard', label: 'Tableau de bord', icon: <Home className="w-5 h-5" />, role: 'student' },
-  { id: 'student-modules', label: 'Mon parcours', icon: <GraduationCap className="w-5 h-5" />, role: 'student' },
-  { id: 'job-tracking', label: 'Suivi des offres', icon: <Search className="w-5 h-5" />, role: 'student' },
-  { id: 'student-cv', label: 'Mon CV', icon: <FileText className="w-5 h-5" />, role: 'student' },
-  { id: 'student-practical', label: 'Cas pratiques', icon: <Briefcase className="w-5 h-5" />, role: 'student' },
-  { id: 'student-profile', label: 'Mon profil', icon: <User className="w-5 h-5" />, role: 'student' },
-  
-  // Admin items
-  { id: 'admin-dashboard', label: 'Vue d\'ensemble', icon: <BarChart3 className="w-5 h-5" />, role: 'admin' },
-  { id: 'admin-cv-review', label: 'Validation CVs', icon: <CheckSquare className="w-5 h-5" />, role: 'admin' },
-  { id: 'admin-exercise-review', label: 'Correction exercices', icon: <ClipboardCheck className="w-5 h-5" />, role: 'admin' },
-  { id: 'admin-modules', label: 'Gestion modules', icon: <FileText className="w-5 h-5" />, role: 'admin' },
-  { id: 'admin-offer-support', label: 'Support offres', icon: <MessageSquare className="w-5 h-5" />, role: 'admin' },
-  { id: 'admin-tracking', label: 'Suivi étudiants', icon: <Users className="w-5 h-5" />, role: 'admin' },
-  { id: 'admin-profile', label: 'Mon profil', icon: <UserCog className="w-5 h-5" />, role: 'admin' },
-  { id: 'admin-settings', label: 'Paramètres', icon: <Settings className="w-5 h-5" />, role: 'admin' },
-];
 
 export function DashboardSidebar({
   currentPage,
@@ -61,15 +42,37 @@ export function DashboardSidebar({
   userName = 'Utilisateur',
   className = ''
 }: DashboardSidebarProps) {
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const { user, signOut } = useAuth()
 
-  const filteredNavItems = navItems.filter(
-    item => item.role === role || item.role === 'both'
-  );
+  let navItems: NavItem[] = []
+  if (user?.role === 'student') {
+    navItems = [
+      { label: 'Tableau de bord', icon: <Home className="w-5 h-5" />, path: ROUTES.StudentDashboard },
+      { label: 'Mon parcours', icon: <GraduationCap className="w-5 h-5" />, path: ROUTES.StudentModules },
+      { label: 'Suivi des offres', icon: <Search className="w-5 h-5" />, path: ROUTES.StudentJobTracking },
+      { label: 'Mon CV', icon: <FileText className="w-5 h-5" />, path: ROUTES.StudentCv },
+      { label: 'Cas pratiques', icon: <Briefcase className="w-5 h-5" />, path: ROUTES.StudentPractical },
+      { label: 'Mon profil', icon: <User className="w-5 h-5" />, path: ROUTES.StudentProfile },
+    ];
+  }
+  else if (user?.role === 'admin') {
+    navItems = [
+      { label: 'Vue d\'ensemble', icon: <BarChart3 className="w-5 h-5" />, path: ROUTES.AdminDashboard },
+      { label: 'Validation CVs', icon: <CheckSquare className="w-5 h-5" />, path: ROUTES.AdminCvReview },
+      { label: 'Correction exercices', icon: <ClipboardCheck className="w-5 h-5" />, path: ROUTES.AdminExerciceReview },
+      { label: 'Gestion modules', icon: <FileText className="w-5 h-5" />, path: ROUTES.AdminModules },
+      { label: 'Support offres', icon: <MessageSquare className="w-5 h-5" />, path: ROUTES.AdminOfferSupport },
+      { label: 'Suivi étudiants', icon: <Users className="w-5 h-5" />, path: ROUTES.AdminTracking },
+      { label: 'Mon profil', icon: <UserCog className="w-5 h-5" />, path: ROUTES.AdminProfile },
+      { label: 'Paramètres', icon: <Settings className="w-5 h-5" />, path: ROUTES.AdmimSettings },
+    ];
+  }
+
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   // Check if current page is a module page
   const isModulePage = currentPage.startsWith('module-');
-  
+
   // Determine if a nav item should be active
   const isNavItemActive = (itemId: string) => {
     if (itemId === 'student-modules' && isModulePage) {
@@ -104,35 +107,30 @@ export function DashboardSidebar({
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1">
-        {filteredNavItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => {
-              onNavigate(item.id);
-              setIsMobileOpen(false);
-            }}
-            className={`
+        {navItems.map((item) => (
+          <Link to={item.path}>
+            <button
+              /*setIsMobileOpen(false);*/
+              className={`
               w-full flex items-center gap-3 px-4 py-3 rounded-xl
               transition-all duration-200 text-left
-              ${isNavItemActive(item.id)
-                ? 'bg-primary text-foreground font-medium'
-                : 'text-foreground hover:bg-secondary'
-              }
+              ${isNavItemActive(item.path)
+                  ? 'bg-primary text-foreground font-medium'
+                  : 'text-foreground hover:bg-secondary'
+                }
             `}
-          >
-            {item.icon}
-            <span className="text-sm">{item.label}</span>
-          </button>
+            >
+              {item.icon}
+              <span className="text-sm">{item.label}</span>
+            </button>
+          </Link>
         ))}
       </nav>
 
       {/* Footer */}
       <div className="p-6 border-t border-border">
         <button
-          onClick={() => {
-            onNavigate('logout');
-            setIsMobileOpen(false);
-          }}
+          onClick={() => signOut()}
           className="w-full text-left text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           Se déconnecter
