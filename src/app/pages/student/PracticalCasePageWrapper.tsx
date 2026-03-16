@@ -1,12 +1,13 @@
 import { useNavigate } from 'react-router-dom';
-import { StudentDashboard } from '../../components/dashboard/StudentDashboard';
 import StudentLayout from '../../layouts/StudentLayout';
+import { PracticalCasePage } from '../../components/PracticalCasePage';
 
-export default function DashboardPage() {
+export default function PracticalCasePageWrapper() {
   const navigate = useNavigate();
 
   const handleNavigate = (page: string) => {
     const routeMap: Record<string, string> = {
+      'student-dashboard': '/student/dashboard',
       'student-journey': '/student/parcours',
       'student-modules': '/student/parcours',
       'student-cv': '/student/cv',
@@ -19,12 +20,12 @@ export default function DashboardPage() {
       return;
     }
 
-    navigate(routeMap[page] || '/student/dashboard');
+    navigate(routeMap[page] || '/student/cas-pratiques');
   };
 
   return (
-    <StudentLayout currentPage="student-dashboard">
-      <StudentDashboard onNavigate={handleNavigate} />
+    <StudentLayout currentPage="student-practical">
+      <PracticalCasePage onNavigate={handleNavigate} />
     </StudentLayout>
   );
 }

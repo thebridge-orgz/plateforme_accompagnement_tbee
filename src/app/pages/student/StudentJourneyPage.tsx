@@ -1,5 +1,5 @@
 import { ArrowLeft, Lock, CheckCircle, Trophy, Star, Zap, Target, Award } from 'lucide-react';
-import { useUserData } from '@/context/UserDataContext';
+import { useUserData } from '../../../context/UserDataContext';
 
 interface StudentJourneyPageProps {
   onNavigate: (page: string) => void;

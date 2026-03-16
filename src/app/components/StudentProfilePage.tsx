@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { Button } from './Button';
 import { FormInput } from './FormInput';
-import { useUserData } from '@/context/UserDataContext';
+import { useUserData } from '../../context/UserDataContext';
 
 interface StudentProfilePageProps {
   onNavigate: (page: string) => void;
@@ -105,6 +105,7 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
       // Créer une preview
       const reader = new FileReader();
       reader.onloadend = () => {
+        console.log(reader);
         const imageData = reader.result as string;
         setProfileImage(imageData);
         // TODO: Upload vers Supabase Storage
@@ -120,6 +121,7 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
 
   // Charger la photo depuis localStorage au montage
   useEffect(() => {
+    console.log(localStorage);
     const savedImage = localStorage.getItem('tbee_profile_image');
     if (savedImage) {
       setProfileImage(savedImage);

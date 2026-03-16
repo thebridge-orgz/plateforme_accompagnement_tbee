@@ -1,12 +1,13 @@
 import { useNavigate } from 'react-router-dom';
-import { StudentDashboard } from '../../components/dashboard/StudentDashboard';
 import StudentLayout from '../../layouts/StudentLayout';
+import { JobTrackingPage } from '../../components/JobTrackingPage';
 
-export default function DashboardPage() {
+export default function OffersPage() {
   const navigate = useNavigate();
 
   const handleNavigate = (page: string) => {
     const routeMap: Record<string, string> = {
+      'student-dashboard': '/student/dashboard',
       'student-journey': '/student/parcours',
       'student-modules': '/student/parcours',
       'student-cv': '/student/cv',
@@ -19,12 +20,12 @@ export default function DashboardPage() {
       return;
     }
 
-    navigate(routeMap[page] || '/student/dashboard');
+    navigate(routeMap[page] || '/student/offres');
   };
 
   return (
-    <StudentLayout currentPage="student-dashboard">
-      <StudentDashboard onNavigate={handleNavigate} />
+    <StudentLayout currentPage="job-tracking">
+      <JobTrackingPage onNavigate={handleNavigate} />
     </StudentLayout>
   );
 }
