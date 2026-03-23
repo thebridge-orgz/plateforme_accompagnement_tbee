@@ -16,7 +16,7 @@ import SignIn from './app/pages/public/SignIn';
 import NotFound from './app/pages/NotFound';
 
 // Pages protégées
-import StudentDashboard from './app/pages/student/Dashboard';
+import DashboardPage from './app/pages/student/Dashboard';
 import AdminDashboard from './app/pages/admin/Dashboard';
 import Onboarding from './app/pages/student/Onboarding';
 
@@ -72,11 +72,11 @@ function App() {
 
         {/* Route dashboard étudiant */}
         <Route
-          path={ROUTES.StudentDashboard}
+          path={ROUTES.studentDashboard}
           element={
             <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
               <UserDataProvider>
-                <StudentDashboard />
+                <DashboardPage />
               </UserDataProvider>
             </ProtectedRoute>
           }

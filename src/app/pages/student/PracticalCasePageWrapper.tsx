@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import StudentLayout from '../../layouts/StudentLayout';
+import StudentLayout from '../../layouts/studentLayout';
 import { PracticalCasePage } from '../../components/PracticalCasePage';
 
 export default function PracticalCasePageWrapper() {

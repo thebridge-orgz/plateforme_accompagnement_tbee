@@ -38,7 +38,7 @@ export const routes: RouteConfig[] = [
         label: 'Se connecter'
     },
     {
-        name: 'StudentDashboard',
+        name: 'studentDashboard',
         path: '/student/dashboard',
         label: 'Dashboard Etudiant',
         isProtected: true,

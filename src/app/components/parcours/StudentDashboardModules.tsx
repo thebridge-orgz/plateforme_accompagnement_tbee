@@ -2,13 +2,13 @@ import { CheckCircle2, Lock, Play, Trophy, Target, TrendingUp, Clock } from 'luc
 import { useUserData } from '@/context/UserDataContext';
 import { formatStudyTime } from '@/utils/initialState';
 
-interface StudentDashboardModulesProps {
+interface studentDashboardModulesProps {
   onNavigate: (page: string) => void;
   authFirstName?: string;
   userData?: any;
 }
 
-export function StudentDashboardModules({ onNavigate, authFirstName }: StudentDashboardModulesProps) {
+export function studentDashboardModules({ onNavigate, authFirstName }: studentDashboardModulesProps) {
   // TODO: fetch from Supabase - using context for now
   const {
     isLoading,

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import { StudentDashboard } from '../../components/dashboard/StudentDashboard';
-import StudentLayout from '../../layouts/StudentLayout';
+import { StudentDashboard } from '../../components/dashboard/studentDashboard';
+import StudentLayout from '../../layouts/studentLayout';
 
 export default function DashboardPage() {
   const navigate = useNavigate();

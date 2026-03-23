@@ -139,7 +139,7 @@ export function AdminCVReviewPage({ onNavigate }: AdminCVReviewPageProps) {
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <p className="text-[15px] font-bold text-[#1E1548] mb-1">{cv.candidateName}</p>
+                      <p className="text-[15px] font-bold text-[#1E1548] mb-1">{cv.studentName}</p>
                       <p className="text-[13px] text-[#6B7280]">{cv.fileName}</p>
                     </div>
                     <span

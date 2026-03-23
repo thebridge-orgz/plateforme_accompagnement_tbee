@@ -13,7 +13,7 @@ import type {
   CVData,
   JobOffer,
   ModuleStatus
-} from '@./types';
+} from '../types';
 import { 
   initialDashboardData,
   calculateGlobalProgress,
@@ -22,7 +22,7 @@ import {
   isNewUser,
   MAX_TRACKED_OFFERS,
   type DashboardData
-} from '@/utils/initialState';
+} from '../utils/initialState';
 
 // -------------------- CONTEXT TYPES --------------------
 

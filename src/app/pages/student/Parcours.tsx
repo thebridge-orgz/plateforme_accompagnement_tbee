@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import StudentLayout from '../../layouts/StudentLayout';
-import { StudentJourneyPage } from '../student/StudentJourneyPage';
+import StudentLayout from '../../layouts/studentLayout';
+import { StudentJourneyPage } from './studentJourneyPage';
 
 export default function ParcoursPage() {
   const navigate = useNavigate();

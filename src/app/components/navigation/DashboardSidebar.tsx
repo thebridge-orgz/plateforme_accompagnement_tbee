@@ -35,7 +35,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  // Student items
+  // student items
   { id: 'student-dashboard', label: 'Tableau de bord', icon: <Home className="w-5 h-5" />, role: 'student' },
   { id: 'student-modules', label: 'Mon parcours', icon: <GraduationCap className="w-5 h-5" />, role: 'student' },
   { id: 'job-tracking', label: 'Suivi des offres', icon: <Search className="w-5 h-5" />, role: 'student' },

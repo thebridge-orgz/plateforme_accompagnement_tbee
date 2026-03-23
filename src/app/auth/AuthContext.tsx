@@ -254,27 +254,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (data.user) {
                 console.log('User created:', data.user.id);
 
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
-                const { error: profileError } = await supabase
-                    .from('profiles')
-                    .insert({
-                        id: data.user.id,
-                        email: email,
-                        first_name: firstName,
-                        last_name: lastName,
-                        role: 'student',
-                        has_rqth: hasRQTH || false,
-                        created_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString(),
-                    });
-
-                if (profileError) {
-                    console.error('Profile creation error:', profileError);
-                    throw profileError;
-                }
-
-                console.log('Profile created successfully');
+                // ✅ NOTE: Le profil est créé automatiquement par le trigger handle_new_user()
+                // qui s'exécute à l'insertion en auth.users
+                // Ne pas insérer manuellement ici pour éviter les doublons !
+                console.log('Profile will be created automatically by database trigger');
             }
         } catch (error) {
             console.error('Sign up error:', error);

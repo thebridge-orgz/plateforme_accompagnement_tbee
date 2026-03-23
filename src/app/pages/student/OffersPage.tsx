@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import StudentLayout from '../../layouts/StudentLayout';
+import StudentLayout from '../../layouts/studentLayout';
 import { JobTrackingPage } from '../../components/JobTrackingPage';
 
 export default function OffersPage() {

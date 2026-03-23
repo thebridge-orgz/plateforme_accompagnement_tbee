@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import StudentLayout from '../../layouts/StudentLayout';
+import StudentLayout from '../../layouts/studentLayout';
 import { ModuleLinearPage } from '../../components/ModuleLinearPage';
 
 export default function ModulePageWrapper() {

@@ -156,12 +156,12 @@ export function AdminExerciseReviewPage({ onNavigate }: AdminExerciseReviewPageP
               } hover:shadow-[0_6px_20px_rgba(30,21,72,0.1)]`}
             >
               <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-                {/* Left: Student & Exercise Info */}
+                {/* Left: student & Exercise Info */}
                 <div className="flex-1 min-w-0">
-                  {/* Student */}
+                  {/* student */}
                   <div className="mb-4">
                     <h3 className="text-[18px] sm:text-[20px] font-bold text-[#1E1548] mb-1">
-                      {exercise.candidateName}
+                      {exercise.studentName}
                     </h3>
                   </div>
 
@@ -185,7 +185,7 @@ export function AdminExerciseReviewPage({ onNavigate }: AdminExerciseReviewPageP
                     {getStatusBadge(exercise.status)}
                   </div>
 
-                  {/* Student Answer Preview */}
+                  {/* student Answer Preview */}
                   {exercise.content && (
                     <div className="bg-[#F8F9FD] rounded-[12px] p-4 mb-4">
                       <p className="text-[12px] font-semibold text-[#1E1548] mb-2">
@@ -279,12 +279,12 @@ export function AdminExerciseReviewPage({ onNavigate }: AdminExerciseReviewPageP
                   </button>
                 </div>
                 <p className="text-[14px] text-[#6B7280] mt-1">
-                  {selectedExerciseData.candidateName} - {selectedExerciseData.moduleName}
+                  {selectedExerciseData.studentName} - {selectedExerciseData.moduleName}
                 </p>
               </div>
 
               <div className="p-4 sm:p-6 space-y-6">
-                {/* Student Answer */}
+                {/* student Answer */}
                 <div>
                   <label className="block text-[14px] font-semibold text-[#1E1548] mb-2">
                     Réponse de l'étudiant

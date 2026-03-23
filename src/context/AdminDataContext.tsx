@@ -16,7 +16,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 // TYPES & INTERFACES
 // ============================================
 
-export interface CandidateProfile {
+export interface studentProfile {
   id: string;
   firstName: string;
   lastName: string;
@@ -36,8 +36,8 @@ export interface CandidateProfile {
   lastActiveAt: string;
 }
 
-export interface CandidateStatistics {
-  candidateId: string;
+export interface studentStatistics {
+  studentId: string;
   totalLessonsCompleted: number;
   totalTimeSpentMinutes: number;
   currentStreakDays: number;
@@ -53,8 +53,8 @@ export interface CandidateStatistics {
 
 export interface CVSubmission {
   id: string;
-  candidateId: string;
-  candidateName: string;
+  studentId: string;
+  studentName: string;
   fileUrl: string;
   fileName: string;
   submittedAt: string;
@@ -67,8 +67,8 @@ export interface CVSubmission {
 
 export interface ExerciseSubmission {
   id: string;
-  candidateId: string;
-  candidateName: string;
+  studentId: string;
+  studentName: string;
   moduleId: string;
   moduleName: string;
   exerciseType: 'practical_case' | 'quiz' | 'simulation';
@@ -84,8 +84,8 @@ export interface ExerciseSubmission {
 
 export interface OfferTracking {
   id: string;
-  candidateId: string;
-  candidateName: string;
+  studentId: string;
+  studentName: string;
   company: string;
   position: string;
   status: 'saved' | 'applied' | 'interview' | 'offer_received' | 'rejected' | 'accepted';
@@ -100,8 +100,8 @@ export interface OfferTracking {
 export interface AdminActivity {
   id: string;
   type: 'cv_submitted' | 'exercise_completed' | 'offer_help' | 'progress' | 'login' | 'module_completed';
-  candidateId: string;
-  candidateName: string;
+  studentId: string;
+  studentName: string;
   message: string;
   timestamp: string;
   urgent: boolean;
@@ -110,8 +110,8 @@ export interface AdminActivity {
 
 interface AdminDataContextType {
   // Candidats
-  candidates: CandidateProfile[];
-  candidateStats: Map<string, CandidateStatistics>;
+  students: studentProfile[];
+  studentStats: Map<string, studentStatistics>;
   
   // CVs
   cvSubmissions: CVSubmission[];
@@ -127,8 +127,8 @@ interface AdminDataContextType {
   
   // Statistiques globales
   globalStats: {
-    totalCandidates: number;
-    activeCandidates: number;
+    totalstudents: number;
+    activestudents: number;
     pendingCVs: number;
     pendingExercises: number;
     offersNeedingHelp: number;
@@ -141,8 +141,8 @@ interface AdminDataContextType {
   reviewCV: (cvId: string, status: CVSubmission['status'], feedback: string, score?: number) => void;
   gradeExercise: (exerciseId: string, score: number, feedback: string) => void;
   updateOfferTracking: (offerId: string, updates: Partial<OfferTracking>) => void;
-  getCandidateById: (candidateId: string) => CandidateProfile | undefined;
-  getCandidateStats: (candidateId: string) => CandidateStatistics | undefined;
+  getstudentById: (studentId: string) => studentProfile | undefined;
+  getstudentStats: (studentId: string) => studentStatistics | undefined;
 }
 
 const AdminDataContext = createContext<AdminDataContextType | undefined>(undefined);
@@ -152,8 +152,8 @@ const AdminDataContext = createContext<AdminDataContextType | undefined>(undefin
 // ============================================
 
 export function AdminDataProvider({ children }: { children: ReactNode }) {
-  const [candidates, setCandidates] = useState<CandidateProfile[]>([]);
-  const [candidateStats, setCandidateStats] = useState<Map<string, CandidateStatistics>>(new Map());
+  const [students, setstudents] = useState<studentProfile[]>([]);
+  const [studentStats, setstudentStats] = useState<Map<string, studentStatistics>>(new Map());
   const [cvSubmissions, setCVSubmissions] = useState<CVSubmission[]>([]);
   const [exerciseSubmissions, setExerciseSubmissions] = useState<ExerciseSubmission[]>([]);
   const [offerTrackings, setOfferTrackings] = useState<OfferTracking[]>([]);
@@ -166,18 +166,18 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     // TODO SUPABASE: Remplacer par des requêtes Supabase
     
     // 1. Charger tous les candidats
-    // const { data: candidatesData } = await supabase
+    // const { data: studentsData } = await supabase
     //   .from('user_profiles')
     //   .select('*')
     //   .order('created_at', { ascending: false });
     
-    const storedCandidates = localStorage.getItem('tbee_all_candidates');
-    if (storedCandidates) {
-      setCandidates(JSON.parse(storedCandidates));
+    const storedstudents = localStorage.getItem('tbee_all_students');
+    if (storedstudents) {
+      setstudents(JSON.parse(storedstudents));
     } else {
       // Initialisation vide - les candidats seront ajoutés lors des inscriptions
-      setCandidates([]);
-      localStorage.setItem('tbee_all_candidates', JSON.stringify([]));
+      setstudents([]);
+      localStorage.setItem('tbee_all_students', JSON.stringify([]));
     }
 
     // 2. Charger les statistiques des candidats
@@ -186,7 +186,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     //   .select('*');
     
     // Initialisation vide - les statistiques seront créées lors des progressions
-    setCandidateStats(new Map<string, CandidateStatistics>());
+    setstudentStats(new Map<string, studentStatistics>());
 
     // 3. Charger les CVs soumis
     // Initialisation vide - les CVs seront ajoutés lors des soumissions
@@ -271,20 +271,20 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     ));
   };
 
-  const getCandidateById = (candidateId: string) => {
-    return candidates.find(c => c.id === candidateId);
+  const getstudentById = (studentId: string) => {
+    return students.find(c => c.id === studentId);
   };
 
-  const getCandidateStats = (candidateId: string) => {
-    return candidateStats.get(candidateId);
+  const getstudentStats = (studentId: string) => {
+    return studentStats.get(studentId);
   };
 
   // ============================================
   // STATISTIQUES GLOBALES
   // ============================================
   const globalStats = {
-    totalCandidates: candidates.length,
-    activeCandidates: candidates.filter(c => {
+    totalstudents: students.length,
+    activestudents: students.filter(c => {
       const lastActive = new Date(c.lastActiveAt);
       const daysSinceActive = (Date.now() - lastActive.getTime()) / (1000 * 60 * 60 * 24);
       return daysSinceActive < 7;
@@ -292,21 +292,21 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     pendingCVs: cvSubmissions.filter(cv => cv.status === 'pending').length,
     pendingExercises: exerciseSubmissions.filter(ex => ex.status === 'pending').length,
     offersNeedingHelp: offerTrackings.filter(o => o.needsHelp).length,
-    averageProgress: Array.from(candidateStats.values()).reduce((acc, stat) => {
+    averageProgress: Array.from(studentStats.values()).reduce((acc, stat) => {
       const moduleProgresses = Object.values(stat.moduleProgress);
       const avgProgress = moduleProgresses.reduce((sum, mod) => sum + mod.progress, 0) / moduleProgresses.length;
       return acc + avgProgress;
-    }, 0) / candidateStats.size || 0,
-    completionRate: Array.from(candidateStats.values()).reduce((acc, stat) => {
+    }, 0) / studentStats.size || 0,
+    completionRate: Array.from(studentStats.values()).reduce((acc, stat) => {
       const completed = Object.values(stat.moduleProgress).filter(m => m.completed).length;
       const total = Object.values(stat.moduleProgress).length;
       return acc + (total > 0 ? (completed / total) * 100 : 0);
-    }, 0) / candidateStats.size || 0
+    }, 0) / studentStats.size || 0
   };
 
   const value: AdminDataContextType = {
-    candidates,
-    candidateStats,
+    students,
+    studentStats,
     cvSubmissions,
     exerciseSubmissions,
     offerTrackings,
@@ -316,8 +316,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     reviewCV,
     gradeExercise,
     updateOfferTracking,
-    getCandidateById,
-    getCandidateStats
+    getstudentById,
+    getstudentStats
   };
 
   return (

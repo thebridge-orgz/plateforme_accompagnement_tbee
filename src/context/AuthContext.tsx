@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
-import { supabase, UserProfile, UserRole } from '../lib/supabase';
+import { supabase, UserProfile, UserRole } from '../app/services/supabase';
 
 // =============================================
 // Types
@@ -28,7 +28,7 @@ interface AuthContextType {
   refetchProfile: () => Promise<void>;
   isAuthenticated: boolean;
   isAdmin: boolean;
-  isStudent: boolean;
+  isstudent: boolean;
   effectiveRole: UserRole | null;
 }
 
@@ -347,7 +347,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refetchProfile,
     isAuthenticated: !!user,
     isAdmin: effectiveRole === 'admin',
-    isStudent: effectiveRole === 'student',
+    isstudent: effectiveRole === 'student',
     effectiveRole,
   };
 

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import StudentLayout from '../../layouts/StudentLayout';
-import { StudentProfilePage } from '../../components/StudentProfilePage';
+import StudentLayout from '../../layouts/studentLayout';
+import { StudentProfilePage } from '../../components/studentProfilePage';
 
 export default function ProfilePageWrapper() {
   const navigate = useNavigate();

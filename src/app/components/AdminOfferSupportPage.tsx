@@ -171,7 +171,7 @@ export function AdminOfferSupportPage({ onNavigate }: AdminOfferSupportPageProps
               <div className="flex flex-col gap-4">
                 <div>
                   <h3 className="text-[18px] sm:text-[20px] font-bold text-[#1E1548] mb-2">
-                    {support.candidateName}
+                    {support.studentName}
                   </h3>
                   <div className="flex items-center gap-2 mb-3">
                     {support.needsHelp ? (
@@ -254,7 +254,7 @@ export function AdminOfferSupportPage({ onNavigate }: AdminOfferSupportPageProps
               <div className="sticky top-0 bg-white border-b border-[rgba(30,21,72,0.08)] p-4 sm:p-6 rounded-t-[16px]">
                 <div className="flex items-center justify-between">
                   <h2 className="text-[20px] sm:text-[24px] font-bold text-[#1E1548]">
-                    Répondre à {selectedSupportData.candidateName}
+                    Répondre à {selectedSupportData.studentName}
                   </h2>
                   <button
                     onClick={() => setSelectedSupport(null)}
@@ -281,7 +281,7 @@ export function AdminOfferSupportPage({ onNavigate }: AdminOfferSupportPageProps
                   </div>
                 </div>
 
-                {/* Student Message */}
+                {/* student Message */}
                 {selectedSupportData.helpRequest && (
                   <div>
                     <label className="block text-[14px] font-semibold text-[#1E1548] mb-2">
