@@ -38,24 +38,16 @@ export function CVUploadPage({ onNavigate }: CVUploadPageProps) {
   const [isUploading, setIsUploading] = useState(false);
 
   const handleFileUpload = async (file: File) => {
-    // TODO: Upload to Supabase Storage
     setIsUploading(true);
-    
     try {
-      // Simuler l'upload
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // TODO: Remplacer par vrai upload Supabase Storage
-      // const { data, error } = await supabase.storage
-      //   .from('user-cvs')
-      //   .upload(`${userId}/${file.name}`, file);
-      
-      await updateCVData({
-        fileName: file.name,
-        fileUrl: URL.createObjectURL(file), // TODO: remplacer par URL Supabase
-        status: 'uploaded',
-        uploadedAt: new Date().toISOString(),
-      });
+      // Upload vers Supabase Storage via le contexte (gère l'upload + mise à jour cv_data)
+      await updateCVData(
+        {
+          status: 'uploaded',
+          uploadedAt: new Date().toISOString(),
+        },
+        file
+      );
     } catch (error) {
       alert('Erreur lors de l\'upload du CV');
       console.error(error);
@@ -67,7 +59,6 @@ export function CVUploadPage({ onNavigate }: CVUploadPageProps) {
   const handleFileDelete = async () => {
     if (confirm('Supprimer votre CV ?')) {
       try {
-        // TODO: Delete from Supabase Storage
         await updateCVData({
           fileName: null,
           fileUrl: null,
