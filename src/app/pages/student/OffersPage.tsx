@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import StudentLayout from '../../layouts/studentLayout';
 import { JobTrackingPage } from '../../components/JobTrackingPage';
+import { routes } from '../../router/routes';
 
 export default function OffersPage() {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ export default function OffersPage() {
   };
 
   return (
-    <StudentLayout currentPage="job-tracking">
+    <StudentLayout currentPage={routes.StudentJobTracking.path}>
       <JobTrackingPage onNavigate={handleNavigate} />
     </StudentLayout>
   );

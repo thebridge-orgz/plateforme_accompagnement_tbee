@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import StudentLayout from '../../layouts/studentLayout';
 import { StudentProfilePage } from '../../components/studentProfilePage';
+import { routes } from '../../router/routes';
 
 export default function ProfilePageWrapper() {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ export default function ProfilePageWrapper() {
   };
 
   return (
-    <StudentLayout currentPage="student-profile">
+    <StudentLayout currentPage={routes.StudentProfile.path}>
       <StudentProfilePage onNavigate={handleNavigate} />
     </StudentLayout>
   );

@@ -4,7 +4,7 @@ import { useAuth } from "../../auth/AuthContext";
 import { Navbar } from "../../components/Navbar";
 import { Footer } from "../../components/Footer";
 import { Link, useNavigate } from 'react-router-dom';
-import { ROUTES } from '../../router/routes';
+import { routes } from '../../router/routes';
 
 function SignUp() {
     const { user, signUp, loading: authLoading } = useAuth();
@@ -22,9 +22,9 @@ function SignUp() {
         if (user) {
             console.log('User detected, redirecting...', user.role);
             if (user.role === 'admin') {
-                navigate(ROUTES.AdminDashboard, { replace: true });
+                navigate(routes.AdminDashboard.path, { replace: true });
             } else {
-                navigate(ROUTES.studentDashboard, { replace: true });
+                navigate(routes.StudentDashboard.path, { replace: true });
             }
         }
     }, [user, navigate]);
@@ -77,7 +77,7 @@ function SignUp() {
             setSuccess(true);
             // Optionnel : rediriger vers la page de connexion après quelques secondes
             setTimeout(() => {
-                navigate(ROUTES.SignIn);
+                navigate(routes.SignIn.path);
             }, 5000);
         } catch (err: any) {
             setError(err.message || "Erreur lors de l'inscription. Veuillez réessayer.");
@@ -108,7 +108,7 @@ function SignUp() {
                     <p className="text-[14px] text-[#6B7280] mb-4">
                         Redirection vers la page de connexion dans quelques secondes...
                     </p>
-                    <Link to={ROUTES.SignIn}>
+                    <Link to={routes.SignIn.path}>
                         <button
                             className="w-full h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[16px] font-semibold hover:bg-[#FDC700] transition-all"
                         >
@@ -338,11 +338,11 @@ function SignUp() {
                                         required />
                                     <label htmlFor="acceptTerms" className="text-[14px] sm:text-[16px] text-[#1E1548] leading-[24px]">
                                         J'accepte les{" "}
-                                        <Link to={ROUTES.LegalNotice} className="text-[#1E1548] font-semibold underline hover:text-[#FFD600]">
+                                        <Link to={routes.LegalNotice.path} className="text-[#1E1548] font-semibold underline hover:text-[#FFD600]">
                                             conditions d'utilisation
                                         </Link>{" "}
                                         et la{" "}
-                                        <Link to={ROUTES.PrivacyPolicy} className="text-[#1E1548] font-semibold underline hover:text-[#FFD600]">
+                                        <Link to={routes.PrivacyPolicy.path} className="text-[#1E1548] font-semibold underline hover:text-[#FFD600]">
                                             politique de confidentialité
                                         </Link>
                                     </label>
@@ -363,7 +363,7 @@ function SignUp() {
                         <div className="text-center mt-6 pt-6 border-t border-[rgba(30,21,72,0.1)]">
                             <p className="text-[14px] sm:text-[16px] font-normal text-[#6B7280]">
                                 Déjà inscrit(e) ?{" "}
-                                <Link to={ROUTES.SignIn}>
+                                <Link to={routes.SignIn.path}>
                                     <button
                                         className="text-[#1E1548] font-semibold hover:text-[#FFD600] focus:outline-none underline transition-colors"
                                     >
@@ -376,7 +376,7 @@ function SignUp() {
 
                     {/* Back to Home Link */}
                     <div className="text-center mt-6">
-                        <Link to={ROUTES.Home}>
+                        <Link to={routes.Home.path}>
                             <button
                                 className="text-[14px] text-[#6B7280] hover:text-[#1E1548] focus:outline-none transition-colors"
                             >

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { StudentDashboard } from '../../components/dashboard/studentDashboard';
 import StudentLayout from '../../layouts/studentLayout';
+import { routes } from '../../router/routes';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <StudentLayout currentPage="student-dashboard">
+    <StudentLayout currentPage={routes.StudentDashboard.path}>
       <StudentDashboard onNavigate={handleNavigate} />
     </StudentLayout>
   );

@@ -1,5 +1,5 @@
 import { Award, BookOpen, Clock, Target, TrendingUp } from 'lucide-react';
-import { StatCard } from './StatCard';
+import { StatCard } from '../../components/StatCard';
 import { ModuleCard } from '../parcours/ModuleCard';
 import { ProgressBar } from '../ui/ProgressBar';
 import { Button } from '../ui/button';

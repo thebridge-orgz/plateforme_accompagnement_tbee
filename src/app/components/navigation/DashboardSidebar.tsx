@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../../auth/AuthContext';
-import { ROUTES } from '../../router/routes';
+import { routes } from '../../router/routes';
 import { Link } from 'react-router-dom';
 
 interface DashboardSidebarProps {
@@ -47,24 +47,24 @@ export function DashboardSidebar({
   let navItems: NavItem[] = []
   if (user?.role === 'student') {
     navItems = [
-      { label: 'Tableau de bord', icon: <Home className="w-5 h-5" />, path: ROUTES.StudentDashboard },
-      { label: 'Mon parcours', icon: <GraduationCap className="w-5 h-5" />, path: ROUTES.StudentModules },
-      { label: 'Suivi des offres', icon: <Search className="w-5 h-5" />, path: ROUTES.StudentJobTracking },
-      { label: 'Mon CV', icon: <FileText className="w-5 h-5" />, path: ROUTES.StudentCv },
-      { label: 'Cas pratiques', icon: <Briefcase className="w-5 h-5" />, path: ROUTES.StudentPractical },
-      { label: 'Mon profil', icon: <User className="w-5 h-5" />, path: ROUTES.StudentProfile },
+      { label: 'Tableau de bord', icon: <Home className="w-5 h-5" />, path: routes.StudentDashboard.path },
+      { label: 'Mon parcours', icon: <GraduationCap className="w-5 h-5" />, path: routes.StudentModules.path },
+      { label: 'Suivi des offres', icon: <Search className="w-5 h-5" />, path: routes.StudentJobTracking.path },
+      { label: 'Mon CV', icon: <FileText className="w-5 h-5" />, path: routes.StudentCv.path },
+      { label: 'Cas pratiques', icon: <Briefcase className="w-5 h-5" />, path: routes.StudentPractical.path },
+      { label: 'Mon profil', icon: <User className="w-5 h-5" />, path: routes.StudentProfile.path },
     ];
   }
   else if (user?.role === 'admin') {
     navItems = [
-      { label: 'Vue d\'ensemble', icon: <BarChart3 className="w-5 h-5" />, path: ROUTES.AdminDashboard },
-      { label: 'Validation CVs', icon: <CheckSquare className="w-5 h-5" />, path: ROUTES.AdminCvReview },
-      { label: 'Correction exercices', icon: <ClipboardCheck className="w-5 h-5" />, path: ROUTES.AdminExerciceReview },
-      { label: 'Gestion modules', icon: <FileText className="w-5 h-5" />, path: ROUTES.AdminModules },
-      { label: 'Support offres', icon: <MessageSquare className="w-5 h-5" />, path: ROUTES.AdminOfferSupport },
-      { label: 'Suivi étudiants', icon: <Users className="w-5 h-5" />, path: ROUTES.AdminTracking },
-      { label: 'Mon profil', icon: <UserCog className="w-5 h-5" />, path: ROUTES.AdminProfile },
-      { label: 'Paramètres', icon: <Settings className="w-5 h-5" />, path: ROUTES.AdmimSettings },
+      { label: 'Vue d\'ensemble', icon: <BarChart3 className="w-5 h-5" />, path: routes.AdminDashboard.path },
+      { label: 'Validation CVs', icon: <CheckSquare className="w-5 h-5" />, path: routes.AdminCvReview.path },
+      { label: 'Correction exercices', icon: <ClipboardCheck className="w-5 h-5" />, path: routes.AdminExerciceReview.path },
+      { label: 'Gestion modules', icon: <FileText className="w-5 h-5" />, path: routes.AdminModules.path },
+      { label: 'Support offres', icon: <MessageSquare className="w-5 h-5" />, path: routes.AdminOfferSupport.path },
+      { label: 'Suivi étudiants', icon: <Users className="w-5 h-5" />, path: routes.AdminTracking.path },
+      { label: 'Mon profil', icon: <UserCog className="w-5 h-5" />, path: routes.AdminProfile.path },
+      { label: 'Paramètres', icon: <Settings className="w-5 h-5" />, path: routes.AdminSettings.path },
     ];
   }
 
@@ -78,6 +78,7 @@ export function DashboardSidebar({
     if (itemId === 'student-modules' && isModulePage) {
       return true;
     }
+    console.log(`currentPage  ${currentPage}, itemId : ${itemId}`);
     return currentPage === itemId;
   };
 

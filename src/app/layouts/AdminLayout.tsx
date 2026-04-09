@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { DashboardSidebar } from '../components/navigation/DashboardSidebar';
 
@@ -13,6 +13,7 @@ type Props = {
 export default function AdminLayout({ children }: Props) {
     const navigate = useNavigate();
     const auth = useAuth();
+    const location = useLocation();
 
     const handleNavigate = (id: string) => {
         if (!id) return;
@@ -40,10 +41,13 @@ export default function AdminLayout({ children }: Props) {
             ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ''}`
             : user?.email || 'Utilisateur';
 
+
+    const { hash, pathname, search } = location;
+
     return (
         <div className="min-h-screen bg-background">
             <DashboardSidebar
-                currentPage=""
+                currentPage={pathname}
                 onNavigate={handleNavigate}
                 role="admin"
                 userName={userName}

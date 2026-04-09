@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import StudentLayout from '../../layouts/studentLayout';
 import { PracticalCasePage } from '../../components/PracticalCasePage';
+import { routes } from '../../router/routes';
 
 export default function PracticalCasePageWrapper() {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ export default function PracticalCasePageWrapper() {
   };
 
   return (
-    <StudentLayout currentPage="student-practical">
+    <StudentLayout currentPage={routes.StudentPractical.path}>
       <PracticalCasePage onNavigate={handleNavigate} />
     </StudentLayout>
   );

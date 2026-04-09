@@ -1,5 +1,5 @@
 import { Users, BookOpen, TrendingUp, Award, Clock, AlertTriangle, CheckCircle2, FileText, Briefcase, Target } from 'lucide-react';
-import { useAdminData } from '@/context/AdminDataContext';
+import { useAdminData } from '../../context/AdminDataContext';
 
 interface AdminDashboardProps {
   onNavigate: (page: string) => void;
@@ -21,29 +21,29 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
 
   // Calculer les tâches urgentes à partir des vraies données
   const urgentTasks = [
-    { 
-      id: '1', 
-      label: 'CVs en attente de validation', 
-      count: globalStats.pendingCVs, 
-      action: 'admin-cv-review' 
+    {
+      id: '1',
+      label: 'CVs en attente de validation',
+      count: globalStats.pendingCVs,
+      action: 'admin-cv-review'
     },
-    { 
-      id: '2', 
-      label: 'Exercices à corriger', 
-      count: globalStats.pendingExercises, 
-      action: 'admin-exercise-review' 
+    {
+      id: '2',
+      label: 'Exercices à corriger',
+      count: globalStats.pendingExercises,
+      action: 'admin-exercise-review'
     },
-    { 
-      id: '3', 
-      label: 'Demandes d\'aide sur offres', 
-      count: globalStats.offersNeedingHelp, 
-      action: 'admin-offer-support' 
+    {
+      id: '3',
+      label: 'Demandes d\'aide sur offres',
+      count: globalStats.offersNeedingHelp,
+      action: 'admin-offer-support'
     },
-    { 
-      id: '4', 
-      label: 'Étudiants inactifs (+7j)', 
-      count: globalStats.totalstudents - globalStats.activestudents, 
-      action: 'admin-tracking' 
+    {
+      id: '4',
+      label: 'Étudiants inactifs (+7j)',
+      count: globalStats.totalstudents - globalStats.activestudents,
+      action: 'admin-tracking'
     }
   ];
 
@@ -215,11 +215,10 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
                 {recentActivities.map((activity) => (
                   <div
                     key={activity.id}
-                    className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-[12px] transition-all ${
-                      activity.urgent
+                    className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-[12px] transition-all ${activity.urgent
                         ? 'bg-[#FFF4CC] border-2 border-[#FFD600]'
                         : 'bg-[#F8F9FD] border border-[rgba(30,21,72,0.08)]'
-                    }`}
+                      }`}
                   >
                     <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
                       {getActivityIcon(activity.type)}

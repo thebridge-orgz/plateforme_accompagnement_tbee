@@ -3,7 +3,7 @@ import { Navbar } from "../../components/Navbar";
 import { Footer } from "../../components/Footer";
 import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
 import { Link } from 'react-router-dom';
-import { ROUTES } from '../../router/routes';
+import { routes } from '../../router/routes';
 
 function Home() {
   return (
@@ -56,7 +56,7 @@ function Home() {
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 md:justify-center lg:justify-start">
-                <Link to={ROUTES.SignUp}>
+                <Link to={routes.SignUp.path}>
                   <button
                     className="w-full sm:w-auto px-3 sm:px-4 md:px-5 h-[44px] bg-[#FFD600] text-[#1E1548] rounded-lg font-medium hover:bg-[#FFD600]/90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD600] text-[12px] sm:text-[13px] md:text-[14px] flex items-center justify-center whitespace-nowrap"
                     style={{ fontWeight: 600 }}
@@ -64,7 +64,7 @@ function Home() {
                     Commencer gratuitement
                   </button>
                 </Link>
-                <Link to={`${ROUTES.Home}#services`} className="w-full sm:w-auto px-3 sm:px-4 md:px-5 h-[44px] border-2 border-[#E8ECFF] text-[#1E1548] rounded-lg font-medium hover:bg-[#E8ECFF]/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E1548] flex items-center justify-center text-[12px] sm:text-[13px] md:text-[14px] whitespace-nowrap"
+                <Link to={`${routes.Home.path}#services`} className="w-full sm:w-auto px-3 sm:px-4 md:px-5 h-[44px] border-2 border-[#E8ECFF] text-[#1E1548] rounded-lg font-medium hover:bg-[#E8ECFF]/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E1548] flex items-center justify-center text-[12px] sm:text-[13px] md:text-[14px] whitespace-nowrap"
                   style={{ fontWeight: 600 }}
                 >
                   Découvrir la plateforme
@@ -307,7 +307,7 @@ function Home() {
                 </div>
               </div>
 
-              <Link to={ROUTES.SignUp}>
+              <Link to={routes.SignUp.path}>
                 <button
                   className="px-5 sm:px-6 h-[44px] sm:h-[48px] bg-[#fdc700] text-[#364153] rounded-lg hover:bg-[#fdc700]/90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fdc700] w-full lg:w-auto lg:self-start text-[14px] sm:text-[16px] font-semibold"
                 >

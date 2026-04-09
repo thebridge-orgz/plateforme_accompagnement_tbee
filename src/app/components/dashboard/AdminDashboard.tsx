@@ -1,6 +1,8 @@
 import { Award, BookOpen, TrendingUp, Users, AlertTriangle, Clock } from 'lucide-react';
-import { StatCard } from './StatCard';
+import { StatCard } from '../../components/StatCard';
 import { useAuth } from '../../auth/AuthContext';
+import { routes } from '../../router/routes';
+import { Link } from 'react-router-dom';
 
 interface AdminDashboardProps {
     onNavigate: (page: string) => void;
@@ -65,70 +67,74 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                <button
-                                    onClick={() => onNavigate('/')}
-                                    className="bg-[#F8F9FD] hover:bg-[#E8ECFF] border-2 border-[rgba(30,21,72,0.08)] hover:border-[#FFD600] rounded-[12px] p-4 text-left transition-all group"
-                                >
-                                    <div className="flex items-start justify-between mb-2">
-                                        <p className="text-[14px] sm:text-[15px] font-semibold text-[#1E1548] leading-tight pr-2">
-                                            CVs en attente de validation
+                                <Link to={routes.AdminCvReview.path} className="block w-full">
+                                    <button
+                                        className="w-full bg-[#F8F9FD] hover:bg-[#E8ECFF] border-2 border-[rgba(30,21,72,0.08)] hover:border-[#FFD600] rounded-[12px] p-4 text-left transition-all group"
+                                    >
+                                        <div className="flex items-start justify-between mb-2">
+                                            <p className="text-[14px] sm:text-[15px] font-semibold text-[#1E1548] leading-tight pr-2">
+                                                CVs en attente de validation
+                                            </p>
+                                            <span className="w-8 h-8 rounded-full bg-[#EF4444] text-white text-[14px] font-bold flex items-center justify-center flex-shrink-0">
+                                                0
+                                            </span>
+                                        </div>
+                                        <p className="text-[12px] text-[#6B7280]">
+                                            Cliquer pour traiter →
                                         </p>
-                                        <span className="w-8 h-8 rounded-full bg-[#EF4444] text-white text-[14px] font-bold flex items-center justify-center flex-shrink-0">
-                                            0
-                                        </span>
-                                    </div>
-                                    <p className="text-[12px] text-[#6B7280]">
-                                        Cliquer pour traiter →
-                                    </p>
-                                </button>
-                                <button
-                                    onClick={() => onNavigate('/')}
-                                    className="bg-[#F8F9FD] hover:bg-[#E8ECFF] border-2 border-[rgba(30,21,72,0.08)] hover:border-[#FFD600] rounded-[12px] p-4 text-left transition-all group"
-                                >
-                                    <div className="flex items-start justify-between mb-2">
-                                        <p className="text-[14px] sm:text-[15px] font-semibold text-[#1E1548] leading-tight pr-2">
-                                            Exercices à corriger
+                                    </button>
+                                </Link>
+                                <Link to={routes.AdminExerciceReview.path} className="block w-full">
+                                    <button
+                                        className="w-full bg-[#F8F9FD] hover:bg-[#E8ECFF] border-2 border-[rgba(30,21,72,0.08)] hover:border-[#FFD600] rounded-[12px] p-4 text-left transition-all group"
+                                    >
+                                        <div className="flex items-start justify-between mb-2">
+                                            <p className="text-[14px] sm:text-[15px] font-semibold text-[#1E1548] leading-tight pr-2">
+                                                Exercices à corriger
+                                            </p>
+                                            <span className="w-8 h-8 rounded-full bg-[#EF4444] text-white text-[14px] font-bold flex items-center justify-center flex-shrink-0">
+                                                0
+                                            </span>
+                                        </div>
+                                        <p className="text-[12px] text-[#6B7280]">
+                                            Cliquer pour traiter →
                                         </p>
-                                        <span className="w-8 h-8 rounded-full bg-[#EF4444] text-white text-[14px] font-bold flex items-center justify-center flex-shrink-0">
-                                            0
-                                        </span>
-                                    </div>
-                                    <p className="text-[12px] text-[#6B7280]">
-                                        Cliquer pour traiter →
-                                    </p>
-                                </button>
-                                <button
-                                    onClick={() => onNavigate('/')}
-                                    className="bg-[#F8F9FD] hover:bg-[#E8ECFF] border-2 border-[rgba(30,21,72,0.08)] hover:border-[#FFD600] rounded-[12px] p-4 text-left transition-all group"
-                                >
-                                    <div className="flex items-start justify-between mb-2">
-                                        <p className="text-[14px] sm:text-[15px] font-semibold text-[#1E1548] leading-tight pr-2">
-                                            Demandes d'aide sur offres
+                                    </button>
+                                </Link>
+                                <Link to={routes.AdminOfferSupport.path} className="block w-full">
+                                    <button
+                                        className="w-full bg-[#F8F9FD] hover:bg-[#E8ECFF] border-2 border-[rgba(30,21,72,0.08)] hover:border-[#FFD600] rounded-[12px] p-4 text-left transition-all group"
+                                    >
+                                        <div className="flex items-start justify-between mb-2">
+                                            <p className="text-[14px] sm:text-[15px] font-semibold text-[#1E1548] leading-tight pr-2">
+                                                Demandes d'aide sur offres
+                                            </p>
+                                            <span className="w-8 h-8 rounded-full bg-[#EF4444] text-white text-[14px] font-bold flex items-center justify-center flex-shrink-0">
+                                                0
+                                            </span>
+                                        </div>
+                                        <p className="text-[12px] text-[#6B7280]">
+                                            Cliquer pour traiter →
                                         </p>
-                                        <span className="w-8 h-8 rounded-full bg-[#EF4444] text-white text-[14px] font-bold flex items-center justify-center flex-shrink-0">
-                                            0
-                                        </span>
-                                    </div>
-                                    <p className="text-[12px] text-[#6B7280]">
-                                        Cliquer pour traiter →
-                                    </p>
-                                </button>
-                                <button
-                                    onClick={() => onNavigate('/')}
-                                    className="bg-[#F8F9FD] hover:bg-[#E8ECFF] border-2 border-[rgba(30,21,72,0.08)] hover:border-[#FFD600] rounded-[12px] p-4 text-left transition-all group"
-                                >
-                                    <div className="flex items-start justify-between mb-2">
-                                        <p className="text-[14px] sm:text-[15px] font-semibold text-[#1E1548] leading-tight pr-2">
-                                            Étudiants inactifs (+7j)
+                                    </button>
+                                </Link>
+                                <Link to={routes.AdminTracking.path} className="block w-full">
+                                    <button
+                                        className="w-full bg-[#F8F9FD] hover:bg-[#E8ECFF] border-2 border-[rgba(30,21,72,0.08)] hover:border-[#FFD600] rounded-[12px] p-4 text-left transition-all group"
+                                    >
+                                        <div className="flex items-start justify-between mb-2">
+                                            <p className="text-[14px] sm:text-[15px] font-semibold text-[#1E1548] leading-tight pr-2">
+                                                Étudiants inactifs (+7j)
+                                            </p>
+                                            <span className="w-8 h-8 rounded-full bg-[#EF4444] text-white text-[14px] font-bold flex items-center justify-center flex-shrink-0">
+                                                0
+                                            </span>
+                                        </div>
+                                        <p className="text-[12px] text-[#6B7280]">
+                                            Cliquer pour traiter →
                                         </p>
-                                        <span className="w-8 h-8 rounded-full bg-[#EF4444] text-white text-[14px] font-bold flex items-center justify-center flex-shrink-0">
-                                            0
-                                        </span>
-                                    </div>
-                                    <p className="text-[12px] text-[#6B7280]">
-                                        Cliquer pour traiter →
-                                    </p>
-                                </button>
+                                    </button>
+                                </Link>
                             </div>
                         </div>
 
@@ -177,12 +183,14 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                                 ))}
                             </div>*/}
 
-                            <button
-                                onClick={() => onNavigate('admin-tracking')}
-                                className="w-full mt-4 h-12 bg-white border-2 border-[#1E1548] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#1E1548] hover:text-white transition-all"
-                            >
-                                Voir toutes les activités
-                            </button>
+
+                            <Link to={routes.AdminTracking.path}>
+                                <button
+                                    className="w-full mt-4 h-12 bg-white border-2 border-[#1E1548] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#1E1548] hover:text-white transition-all"
+                                >
+                                    Voir toutes les activités
+                                </button>
+                            </Link>
                         </div>
                     </div>
 
@@ -192,49 +200,56 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                                 Actions rapides
                             </h3>
                             <div className="space-y-3">
-                                <button
-                                    onClick={() => onNavigate('/')}
-                                    className="w-full h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#FDC700] transition-all flex items-center justify-between px-4"
-                                >
-                                    <span>📄 Valider les CVs</span>
-                                    <span className="w-6 h-6 rounded-full bg-[#1E1548] text-white text-[12px] font-bold flex items-center justify-center">
-                                        0
-                                    </span>
-                                </button>
+                                <Link to={routes.AdminCvReview.path} className="block w-full">
+                                    <button
+                                        className="w-full h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#FDC700] transition-all flex items-center justify-between px-4"
+                                    >
+                                        <span>📄 Valider les CVs</span>
+                                        <span className="w-6 h-6 rounded-full bg-[#1E1548] text-white text-[12px] font-bold flex items-center justify-center">
+                                            0
+                                        </span>
+                                    </button>
+                                </Link>
 
-                                <button
-                                    onClick={() => onNavigate('/')}
-                                    className="w-full h-12 bg-white border-2 border-[#E8ECFF] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#E8ECFF] transition-all flex items-center justify-between px-4"
-                                >
-                                    <span>✏️ Corriger exercices</span>
-                                    <span className="w-6 h-6 rounded-full bg-[#FFD600] text-[#1E1548] text-[12px] font-bold flex items-center justify-center">
-                                        0
-                                    </span>
-                                </button>
 
-                                <button
-                                    onClick={() => onNavigate('/')}
-                                    className="w-full h-12 bg-white border-2 border-[#E8ECFF] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#E8ECFF] transition-all flex items-center justify-between px-4"
-                                >
-                                    <span>💼 Suivi des offres</span>
-                                    <span className="w-6 h-6 rounded-full bg-[#1E1548] text-white text-[12px] font-bold flex items-center justify-center">
-                                        0
-                                    </span>
-                                </button>
+                                <Link to={routes.AdminExerciceReview.path} className="block w-full">
+                                    <button
+                                        className="w-full h-12 bg-white border-2 border-[#E8ECFF] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#E8ECFF] transition-all flex items-center justify-between px-4"
+                                    >
+                                        <span>✏️ Corriger exercices</span>
+                                        <span className="w-6 h-6 rounded-full bg-[#FFD600] text-[#1E1548] text-[12px] font-bold flex items-center justify-center">
+                                            0
+                                        </span>
+                                    </button>
+                                </Link>
 
-                                <button
-                                    onClick={() => onNavigate('/')}
-                                    className="w-full h-12 bg-white border-2 border-[#E8ECFF] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#E8ECFF] transition-all flex items-center justify-center px-4"
-                                >
-                                    👥 Tous les étudiants
-                                </button>
 
-                                <button
-                                    onClick={() => onNavigate('/')}
-                                    className="w-full h-12 bg-white border-2 border-[#E8ECFF] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#E8ECFF] transition-all flex items-center justify-center px-4"
-                                >
-                                    ⚙️ Paramètres
-                                </button>
+                                <Link to={routes.AdminOfferSupport.path} className="block w-full">
+                                    <button
+                                        className="w-full h-12 bg-white border-2 border-[#E8ECFF] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#E8ECFF] transition-all flex items-center justify-between px-4"
+                                    >
+                                        <span>💼 Suivi des offres</span>
+                                        <span className="w-6 h-6 rounded-full bg-[#1E1548] text-white text-[12px] font-bold flex items-center justify-center">
+                                            0
+                                        </span>
+                                    </button>
+                                </Link>
+
+                                <Link to={routes.AdminTracking.path} className="block w-full">
+                                    <button
+                                        className="w-full h-12 bg-white border-2 border-[#E8ECFF] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#E8ECFF] transition-all flex items-center justify-center px-4"
+                                    >
+                                        👥 Tous les étudiants
+                                    </button>
+                                </Link>
+
+                                <Link to={routes.AdminSettings.path} className="block w-full">
+                                    <button
+                                        className="w-full h-12 bg-white border-2 border-[#E8ECFF] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#E8ECFF] transition-all flex items-center justify-center px-4"
+                                    >
+                                        ⚙️ Paramètres
+                                    </button>
+                                </Link>
                             </div>
                         </div>
 
@@ -299,12 +314,13 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                                     </p>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => onNavigate('/')}
-                                className="w-full h-10 bg-white border-2 border-[#EF4444] text-[#EF4444] rounded-[10px] text-[14px] font-semibold hover:bg-[#EF4444] hover:text-white transition-all"
-                            >
-                                Voir les détails
-                            </button>
+                            <Link to={routes.AdminTracking.path}>
+                                <button
+                                    className="w-full h-10 bg-white border-2 border-[#EF4444] text-[#EF4444] rounded-[10px] text-[14px] font-semibold hover:bg-[#EF4444] hover:text-white transition-all"
+                                >
+                                    Voir les détails
+                                </button>
+                            </Link>
                         </div>
 
                     </div>

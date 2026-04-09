@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { ArrowLeft, TrendingUp, Clock, Award, MessageSquare, Calendar, FileText } from 'lucide-react';
 import { Button } from './Button';
-import { ProgressBar } from './ProgressBar';
+import { ProgressBar } from '../components/ui/ProgressBar';
 import { StatCard } from './StatCard';
+import { Link } from 'react-router-dom';
+import { routes } from '../router/routes';
 
 interface studentTrackingPageProps {
   onNavigate: (page: string) => void;
@@ -37,7 +39,7 @@ const studentData = {
   notes: []
 };
 
-export function studentTrackingPage({ onNavigate }: studentTrackingPageProps) {
+export function StudentTrackingPage({ onNavigate }: studentTrackingPageProps) {
   const [newNote, setNewNote] = useState('');
   const student = studentData;
 
@@ -76,13 +78,14 @@ export function studentTrackingPage({ onNavigate }: studentTrackingPageProps) {
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <button
-            onClick={() => onNavigate('admin-dashboard')}
-            className="w-10 h-10 rounded-full hover:bg-secondary flex items-center justify-center transition-colors self-start"
-            aria-label="Retour"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
+          <Link to={routes.AdminDashboard.path}>
+            <button
+              className="w-10 h-10 rounded-full hover:bg-secondary flex items-center justify-center transition-colors self-start"
+              aria-label="Retour"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          </Link>
           <div className="flex-1">
             <h2>Suivi de {student.name}</h2>
             <p className="text-muted-foreground">

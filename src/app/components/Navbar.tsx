@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ROUTES } from '..//router/routes';
+import { routes } from '..//router/routes';
 import { useAuth } from '../auth/AuthContext';
 import { useState, useRef, useEffect } from 'react';
 import { User, LogOut, ChevronDown } from 'lucide-react';
@@ -17,7 +17,7 @@ export function Navbar() {
 
     if (!user && !loading && isSigningOut) {
       console.log('User signed out, redirecting to home');
-      navigate(ROUTES.Home);
+      navigate(routes.Home.path);
       setIsSigningOut(false);
     }
   }, [user, loading, navigate, isSigningOut]);
@@ -58,9 +58,9 @@ export function Navbar() {
 
   const handleDashboardNavigation = () => {
     if (user?.role === 'admin') {
-      navigate(ROUTES.AdminDashboard);
+      navigate(routes.AdminDashboard.path);
     } else {
-      navigate(ROUTES.studentDashboard);
+      navigate(routes.StudentDashboard.path);
     }
     setIsMenuOpen(false);
   };
@@ -71,7 +71,7 @@ export function Navbar() {
       <nav className="w-full bg-white sticky top-0 z-50">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-[50px]">
           <div className="flex items-center justify-between h-[56px] sm:h-[64px] gap-2 sm:gap-4">
-            <Link to={ROUTES.Home}>
+            <Link to={routes.Home.path}>
               <button
                 className="flex items-center gap-[6px] sm:gap-[8px] group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E1548] rounded-[12px] shrink-0 h-[28px] sm:h-[32px]"
                 aria-label="Retour à l'accueil"
@@ -96,7 +96,7 @@ export function Navbar() {
     <nav className="w-full bg-white sticky top-0 z-50">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-[50px]">
         <div className="flex items-center justify-between h-[56px] sm:h-[64px] gap-2 sm:gap-4">
-          <Link to={ROUTES.Home}>
+          <Link to={routes.Home.path}>
             <button
               className="flex items-center gap-[6px] sm:gap-[8px] group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E1548] rounded-[12px] shrink-0 h-[28px] sm:h-[32px]"
               aria-label="Retour à l'accueil"
@@ -111,7 +111,7 @@ export function Navbar() {
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {!user ? (
               <>
-                <Link to={ROUTES.SignIn}>
+                <Link to={routes.SignIn.path}>
                   <button
                     className="px-3 sm:px-4 md:px-5 h-[36px] sm:h-[40px] md:h-[44px] rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1E1548] font-bold border-2 border-[#E8ECFF] hover:bg-[#E8ECFF]/50 text-[12px] sm:text-[13px] md:text-[14px]"
                     style={{ color: '#364153' }}
@@ -120,7 +120,7 @@ export function Navbar() {
                     <span className="sm:hidden">Connexion</span>
                   </button>
                 </Link>
-                <Link to={ROUTES.SignUp}>
+                <Link to={routes.SignUp.path}>
                   <button
                     className="px-3 sm:px-4 md:px-5 h-[36px] sm:h-[40px] md:h-[44px] bg-[#FDC700] rounded-lg hover:bg-[#FDC700]/90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FDC700] font-bold text-[12px] sm:text-[13px] md:text-[14px]"
                     style={{ color: '#364153' }}

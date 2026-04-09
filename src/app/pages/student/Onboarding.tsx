@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '../../router/routes';
+import { routes } from '../../router/routes';
 import { OnboardingStep1 } from '../../components/onboarding/OnboardingStep1';
 import { OnboardingStep2 } from '../../components/onboarding/OnboardingStep2';
 import { Navbar } from '../../components/Navbar';
@@ -15,9 +15,9 @@ function Onboarding() {
     useEffect(() => {
         if (!loading) {
             if (!user) {
-                navigate(ROUTES.SignIn, { replace: true });
+                navigate(routes.SignIn.path, { replace: true });
             } else if (user.onboardingCompleted) {
-                navigate(ROUTES.studentDashboard, { replace: true });
+                navigate(routes.StudentDashboard.path, { replace: true });
             }
         }
     }, [user, loading, navigate]);
@@ -49,7 +49,7 @@ function Onboarding() {
             await saveOnboarding(onboardingData);
 
             // Rediriger vers le dashboard
-            navigate(ROUTES.studentDashboard);
+            navigate(routes.StudentDashboard.path);
         } catch (error) {
             console.error('Error completing onboarding:', error);
         }

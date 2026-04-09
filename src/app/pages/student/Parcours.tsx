@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import StudentLayout from '../../layouts/studentLayout';
 import { StudentJourneyPage } from './studentJourneyPage';
+import { routes } from '../../router/routes';
 
 export default function ParcoursPage() {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ export default function ParcoursPage() {
   };
 
   return (
-    <StudentLayout currentPage="student-modules">
+    <StudentLayout currentPage={routes.StudentModules.path}>
       <StudentJourneyPage onNavigate={handleNavigate} />
     </StudentLayout>
   );

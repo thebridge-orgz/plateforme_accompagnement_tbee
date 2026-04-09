@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import StudentLayout from '../../layouts/studentLayout';
 import { CVUploadPage } from '../../components/CVUploadPage';
+import { routes } from '../../router/routes';
 
 export default function CvPage() {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ export default function CvPage() {
   };
 
   return (
-    <StudentLayout currentPage="student-cv">
+    <StudentLayout currentPage={routes.StudentCv.path}>
       <CVUploadPage onNavigate={handleNavigate} />
     </StudentLayout>
   );

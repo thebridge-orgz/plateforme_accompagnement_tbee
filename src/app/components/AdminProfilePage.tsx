@@ -1,5 +1,7 @@
 import { ArrowLeft, User, Mail, Building, Shield, Edit2, Save, X } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { routes } from '../router/routes';
 
 interface AdminProfilePageProps {
   onNavigate: (page: string) => void;
@@ -46,13 +48,14 @@ export function AdminProfilePage({ onNavigate, userName, authEmail, authFirstNam
       <div className="bg-white border-b border-[rgba(30,21,72,0.08)] sticky top-0 z-30">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex items-start gap-3 sm:gap-6">
-            <button
-              onClick={() => onNavigate('admin-dashboard')}
-              className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
-              aria-label="Retour"
-            >
-              <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
-            </button>
+            <Link to={routes.AdminDashboard.path}>
+              <button
+                className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
+                aria-label="Retour"
+              >
+                <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
+              </button>
+            </Link>
             <div className="flex-1 min-w-0">
               <h1 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold leading-tight text-[#1E1548] mb-1 sm:mb-2">
                 Mon profil administrateur

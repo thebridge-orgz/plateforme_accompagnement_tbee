@@ -1,6 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import { Link } from 'react-router-dom';
-import { ROUTES } from '../../router/routes';
+import { routes } from '../../router/routes';
 import { Footer } from "../../components/Footer";
 
 function LegalNotice() {
@@ -9,7 +9,7 @@ function LegalNotice() {
             {/* Header */}
             <div className="w-full border-b border-[#E5E7EB]">
                 <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-24 py-4 sm:py-6">
-                    <Link to={ROUTES.Home}>
+                    <Link to={routes.Home.path}>
                         <button
                             className="flex items-center gap-2 text-[#1E1548] hover:text-[#1E1548]/80 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD600] rounded px-2 sm:px-3 py-2"
                             style={{ fontSize: '13px', fontWeight: 500 }}>
@@ -97,7 +97,7 @@ function LegalNotice() {
                             </p>
                             <p className="text-[14px] sm:text-[16px] leading-[22px] sm:leading-[26px] text-[#6B7280]">
                                 Pour plus d'informations sur la gestion de vos données personnelles, consultez notre{" "}
-                                <Link to={ROUTES.PrivacyPolicy} className="text-[#155dfc] hover:underline"
+                                <Link to={routes.PrivacyPolicy.path} className="text-[#155dfc] hover:underline"
                                     style={{ fontWeight: 500 }}
                                 >
                                     Politique de confidentialité

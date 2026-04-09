@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ROUTES } from '../router/routes';
+import { routes } from '../router/routes';
 import { Home as HomeIcon, ArrowLeft } from "lucide-react";
 
 function NotFound() {
@@ -27,7 +27,7 @@ function NotFound() {
 
                         {/* Action Buttons */}
                         <div className="flex flex-col sm:flex-row gap-4">
-                            <Link to={ROUTES.Home}>
+                            <Link to={routes.Home.path}>
                                 <button
                                     className="px-6 sm:px-8 h-[48px] bg-[#FFD600] text-[#1E1548] rounded-lg font-semibold hover:bg-[#FFD600]/90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD600] flex items-center justify-center gap-2 text-[14px] sm:text-[16px] w-full sm:w-auto"
                                 >

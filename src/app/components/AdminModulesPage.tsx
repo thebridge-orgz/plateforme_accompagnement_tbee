@@ -1,6 +1,8 @@
 import { ArrowLeft, FileText, Plus, X, Calendar, BookOpen, Target } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from './Button';
+import { Link } from 'react-router-dom';
+import { routes } from '../router/routes';
 
 interface AdminModulesPageProps {
   onNavigate: (page: string) => void;
@@ -20,55 +22,55 @@ interface Module {
 
 export function AdminModulesPage({ onNavigate }: AdminModulesPageProps) {
   const [modules, setModules] = useState<Module[]>([
-    { 
+    {
       id: '1',
-      name: 'Rédiger son CV', 
-      status: 'Publié', 
-      users: 245, 
+      name: 'Rédiger son CV',
+      status: 'Publié',
+      users: 245,
       completion: 85,
       description: 'Apprenez à créer un CV professionnel et attractif',
       thematic: 'CV et candidature',
       week: 'Semaine 1',
       order: 1
     },
-    { 
+    {
       id: '2',
-      name: 'Préparer son entretien', 
-      status: 'Publié', 
-      users: 218, 
+      name: 'Préparer son entretien',
+      status: 'Publié',
+      users: 218,
       completion: 72,
       description: 'Maîtrisez les techniques d\'entretien d\'embauche',
       thematic: 'Entretien',
       week: 'Semaine 2',
       order: 1
     },
-    { 
+    {
       id: '3',
-      name: 'Comprendre l\'alternance', 
-      status: 'Publié', 
-      users: 198, 
+      name: 'Comprendre l\'alternance',
+      status: 'Publié',
+      users: 198,
       completion: 68,
       description: 'Découvrez le fonctionnement de l\'alternance',
       thematic: 'Alternance',
       week: 'Semaine 1',
       order: 2
     },
-    { 
+    {
       id: '4',
-      name: 'Rechercher son entreprise', 
-      status: 'Brouillon', 
-      users: 0, 
+      name: 'Rechercher son entreprise',
+      status: 'Brouillon',
+      users: 0,
       completion: 0,
       description: 'Stratégies pour trouver votre entreprise d\'alternance',
       thematic: 'Recherche d\'emploi',
       week: 'Semaine 3',
       order: 1
     },
-    { 
+    {
       id: '5',
-      name: 'Postuler efficacement', 
-      status: 'Brouillon', 
-      users: 0, 
+      name: 'Postuler efficacement',
+      status: 'Brouillon',
+      users: 0,
       completion: 0,
       description: 'Optimisez vos candidatures et démarquez-vous',
       thematic: 'CV et candidature',
@@ -139,7 +141,7 @@ export function AdminModulesPage({ onNavigate }: AdminModulesPageProps) {
   };
 
   const handlePublishModule = (moduleId: string) => {
-    setModules(modules.map(m => 
+    setModules(modules.map(m =>
       m.id === moduleId ? { ...m, status: 'Publié' as const } : m
     ));
   };
@@ -150,13 +152,14 @@ export function AdminModulesPage({ onNavigate }: AdminModulesPageProps) {
       <div className="bg-white border-b border-[rgba(30,21,72,0.08)] sticky top-0 z-30">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex items-start gap-3 sm:gap-6">
-            <button
-              onClick={() => onNavigate('admin-dashboard')}
-              className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
-              aria-label="Retour"
-            >
-              <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
-            </button>
+            <Link to={routes.AdminDashboard.path}>
+              <button
+                className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
+                aria-label="Retour"
+              >
+                <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
+              </button>
+            </Link>
             <div className="flex-1 min-w-0">
               <h1 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold leading-tight text-[#1E1548] mb-1 sm:mb-2">
                 Gestion des modules
@@ -181,8 +184,8 @@ export function AdminModulesPage({ onNavigate }: AdminModulesPageProps) {
         {/* Modules List */}
         <div className="space-y-4">
           {modules.map((module, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[16px] p-4 sm:p-6 shadow-[0_2px_8px_rgba(30,21,72,0.04)] hover:shadow-[0_4px_12px_rgba(30,21,72,0.08)] transition-shadow"
             >
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -192,18 +195,17 @@ export function AdminModulesPage({ onNavigate }: AdminModulesPageProps) {
                     <h3 className="text-[18px] sm:text-[20px] font-bold text-[#1E1548]">
                       {module.name}
                     </h3>
-                    <span className={`px-3 py-1 rounded-full text-[12px] font-semibold flex-shrink-0 ${
-                      module.status === 'Publié' 
-                        ? 'bg-[#F0FDF4] text-[#10B981]' 
-                        : 'bg-[#FFF4CC] text-[#B45309]'
-                    }`}>
+                    <span className={`px-3 py-1 rounded-full text-[12px] font-semibold flex-shrink-0 ${module.status === 'Publié'
+                      ? 'bg-[#F0FDF4] text-[#10B981]'
+                      : 'bg-[#FFF4CC] text-[#B45309]'
+                      }`}>
                       {module.status}
                     </span>
                   </div>
                   <p className="text-[14px] text-[#6B7280] mb-3">
                     {module.description}
                   </p>
-                  
+
                   {/* Module Organization Info */}
                   <div className="flex flex-wrap gap-4 mb-4 pb-3 border-b border-[rgba(30,21,72,0.06)]">
                     <div className="flex items-center gap-2 text-[13px]">
@@ -219,7 +221,7 @@ export function AdminModulesPage({ onNavigate }: AdminModulesPageProps) {
                       <span className="text-[#1E1548] font-medium">Position {module.order}</span>
                     </div>
                   </div>
-                  
+
                   <div className="flex flex-wrap gap-6 text-[14px] text-[#6B7280]">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-[#1E1548]">{module.users}</span>
@@ -298,7 +300,7 @@ export function AdminModulesPage({ onNavigate }: AdminModulesPageProps) {
                     <FileText className="w-4 h-4 text-[#FFD600]" />
                     Informations générales
                   </h3>
-                  
+
                   <div>
                     <label className="block text-[13px] sm:text-[14px] font-semibold text-[#1E1548] mb-2">
                       Nom du module <span className="text-red-500">*</span>

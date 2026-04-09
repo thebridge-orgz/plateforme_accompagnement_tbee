@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom';
-import { AdminDashboard } from '../../components/dashboard/AdminDashboard';
+import { AdminModulesPage } from '../../components/AdminModulesPage';
 import AdminLayout from '../../layouts/AdminLayout';
 import { routes } from '../../router/routes';
 
-export default function DashboardPage() {
+export default function Modules() {
     const navigate = useNavigate();
     //console.log(`Routes : ${JSON.stringify(routes, null, 2)}`);
 
@@ -25,8 +25,8 @@ export default function DashboardPage() {
     };
 
     return (
-        <AdminLayout currentPage={routes.AdminDashboard.path}>
-            <AdminDashboard onNavigate={handleNavigate} />
+        <AdminLayout currentPage={routes.AdminModules.path}>
+            <AdminModulesPage onNavigate={handleNavigate} />
         </AdminLayout>
     );
 }
