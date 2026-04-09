@@ -6,7 +6,7 @@
 
 // -------------------- USER --------------------
 
-export type UserRole = 'candidate' | 'admin';
+export type UserRole = 'student' | 'admin';
 
 export interface UserProfile {
   id: string;

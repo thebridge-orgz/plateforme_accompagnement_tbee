@@ -24,7 +24,7 @@ function SignUp() {
             if (user.role === 'admin') {
                 navigate(ROUTES.AdminDashboard, { replace: true });
             } else {
-                navigate(ROUTES.StudentDashboard, { replace: true });
+                navigate(ROUTES.studentDashboard, { replace: true });
             }
         }
     }, [user, navigate]);

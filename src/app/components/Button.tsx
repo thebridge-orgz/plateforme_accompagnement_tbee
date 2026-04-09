@@ -15,7 +15,7 @@ export function Button({
   className = "",
   ...props 
 }: ButtonProps) {
-  const baseClasses = "rounded-xl font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+  const baseClasses = "inline-flex items-center justify-center rounded-xl font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-ring";
   
   const variantClasses = {
     primary: "bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105",

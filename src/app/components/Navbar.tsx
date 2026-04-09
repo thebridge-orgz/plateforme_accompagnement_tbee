@@ -60,7 +60,7 @@ export function Navbar() {
     if (user?.role === 'admin') {
       navigate(ROUTES.AdminDashboard);
     } else {
-      navigate(ROUTES.StudentDashboard);
+      navigate(ROUTES.studentDashboard);
     }
     setIsMenuOpen(false);
   };

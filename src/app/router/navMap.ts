@@ -1,5 +1,5 @@
 export const navIdToPath: Record<string, string> = {
-  // Student
+  // student
   'student-dashboard': '/student/dashboard',
   'student-modules': '/student/parcours',
   'student-journey': '/student/parcours',

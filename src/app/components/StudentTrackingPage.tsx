@@ -4,7 +4,7 @@ import { Button } from './Button';
 import { ProgressBar } from './ProgressBar';
 import { StatCard } from './StatCard';
 
-interface StudentTrackingPageProps {
+interface studentTrackingPageProps {
   onNavigate: (page: string) => void;
 }
 
@@ -37,7 +37,7 @@ const studentData = {
   notes: []
 };
 
-export function StudentTrackingPage({ onNavigate }: StudentTrackingPageProps) {
+export function studentTrackingPage({ onNavigate }: studentTrackingPageProps) {
   const [newNote, setNewNote] = useState('');
   const student = studentData;
 
@@ -95,7 +95,7 @@ export function StudentTrackingPage({ onNavigate }: StudentTrackingPageProps) {
           </Button>
         </div>
 
-        {/* Student Info Card */}
+        {/* student Info Card */}
         <div className="bg-gradient-to-br from-primary/10 to-secondary rounded-2xl p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div>

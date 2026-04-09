@@ -17,7 +17,7 @@ function Onboarding() {
             if (!user) {
                 navigate(ROUTES.SignIn, { replace: true });
             } else if (user.onboardingCompleted) {
-                navigate(ROUTES.StudentDashboard, { replace: true });
+                navigate(ROUTES.studentDashboard, { replace: true });
             }
         }
     }, [user, loading, navigate]);
@@ -49,7 +49,7 @@ function Onboarding() {
             await saveOnboarding(onboardingData);
 
             // Rediriger vers le dashboard
-            navigate(ROUTES.StudentDashboard);
+            navigate(ROUTES.studentDashboard);
         } catch (error) {
             console.error('Error completing onboarding:', error);
         }

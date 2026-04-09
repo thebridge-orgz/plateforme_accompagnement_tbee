@@ -16,9 +16,17 @@ import SignIn from './app/pages/public/SignIn';
 import NotFound from './app/pages/NotFound';
 
 // Pages protégées
-import StudentDashboard from './app/pages/student/Dashboard';
+import DashboardPage from './app/pages/student/Dashboard';
 import AdminDashboard from './app/pages/admin/Dashboard';
 import Onboarding from './app/pages/student/Onboarding';
+
+// nouveaux wrappers pour les sections étudiantes
+import ParcoursPage from './app/pages/student/Parcours';
+import CvPage from './app/pages/student/CvPage';
+import OffersPage from './app/pages/student/OffersPage';
+import PracticalCasePageWrapper from './app/pages/student/PracticalCasePageWrapper';
+import ProfilePageWrapper from './app/pages/student/ProfilePageWrapper';
+import ModulePageWrapper from './app/pages/student/ModulePageWrapper';
 
 function App() {
   const location = useLocation();
@@ -64,11 +72,71 @@ function App() {
 
         {/* Route dashboard étudiant */}
         <Route
-          path={ROUTES.StudentDashboard}
+          path={ROUTES.studentDashboard}
           element={
             <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
               <UserDataProvider>
-                <StudentDashboard />
+                <DashboardPage />
+              </UserDataProvider>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* routes secondaires étudiant */}
+        <Route
+          path="/student/parcours"
+          element={
+            <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
+              <UserDataProvider>
+                <ParcoursPage />
+              </UserDataProvider>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/cv"
+          element={
+            <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
+              <UserDataProvider>
+                <CvPage />
+              </UserDataProvider>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/offres"
+          element={
+            <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
+              <UserDataProvider>
+                <OffersPage />
+              </UserDataProvider>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/cas-pratiques"
+          element={
+            <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
+              <UserDataProvider>
+                <PracticalCasePageWrapper />
+              </UserDataProvider>
+            </ProtectedRoute>
+          }
+        />
+        <Route          path="/student/modules/:moduleId"
+          element={
+            <ProtectedRoute allowedRoles={["student"]} requireOnboarding={true}>
+              <UserDataProvider>
+                <ModulePageWrapper />
+              </UserDataProvider>
+            </ProtectedRoute>
+          }
+        />
+        <Route          path="/student/profil"
+          element={
+            <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
+              <UserDataProvider>
+                <ProfilePageWrapper />
               </UserDataProvider>
             </ProtectedRoute>
           }

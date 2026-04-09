@@ -1,22 +1,16 @@
 /**
  * CONTEXTE ADMIN - Données partagées entre tous les comptes admin
- * 
- * Ce contexte centralise toutes les données des candidats pour permettre
- * aux administrateurs de suivre, corriger, et accompagner chaque candidat.
- * 
- * TODO SUPABASE:
- * - Remplacer localStorage par des appels Supabase en temps réel
- * - Utiliser les Realtime Subscriptions pour la synchronisation
- * - Implémenter les RLS (Row Level Security) policies
+ * Connecté à Supabase avec Realtime pour la synchronisation en temps réel.
  */
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { supabase } from '../app/auth/supabaseClient';
 
 // ============================================
 // TYPES & INTERFACES
 // ============================================
 
-export interface CandidateProfile {
+export interface studentProfile {
   id: string;
   firstName: string;
   lastName: string;
@@ -36,8 +30,8 @@ export interface CandidateProfile {
   lastActiveAt: string;
 }
 
-export interface CandidateStatistics {
-  candidateId: string;
+export interface studentStatistics {
+  studentId: string;
   totalLessonsCompleted: number;
   totalTimeSpentMinutes: number;
   currentStreakDays: number;
@@ -53,8 +47,8 @@ export interface CandidateStatistics {
 
 export interface CVSubmission {
   id: string;
-  candidateId: string;
-  candidateName: string;
+  studentId: string;
+  studentName: string;
   fileUrl: string;
   fileName: string;
   submittedAt: string;
@@ -67,8 +61,8 @@ export interface CVSubmission {
 
 export interface ExerciseSubmission {
   id: string;
-  candidateId: string;
-  candidateName: string;
+  studentId: string;
+  studentName: string;
   moduleId: string;
   moduleName: string;
   exerciseType: 'practical_case' | 'quiz' | 'simulation';
@@ -84,8 +78,8 @@ export interface ExerciseSubmission {
 
 export interface OfferTracking {
   id: string;
-  candidateId: string;
-  candidateName: string;
+  studentId: string;
+  studentName: string;
   company: string;
   position: string;
   status: 'saved' | 'applied' | 'interview' | 'offer_received' | 'rejected' | 'accepted';
@@ -100,8 +94,8 @@ export interface OfferTracking {
 export interface AdminActivity {
   id: string;
   type: 'cv_submitted' | 'exercise_completed' | 'offer_help' | 'progress' | 'login' | 'module_completed';
-  candidateId: string;
-  candidateName: string;
+  studentId: string;
+  studentName: string;
   message: string;
   timestamp: string;
   urgent: boolean;
@@ -109,215 +103,424 @@ export interface AdminActivity {
 }
 
 interface AdminDataContextType {
-  // Candidats
-  candidates: CandidateProfile[];
-  candidateStats: Map<string, CandidateStatistics>;
-  
-  // CVs
+  students: studentProfile[];
+  studentStats: Map<string, studentStatistics>;
   cvSubmissions: CVSubmission[];
-  
-  // Exercices
   exerciseSubmissions: ExerciseSubmission[];
-  
-  // Suivi des offres
   offerTrackings: OfferTracking[];
-  
-  // Activités récentes
   recentActivities: AdminActivity[];
-  
-  // Statistiques globales
+  isLoading: boolean;
   globalStats: {
-    totalCandidates: number;
-    activeCandidates: number;
+    totalstudents: number;
+    activestudents: number;
     pendingCVs: number;
     pendingExercises: number;
     offersNeedingHelp: number;
     averageProgress: number;
     completionRate: number;
   };
-  
-  // Actions
-  loadAllData: () => void;
-  reviewCV: (cvId: string, status: CVSubmission['status'], feedback: string, score?: number) => void;
-  gradeExercise: (exerciseId: string, score: number, feedback: string) => void;
-  updateOfferTracking: (offerId: string, updates: Partial<OfferTracking>) => void;
-  getCandidateById: (candidateId: string) => CandidateProfile | undefined;
-  getCandidateStats: (candidateId: string) => CandidateStatistics | undefined;
+  loadAllData: () => Promise<void>;
+  reviewCV: (cvId: string, status: CVSubmission['status'], feedback: string, score?: number) => Promise<void>;
+  gradeExercise: (exerciseId: string, score: number, feedback: string) => Promise<void>;
+  updateOfferTracking: (offerId: string, updates: Partial<OfferTracking>) => Promise<void>;
+  getstudentById: (studentId: string) => studentProfile | undefined;
+  getstudentStats: (studentId: string) => studentStatistics | undefined;
 }
 
 const AdminDataContext = createContext<AdminDataContextType | undefined>(undefined);
+
+// ============================================
+// MAPPERS
+// ============================================
+
+function mapStudent(raw: any): studentProfile {
+  return {
+    id: raw.id,
+    firstName: raw.first_name ?? '',
+    lastName: raw.last_name ?? '',
+    email: raw.email ?? '',
+    phone: raw.phone ?? '',
+    birthDate: raw.birth_date ?? '',
+    city: raw.city ?? '',
+    postalCode: raw.postal_code ?? '',
+    currentLevel: raw.current_level ?? '',
+    targetLevel: raw.target_level ?? '',
+    fieldOfInterest: raw.field_of_interest ?? '',
+    mobilityRadius: raw.mobility_radius ?? null,
+    hasRQTH: raw.has_rqth ?? false,
+    profilePictureUrl: raw.profile_picture_url,
+    createdAt: raw.created_at ?? '',
+    lastActiveAt: raw.updated_at ?? raw.created_at ?? '',
+  };
+}
+
+function mapCVSubmission(raw: any, studentName: string): CVSubmission {
+  return {
+    id: raw.id,
+    studentId: raw.user_id,
+    studentName,
+    fileUrl: raw.file_url ?? '',
+    fileName: raw.file_name ?? '',
+    submittedAt: raw.uploaded_at ?? raw.updated_at ?? '',
+    status: raw.status === 'uploaded' ? 'pending' : raw.status,
+    reviewedBy: raw.reviewed_by,
+    reviewedAt: raw.reviewed_at,
+    feedback: raw.admin_feedback,
+    score: raw.score,
+  };
+}
+
+function mapOfferTracking(raw: any, studentName: string): OfferTracking {
+  return {
+    id: raw.id,
+    studentId: raw.user_id,
+    studentName,
+    company: raw.company_name ?? raw.offer_id ?? '',
+    position: raw.position ?? '',
+    status: raw.application_status ?? 'saved',
+    applicationDate: raw.application_date,
+    interviewDate: raw.interview_date,
+    needsHelp: raw.needs_help ?? false,
+    helpRequest: raw.help_request,
+    notes: raw.user_notes,
+    lastUpdated: raw.updated_at ?? '',
+  };
+}
 
 // ============================================
 // PROVIDER
 // ============================================
 
 export function AdminDataProvider({ children }: { children: ReactNode }) {
-  const [candidates, setCandidates] = useState<CandidateProfile[]>([]);
-  const [candidateStats, setCandidateStats] = useState<Map<string, CandidateStatistics>>(new Map());
+  const [students, setstudents] = useState<studentProfile[]>([]);
+  const [studentStats, setstudentStats] = useState<Map<string, studentStatistics>>(new Map());
   const [cvSubmissions, setCVSubmissions] = useState<CVSubmission[]>([]);
   const [exerciseSubmissions, setExerciseSubmissions] = useState<ExerciseSubmission[]>([]);
   const [offerTrackings, setOfferTrackings] = useState<OfferTracking[]>([]);
   const [recentActivities, setRecentActivities] = useState<AdminActivity[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // ============================================
   // CHARGEMENT DES DONNÉES
   // ============================================
-  const loadAllData = () => {
-    // TODO SUPABASE: Remplacer par des requêtes Supabase
-    
-    // 1. Charger tous les candidats
-    // const { data: candidatesData } = await supabase
-    //   .from('user_profiles')
-    //   .select('*')
-    //   .order('created_at', { ascending: false });
-    
-    const storedCandidates = localStorage.getItem('tbee_all_candidates');
-    if (storedCandidates) {
-      setCandidates(JSON.parse(storedCandidates));
-    } else {
-      // Initialisation vide - les candidats seront ajoutés lors des inscriptions
-      setCandidates([]);
-      localStorage.setItem('tbee_all_candidates', JSON.stringify([]));
+
+  const loadAllData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      // 1. Charger tous les étudiants
+      const { data: studentsData, error: studentsError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'student')
+        .order('created_at', { ascending: false });
+
+      if (studentsError) throw studentsError;
+
+      const mappedStudents = (studentsData || []).map(mapStudent);
+      setstudents(mappedStudents);
+
+      // Construire un index nom par userId
+      const nameMap: Record<string, string> = {};
+      mappedStudents.forEach(s => {
+        nameMap[s.id] = `${s.firstName} ${s.lastName}`.trim() || s.email;
+      });
+
+      // 2. Charger les statistiques des étudiants
+      const { data: statsData } = await supabase
+        .from('user_statistics')
+        .select('*');
+
+      const statsMap = new Map<string, studentStatistics>();
+      (statsData || []).forEach((stat: any) => {
+        statsMap.set(stat.user_id, {
+          studentId: stat.user_id,
+          totalLessonsCompleted: stat.total_lessons_completed ?? 0,
+          totalTimeSpentMinutes: stat.total_time_spent_minutes ?? 0,
+          currentStreakDays: stat.current_streak_days ?? 0,
+          longestStreakDays: stat.longest_streak_days ?? 0,
+          moduleProgress: {},
+        });
+      });
+
+      // 3. Charger les progressions modules pour enrichir statsMap
+      const { data: moduleProgressData } = await supabase
+        .from('user_module_progress')
+        .select('*');
+
+      (moduleProgressData || []).forEach((mp: any) => {
+        const existing = statsMap.get(mp.user_id);
+        if (existing) {
+          existing.moduleProgress[mp.module_id] = {
+            completed: mp.status === 'completed',
+            progress: mp.progress ?? 0,
+            lastAccessedAt: mp.updated_at ?? '',
+          };
+        }
+      });
+
+      setstudentStats(statsMap);
+
+      // 4. Charger les CVs soumis
+      const { data: cvsData } = await supabase
+        .from('cv_data')
+        .select('*')
+        .neq('status', 'not_uploaded')
+        .order('uploaded_at', { ascending: false });
+
+      setCVSubmissions(
+        (cvsData || []).map((cv: any) =>
+          mapCVSubmission(cv, nameMap[cv.user_id] || 'Étudiant inconnu')
+        )
+      );
+
+      // 5. Charger les exercices soumis (user_lesson_progress avec submission)
+      const { data: exercisesData } = await supabase
+        .from('user_lesson_progress')
+        .select('*, lessons(title, content_type, module_id, modules(title))')
+        .not('user_submission', 'is', null)
+        .order('submitted_at', { ascending: false });
+
+      setExerciseSubmissions(
+        (exercisesData || []).map((ex: any) => ({
+          id: ex.id,
+          studentId: ex.user_id,
+          studentName: nameMap[ex.user_id] || 'Étudiant inconnu',
+          moduleId: ex.lessons?.module_id ?? '',
+          moduleName: ex.lessons?.modules?.title ?? '',
+          exerciseType: ex.lessons?.content_type ?? 'quiz',
+          content: JSON.stringify(ex.user_submission),
+          submittedAt: ex.submitted_at ?? '',
+          status: ex.validation_status === 'pending' ? 'pending' : 'graded',
+          gradedBy: ex.validated_by,
+          gradedAt: ex.validated_at,
+          score: ex.score,
+          feedback: ex.admin_feedback,
+          maxScore: 100,
+        }))
+      );
+
+      // 6. Charger le suivi des offres
+      const { data: offersData } = await supabase
+        .from('user_tracked_offers')
+        .select('*')
+        .order('updated_at', { ascending: false });
+
+      setOfferTrackings(
+        (offersData || []).map((o: any) =>
+          mapOfferTracking(o, nameMap[o.user_id] || 'Étudiant inconnu')
+        )
+      );
+
+      // 7. Activités récentes (basées sur les données chargées)
+      const activities: AdminActivity[] = [];
+
+      // Dernières soumissions de CV
+      (cvsData || []).slice(0, 5).forEach((cv: any) => {
+        activities.push({
+          id: `cv-${cv.id}`,
+          type: 'cv_submitted',
+          studentId: cv.user_id,
+          studentName: nameMap[cv.user_id] || 'Étudiant',
+          message: `A soumis son CV : ${cv.file_name}`,
+          timestamp: cv.uploaded_at ?? cv.updated_at ?? '',
+          urgent: cv.status === 'uploaded',
+        });
+      });
+
+      // Dernières progressions modules
+      (moduleProgressData || [])
+        .filter((mp: any) => mp.status === 'completed')
+        .slice(0, 5)
+        .forEach((mp: any) => {
+          activities.push({
+            id: `module-${mp.id}`,
+            type: 'module_completed',
+            studentId: mp.user_id,
+            studentName: nameMap[mp.user_id] || 'Étudiant',
+            message: `A complété un module`,
+            timestamp: mp.completed_at ?? mp.updated_at ?? '',
+            urgent: false,
+          });
+        });
+
+      // Trier par date décroissante
+      activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      setRecentActivities(activities.slice(0, 20));
+
+    } catch (error) {
+      console.error('Erreur chargement données admin:', error);
+    } finally {
+      setIsLoading(false);
     }
-
-    // 2. Charger les statistiques des candidats
-    // const { data: statsData } = await supabase
-    //   .from('user_statistics')
-    //   .select('*');
-    
-    // Initialisation vide - les statistiques seront créées lors des progressions
-    setCandidateStats(new Map<string, CandidateStatistics>());
-
-    // 3. Charger les CVs soumis
-    // Initialisation vide - les CVs seront ajoutés lors des soumissions
-    setCVSubmissions([]);
-
-    // 4. Charger les exercices soumis
-    // Initialisation vide - les exercices seront ajoutés lors des soumissions
-    setExerciseSubmissions([]);
-
-    // 5. Charger le suivi des offres
-    // Initialisation vide - les offres seront ajoutées lors du suivi
-    setOfferTrackings([]);
-
-    // 6. Charger les activités récentes
-    // Initialisation vide - les activités seront ajoutées lors des actions
-    setRecentActivities([]);
-  };
+  }, []);
 
   // Charger les données au montage
   useEffect(() => {
     loadAllData();
-    
-    // TODO SUPABASE: S'abonner aux changements en temps réel
-    // const subscription = supabase
-    //   .channel('admin_realtime')
-    //   .on('postgres_changes', { event: '*', schema: 'public', table: 'user_profiles' }, (payload) => {
-    //     loadAllData();
-    //   })
-    //   .subscribe();
-    // return () => { subscription.unsubscribe(); };
-  }, []);
+
+    // Abonnement Realtime pour synchronisation en temps réel
+    const channel = supabase
+      .channel('admin_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+        loadAllData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cv_data' }, () => {
+        loadAllData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_module_progress' }, () => {
+        loadAllData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [loadAllData]);
 
   // ============================================
   // ACTIONS
   // ============================================
 
-  const reviewCV = (cvId: string, status: CVSubmission['status'], feedback: string, score?: number) => {
-    // TODO SUPABASE:
-    // await supabase.from('cv_submissions').update({
-    //   status,
-    //   feedback,
-    //   score,
-    //   reviewed_by: adminId,
-    //   reviewed_at: new Date().toISOString()
-    // }).eq('id', cvId);
+  const reviewCV = useCallback(async (
+    cvId: string,
+    status: CVSubmission['status'],
+    feedback: string,
+    score?: number
+  ) => {
+    const { error } = await supabase
+      .from('cv_data')
+      .update({
+        status,
+        admin_feedback: feedback,
+        score,
+        reviewed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', cvId);
 
-    setCVSubmissions(prev => prev.map(cv => 
-      cv.id === cvId 
-        ? { ...cv, status, feedback, score, reviewedAt: new Date().toISOString() }
-        : cv
-    ));
-  };
+    if (error) throw error;
 
-  const gradeExercise = (exerciseId: string, score: number, feedback: string) => {
-    // TODO SUPABASE:
-    // await supabase.from('exercise_submissions').update({
-    //   status: 'graded',
-    //   score,
-    //   feedback,
-    //   graded_by: adminId,
-    //   graded_at: new Date().toISOString()
-    // }).eq('id', exerciseId);
+    setCVSubmissions(prev =>
+      prev.map(cv =>
+        cv.id === cvId
+          ? { ...cv, status, feedback, score, reviewedAt: new Date().toISOString() }
+          : cv
+      )
+    );
+  }, []);
 
-    setExerciseSubmissions(prev => prev.map(ex => 
-      ex.id === exerciseId 
-        ? { ...ex, status: 'graded', score, feedback, gradedAt: new Date().toISOString() }
-        : ex
-    ));
-  };
+  const gradeExercise = useCallback(async (
+    exerciseId: string,
+    score: number,
+    feedback: string
+  ) => {
+    const { error } = await supabase
+      .from('user_lesson_progress')
+      .update({
+        validation_status: 'approved',
+        admin_feedback: feedback,
+        score,
+        validated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', exerciseId);
 
-  const updateOfferTracking = (offerId: string, updates: Partial<OfferTracking>) => {
-    // TODO SUPABASE:
-    // await supabase.from('offer_trackings').update({
-    //   ...updates,
-    //   last_updated: new Date().toISOString()
-    // }).eq('id', offerId);
+    if (error) throw error;
 
-    setOfferTrackings(prev => prev.map(offer => 
-      offer.id === offerId 
-        ? { ...offer, ...updates, lastUpdated: new Date().toISOString() }
-        : offer
-    ));
-  };
+    setExerciseSubmissions(prev =>
+      prev.map(ex =>
+        ex.id === exerciseId
+          ? { ...ex, status: 'graded', score, feedback, gradedAt: new Date().toISOString() }
+          : ex
+      )
+    );
+  }, []);
 
-  const getCandidateById = (candidateId: string) => {
-    return candidates.find(c => c.id === candidateId);
-  };
+  const updateOfferTracking = useCallback(async (
+    offerId: string,
+    updates: Partial<OfferTracking>
+  ) => {
+    const dbUpdates: Record<string, any> = { updated_at: new Date().toISOString() };
+    if (updates.status !== undefined) dbUpdates.application_status = updates.status;
+    if (updates.notes !== undefined) dbUpdates.user_notes = updates.notes;
+    if (updates.needsHelp !== undefined) dbUpdates.needs_help = updates.needsHelp;
+    if (updates.helpRequest !== undefined) dbUpdates.help_request = updates.helpRequest;
 
-  const getCandidateStats = (candidateId: string) => {
-    return candidateStats.get(candidateId);
-  };
+    const { error } = await supabase
+      .from('user_tracked_offers')
+      .update(dbUpdates)
+      .eq('id', offerId);
+
+    if (error) throw error;
+
+    setOfferTrackings(prev =>
+      prev.map(offer =>
+        offer.id === offerId
+          ? { ...offer, ...updates, lastUpdated: new Date().toISOString() }
+          : offer
+      )
+    );
+  }, []);
+
+  const getstudentById = useCallback((studentId: string) => {
+    return students.find(s => s.id === studentId);
+  }, [students]);
+
+  const getstudentStats = useCallback((studentId: string) => {
+    return studentStats.get(studentId);
+  }, [studentStats]);
 
   // ============================================
   // STATISTIQUES GLOBALES
   // ============================================
+
   const globalStats = {
-    totalCandidates: candidates.length,
-    activeCandidates: candidates.filter(c => {
-      const lastActive = new Date(c.lastActiveAt);
-      const daysSinceActive = (Date.now() - lastActive.getTime()) / (1000 * 60 * 60 * 24);
-      return daysSinceActive < 7;
+    totalstudents: students.length,
+    activestudents: students.filter(s => {
+      const lastActive = new Date(s.lastActiveAt);
+      return (Date.now() - lastActive.getTime()) / (1000 * 60 * 60 * 24) < 7;
     }).length,
     pendingCVs: cvSubmissions.filter(cv => cv.status === 'pending').length,
     pendingExercises: exerciseSubmissions.filter(ex => ex.status === 'pending').length,
     offersNeedingHelp: offerTrackings.filter(o => o.needsHelp).length,
-    averageProgress: Array.from(candidateStats.values()).reduce((acc, stat) => {
-      const moduleProgresses = Object.values(stat.moduleProgress);
-      const avgProgress = moduleProgresses.reduce((sum, mod) => sum + mod.progress, 0) / moduleProgresses.length;
-      return acc + avgProgress;
-    }, 0) / candidateStats.size || 0,
-    completionRate: Array.from(candidateStats.values()).reduce((acc, stat) => {
-      const completed = Object.values(stat.moduleProgress).filter(m => m.completed).length;
-      const total = Object.values(stat.moduleProgress).length;
-      return acc + (total > 0 ? (completed / total) * 100 : 0);
-    }, 0) / candidateStats.size || 0
+    averageProgress: (() => {
+      const values = Array.from(studentStats.values());
+      if (!values.length) return 0;
+      const total = values.reduce((acc, stat) => {
+        const progresses = Object.values(stat.moduleProgress);
+        if (!progresses.length) return acc;
+        return acc + progresses.reduce((s, m) => s + m.progress, 0) / progresses.length;
+      }, 0);
+      return total / values.length;
+    })(),
+    completionRate: (() => {
+      const values = Array.from(studentStats.values());
+      if (!values.length) return 0;
+      const total = values.reduce((acc, stat) => {
+        const progresses = Object.values(stat.moduleProgress);
+        if (!progresses.length) return acc;
+        const completed = progresses.filter(m => m.completed).length;
+        return acc + (completed / progresses.length) * 100;
+      }, 0);
+      return total / values.length;
+    })(),
   };
 
   const value: AdminDataContextType = {
-    candidates,
-    candidateStats,
+    students,
+    studentStats,
     cvSubmissions,
     exerciseSubmissions,
     offerTrackings,
     recentActivities,
+    isLoading,
     globalStats,
     loadAllData,
     reviewCV,
     gradeExercise,
     updateOfferTracking,
-    getCandidateById,
-    getCandidateStats
+    getstudentById,
+    getstudentStats,
   };
 
   return (

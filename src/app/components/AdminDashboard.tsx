@@ -11,7 +11,7 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
   // DONNÉES RÉELLES DEPUIS LE CONTEXTE
   // ============================================
   const {
-    candidates,
+    students,
     globalStats,
     recentActivities,
     cvSubmissions,
@@ -42,15 +42,15 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
     { 
       id: '4', 
       label: 'Étudiants inactifs (+7j)', 
-      count: globalStats.totalCandidates - globalStats.activeCandidates, 
+      count: globalStats.totalstudents - globalStats.activestudents, 
       action: 'admin-tracking' 
     }
   ];
 
   // Calculer les statistiques admin depuis les vraies données
   const adminStats = {
-    totalStudents: globalStats.totalCandidates,
-    activeStudents: globalStats.activeCandidates,
+    totalstudents: globalStats.totalstudents,
+    activestudents: globalStats.activestudents,
     pendingReviews: globalStats.pendingCVs + globalStats.pendingExercises,
     completionRate: Math.round(globalStats.completionRate),
     averageProgress: Math.round(globalStats.averageProgress),
@@ -59,7 +59,7 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
     offerSupport: globalStats.offersNeedingHelp
   };
 
-  const inactiveCandidates = globalStats.totalCandidates - globalStats.activeCandidates;
+  const inactivestudents = globalStats.totalstudents - globalStats.activestudents;
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -95,7 +95,7 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-          {/* Total Students */}
+          {/* Total students */}
           <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[16px] p-4 sm:p-6 shadow-[0_2px_8px_rgba(30,21,72,0.04)]">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-12 h-12 rounded-[12px] bg-[#E8ECFF] flex items-center justify-center">
@@ -108,11 +108,11 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
               </div>
             </div>
             <p className="text-[32px] sm:text-[36px] font-bold text-[#1E1548]">
-              {adminStats.totalStudents}
+              {adminStats.totalstudents}
             </p>
           </div>
 
-          {/* Active Students */}
+          {/* Active students */}
           <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[16px] p-4 sm:p-6 shadow-[0_2px_8px_rgba(30,21,72,0.04)]">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-12 h-12 rounded-[12px] bg-[#FFF4CC] flex items-center justify-center">
@@ -125,7 +125,7 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
               </div>
             </div>
             <p className="text-[32px] sm:text-[36px] font-bold text-[#1E1548]">
-              {adminStats.activeStudents}
+              {adminStats.activestudents}
             </p>
           </div>
 
@@ -226,7 +226,7 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[14px] sm:text-[15px] font-semibold text-[#1E1548] mb-1">
-                        {activity.candidateName}
+                        {activity.studentName}
                       </p>
                       <p className="text-[13px] sm:text-[14px] text-[#6B7280]">
                         {activity.message}
@@ -374,7 +374,7 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
                     ⚠️ Étudiants inactifs
                   </h3>
                   <p className="text-[13px] sm:text-[14px] text-[#6B7280] leading-[20px]">
-                    {inactiveCandidates} étudiants n'ont pas été actifs depuis plus de 7 jours
+                    {inactivestudents} étudiants n'ont pas été actifs depuis plus de 7 jours
                   </p>
                 </div>
               </div>

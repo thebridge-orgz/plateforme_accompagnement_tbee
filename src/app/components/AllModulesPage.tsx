@@ -1,6 +1,6 @@
 import { ArrowLeft, Award, Clock } from 'lucide-react';
 import { ModuleCard } from './ModuleCard';
-import { ProgressBar } from './ProgressBar';
+import { ProgressBar } from './ui/ProgressBar';
 
 interface AllModulesPageProps {
   onNavigate: (page: string) => void;

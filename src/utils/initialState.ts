@@ -10,12 +10,12 @@ import type {
   ModuleWithProgress,
   CVData,
   UserTrackedOffer 
-} from '../types/index';
+} from '../types';
 
 // -------------------- USER PROFILE --------------------
 
 export const initialUserProfile: Partial<UserProfile> = {
-  role: 'candidate',
+  role: 'student',
   
   // Onboarding Step 1 - vide jusqu'à complétion
   firstName: null,

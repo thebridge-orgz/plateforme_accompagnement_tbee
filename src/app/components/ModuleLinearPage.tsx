@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle2, ChevronLeft, Clock, FileText, Lock, Play, Upload, Video } from 'lucide-react';
-import { useUserData } from '@/context/UserDataContext';
+import { useUserData } from '../../context/UserDataContext';
 
 interface ModuleLinearPageProps {
   moduleId: string;

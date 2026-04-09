@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  Calendar, 
-  MapPin, 
+import {
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  MapPin,
   GraduationCap,
   Building2,
   Save,
@@ -15,13 +15,13 @@ import {
   Lock,
   Download,
   AlertTriangle,
-  X,
   Eye,
   EyeOff
 } from 'lucide-react';
 import { Button } from './Button';
 import { FormInput } from './FormInput';
-import { useUserData } from '@/context/UserDataContext';
+import { useUserData } from '../../context/UserDataContext';
+import { supabase } from '../../app/auth/supabaseClient';
 
 interface StudentProfilePageProps {
   onNavigate: (page: string) => void;
@@ -39,8 +39,7 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
   const [showPasswordFields, setShowPasswordFields] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // TODO: Remplacer par Supabase - Utilisation du contexte pour récupérer les données d'onboarding
-  const { userProfile, statistics, modules } = useUserData();
+  const { userProfile, statistics, modules, updateUserProfile } = useUserData();
   
   // État local pour le mot de passe
   const [passwordData, setPasswordData] = useState({
@@ -89,73 +88,76 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
     fileInputRef.current?.click();
   };
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Validation du fichier
-      if (!file.type.startsWith('image/')) {
-        alert('Veuillez sélectionner une image valide');
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) { // 5MB max
-        alert('L\'image ne doit pas dépasser 5MB');
-        return;
-      }
+    if (!file) return;
 
-      // Créer une preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const imageData = reader.result as string;
-        setProfileImage(imageData);
-        // TODO: Upload vers Supabase Storage
-        // const { data, error } = await supabase.storage
-        //   .from('profile-pictures')
-        //   .upload(`${userId}/${file.name}`, file);
-        // Puis sauvegarder l'URL dans le profil utilisateur
-        localStorage.setItem('tbee_profile_image', imageData);
-      };
-      reader.readAsDataURL(file);
+    if (!file.type.startsWith('image/')) {
+      alert('Veuillez sélectionner une image valide');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('L\'image ne doit pas dépasser 5MB');
+      return;
+    }
+
+    // Preview locale immédiate
+    const reader = new FileReader();
+    reader.onloadend = () => setProfileImage(reader.result as string);
+    reader.readAsDataURL(file);
+
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+
+      const filePath = `${authUser.id}/avatar_${Date.now()}.${file.name.split('.').pop()}`;
+      const { error: uploadError } = await supabase.storage
+        .from('profile-pictures')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('profile-pictures')
+        .getPublicUrl(filePath);
+
+      await updateUserProfile({ profilePictureUrl: urlData.publicUrl } as any);
+    } catch (error) {
+      console.error('Erreur upload photo:', error);
     }
   };
 
-  // Charger la photo depuis localStorage au montage
+  // Charger la photo depuis le profil au montage
   useEffect(() => {
-    const savedImage = localStorage.getItem('tbee_profile_image');
-    if (savedImage) {
-      setProfileImage(savedImage);
+    if (userProfile && (userProfile as any).profilePictureUrl) {
+      setProfileImage((userProfile as any).profilePictureUrl);
     }
-  }, []);
+  }, [userProfile]);
 
   // ============================================
   // GESTION DE LA SAUVEGARDE DU PROFIL
   // ============================================
-  const handleSave = () => {
-    // TODO: Sauvegarder dans Supabase
-    // await supabase.from('user_profiles').update(profileData).eq('id', userId);
-    
-    // Sauvegarde temporaire en localStorage
-    const onboardingData = JSON.parse(localStorage.getItem('tbee_onboarding_data') || '{}');
-    onboardingData.step1 = {
-      ...onboardingData.step1,
-      firstName: profileData.firstName,
-      lastName: profileData.lastName,
-      phone: profileData.phone,
-      birthDate: profileData.birthDate,
-      hasRQTH: profileData.rqth
-    };
-    onboardingData.step2 = {
-      ...onboardingData.step2,
-      currentLevel: profileData.level,
-      targetLevel: profileData.targetLevel,
-      fieldOfInterest: profileData.program,
-      city: profileData.city,
-      postalCode: profileData.postalCode,
-      mobilityRadius: profileData.mobilityRadius
-    };
-    localStorage.setItem('tbee_onboarding_data', JSON.stringify(onboardingData));
-    
-    setIsEditing(false);
-    alert('✅ Profil mis à jour avec succès !');
+  const handleSave = async () => {
+    try {
+      await updateUserProfile({
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        phone: profileData.phone,
+        birthDate: profileData.birthDate,
+        hasRQTH: profileData.rqth,
+        currentLevel: profileData.level,
+        targetLevel: profileData.targetLevel,
+        fieldOfInterest: profileData.program,
+        city: profileData.city,
+        postalCode: profileData.postalCode,
+        mobilityRadius: profileData.mobilityRadius ?? null,
+      });
+      setIsEditing(false);
+      alert('✅ Profil mis à jour avec succès !');
+    } catch (error) {
+      console.error('Erreur sauvegarde profil:', error);
+      alert('Erreur lors de la sauvegarde du profil');
+    }
   };
 
   const handleInputChange = (field: string, value: string | boolean | number) => {
@@ -197,16 +199,15 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
       return;
     }
 
-    // TODO: Appel à Supabase pour changer le mot de passe
-    // const { error } = await supabase.auth.updateUser({
-    //   password: passwordData.newPassword
-    // });
-    // if (error) {
-    //   setPasswordError(error.message);
-    //   return;
-    // }
+    const { error } = await supabase.auth.updateUser({
+      password: passwordData.newPassword,
+    });
 
-    // Simulation de succès
+    if (error) {
+      setPasswordError(error.message);
+      return;
+    }
+
     setPasswordSuccess(true);
     setPasswordData({
       currentPassword: '',
@@ -256,20 +257,31 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
   // ============================================
   // SUPPRESSION DU COMPTE
   // ============================================
-  const handleDeleteAccount = () => {
-    // TODO: Suppression dans Supabase
-    // 1. Supprimer toutes les données utilisateur
-    // await supabase.from('user_profiles').delete().eq('id', userId);
-    // await supabase.from('user_statistics').delete().eq('user_id', userId);
-    // await supabase.from('user_module_progress').delete().eq('user_id', userId);
-    // await supabase.from('user_tracked_offers').delete().eq('user_id', userId);
-    // 2. Supprimer l'utilisateur de Supabase Auth
-    // await supabase.auth.admin.deleteUser(userId);
+  const handleDeleteAccount = async () => {
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
 
-    // Suppression locale pour la démo
-    localStorage.clear();
-    alert('Votre compte a été supprimé. Vous allez être redirigé vers la page d\'accueil.');
-    onNavigate('landing');
+      const userId = authUser.id;
+
+      // Supprimer toutes les données utilisateur
+      await Promise.all([
+        supabase.from('user_statistics').delete().eq('user_id', userId),
+        supabase.from('user_module_progress').delete().eq('user_id', userId),
+        supabase.from('user_tracked_offers').delete().eq('user_id', userId),
+        supabase.from('cv_data').delete().eq('user_id', userId),
+        supabase.from('user_lesson_progress').delete().eq('user_id', userId),
+      ]);
+
+      await supabase.from('profiles').delete().eq('id', userId);
+      await supabase.auth.signOut();
+
+      alert('Votre compte a été supprimé.');
+      onNavigate('landing');
+    } catch (error) {
+      console.error('Erreur suppression compte:', error);
+      alert('Erreur lors de la suppression du compte.');
+    }
   };
 
   return (
