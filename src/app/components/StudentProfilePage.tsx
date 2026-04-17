@@ -16,7 +16,9 @@ import {
   Download,
   AlertTriangle,
   Eye,
-  EyeOff
+  EyeOff,
+  Edit2,
+  X
 } from 'lucide-react';
 import { Button } from './Button';
 import { FormInput } from './FormInput';
@@ -183,7 +185,7 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
     setPasswordError('');
     setPasswordSuccess(false);
 
-    // Validation
+    // Validation des champs
     if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
       setPasswordError('Tous les champs sont requis');
       return;
@@ -199,6 +201,30 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
       return;
     }
 
+    if (passwordData.newPassword === passwordData.currentPassword) {
+      setPasswordError('Le nouveau mot de passe doit être différent de l\'ancien');
+      return;
+    }
+
+    // Récupérer l'email de l'utilisateur courant
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (!authUser?.email) {
+      setPasswordError('Erreur : utilisateur non connecté');
+      return;
+    }
+
+    // Vérifier l'ancien mot de passe en tentant une reconnexion
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: authUser.email,
+      password: passwordData.currentPassword,
+    });
+
+    if (signInError) {
+      setPasswordError('Mot de passe actuel incorrect');
+      return;
+    }
+
+    // Mettre à jour avec le nouveau mot de passe
     const { error } = await supabase.auth.updateUser({
       password: passwordData.newPassword,
     });
@@ -214,8 +240,7 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
       newPassword: '',
       confirmPassword: ''
     });
-    setShowPasswordFields(false);
-    
+
     setTimeout(() => {
       setPasswordSuccess(false);
     }, 3000);
@@ -366,13 +391,32 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
                 )}
               </div>
             </div>
-            <Button
-              onClick={() => setIsEditing(!isEditing)}
-              variant={isEditing ? 'default' : 'outline'}
-              className="w-full sm:w-auto"
-            >
-              {isEditing ? '✓ Mode édition' : 'Modifier le profil'}
-            </Button>
+            {!isEditing ? (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="h-10 px-4 bg-[#FFD600] text-[#1E1548] rounded-[10px] text-[14px] font-semibold hover:bg-[#FDC700] transition-all flex items-center justify-center gap-2 flex-shrink-0 w-full sm:w-auto"
+              >
+                <Edit2 className="w-4 h-4" />
+                Modifier
+              </button>
+            ) : (
+              <div className="flex gap-2 flex-shrink-0 w-full sm:w-auto">
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="h-10 px-4 bg-white border-2 border-[#E5E7EB] text-[#6B7280] rounded-[10px] text-[14px] font-semibold hover:bg-[#F8F9FD] transition-all flex items-center justify-center gap-2"
+                >
+                  <X className="w-4 h-4" />
+                  Annuler
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="h-10 px-4 bg-[#10B981] text-white rounded-[10px] text-[14px] font-semibold hover:bg-[#059669] transition-all flex items-center justify-center gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  Enregistrer
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -582,7 +626,7 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
             {isEditing && (
               <div className="flex justify-end gap-4">
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   onClick={() => setIsEditing(false)}
                 >
                   Annuler
@@ -682,7 +726,7 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
                 Vous pouvez télécharger une copie de toutes vos données personnelles.
               </p>
               <Button
-                variant="outline"
+                variant="secondary"
                 onClick={handleDownloadData}
               >
                 Télécharger mes données
@@ -696,7 +740,7 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
                 La suppression de votre compte est définitive et irréversible. Toutes vos données seront supprimées.
               </p>
               <Button
-                variant="outline"
+                variant="secondary"
                 className="border-red-300 text-red-700 hover:bg-red-100"
                 onClick={() => setShowDeleteModal(true)}
               >
@@ -818,13 +862,13 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
             </p>
             <div className="flex justify-end gap-4">
               <Button
-                variant="outline"
+                variant="secondary"
                 onClick={() => setShowDeleteModal(false)}
               >
                 Annuler
               </Button>
               <Button
-                variant="outline"
+                variant="secondary"
                 className="border-red-300 text-red-700 hover:bg-red-100"
                 onClick={handleDeleteAccount}
               >

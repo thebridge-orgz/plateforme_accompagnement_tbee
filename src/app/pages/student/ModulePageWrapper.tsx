@@ -9,7 +9,7 @@ export default function ModulePageWrapper() {
   const handleNavigate = (page: string) => {
     const routeMap: Record<string, string> = {
       'student-dashboard': '/student/dashboard',
-      'student-journey': '/student/parcours',
+      'student-journey': '/student/modules',
       'student-modules': '/student/parcours',
       'student-cv': '/student/cv',
       'student-tracking': '/student/offres',

@@ -167,7 +167,7 @@ export function CVUploadPage({ onNavigate }: CVUploadPageProps) {
                   <div className="flex gap-3">
                     {cvData.fileUrl && (
                       <Button
-                        variant="outline"
+                        variant="secondary"
                         className="flex-1"
                         onClick={() => window.open(cvData.fileUrl!, '_blank')}
                       >
@@ -176,7 +176,7 @@ export function CVUploadPage({ onNavigate }: CVUploadPageProps) {
                       </Button>
                     )}
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       className="flex-1"
                       onClick={handleFileDelete}
                     >
@@ -263,29 +263,39 @@ export function CVUploadPage({ onNavigate }: CVUploadPageProps) {
             </div>
 
             {/* Templates */}
-            <div className="bg-gradient-to-br from-primary/10 to-secondary rounded-2xl p-6">
-              <h4 className="mb-2">Modèles de CV</h4>
+            <div className="bg-card border border-border rounded-2xl p-6">
+              <h4 className="mb-1">Modèles de CV</h4>
               <p className="text-sm text-muted-foreground mb-4">
                 Téléchargez nos modèles professionnels pour créer votre CV
               </p>
-              <Button variant="outline" className="w-full">
-                Voir les modèles
-              </Button>
-            </div>
 
-            {/* Module Link */}
-            <div className="bg-card border border-border rounded-2xl p-6">
-              <h4 className="mb-2">Formation CV</h4>
-              <p className="text-sm text-muted-foreground mb-4">
-                Suivez notre module complet sur la rédaction de CV
+              {/* Grille de modèles — à remplir avec de vrais fichiers */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                {[
+                  { label: 'Moderne', tag: 'Populaire', color: 'bg-blue-50 border-blue-200' },
+                  { label: 'Classique', tag: null, color: 'bg-gray-50 border-gray-200' },
+                  { label: 'Créatif', tag: 'Nouveau', color: 'bg-purple-50 border-purple-200' },
+                  { label: 'Tech', tag: null, color: 'bg-green-50 border-green-200' },
+                ].map((template) => (
+                  <div
+                    key={template.label}
+                    className={`relative border-2 border-dashed ${template.color} rounded-xl p-4 flex flex-col items-center justify-center gap-2 min-h-[100px] cursor-not-allowed opacity-70`}
+                  >
+                    {template.tag && (
+                      <span className="absolute top-1.5 right-1.5 text-[10px] font-bold bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">
+                        {template.tag}
+                      </span>
+                    )}
+                    <Download className="w-6 h-6 text-muted-foreground" />
+                    <p className="text-xs font-medium text-center text-muted-foreground">{template.label}</p>
+                    <p className="text-[10px] text-muted-foreground">Bientôt disponible</p>
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-xs text-muted-foreground text-center">
+                Les modèles seront disponibles prochainement
               </p>
-              <Button 
-                variant="primary" 
-                className="w-full"
-                onClick={() => onNavigate('module-week2')}
-              >
-                Accéder au module
-              </Button>
             </div>
           </div>
         </div>

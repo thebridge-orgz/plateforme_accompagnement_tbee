@@ -261,4 +261,5 @@ export interface ModuleWithProgress extends Module {
   progress: number; // 0-100
   xp: number; // Points d'expérience gagnés
   badge?: string; // Emoji ou icône de badge
+  completedSteps: string[]; // IDs des étapes complétées (ex: ['step1', 'step2'])
 }

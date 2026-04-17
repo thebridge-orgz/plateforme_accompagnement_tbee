@@ -43,6 +43,7 @@ interface UserDataContextType {
 
   updateUserProfile: (updates: Partial<UserProfile>) => Promise<void>;
   updateModuleProgress: (moduleId: string, progress: number) => Promise<void>;
+  saveModuleStepProgress: (moduleId: string, completedSteps: string[]) => Promise<void>;
   completeModule: (moduleId: string) => Promise<void>;
   startModule: (moduleId: string) => Promise<void>;
   addTrackedOffer: (offer: Omit<UserTrackedOffer, 'id' | 'userId' | 'trackedAt' | 'updatedAt'>) => Promise<void>;
@@ -138,6 +139,7 @@ function mapModuleWithProgress(rawModule: any, rawProgress: any): ModuleWithProg
     status: rawProgress?.status ?? 'locked',
     progress: rawProgress?.progress ?? 0,
     xp: rawProgress?.xp ?? 0,
+    completedSteps: rawProgress?.completed_steps ?? [],
   };
 }
 
@@ -300,6 +302,28 @@ export function UserDataProvider({ children, initialData }: UserDataProviderProp
       ...prev,
       modules: prev.modules.map(m =>
         m.id === moduleId ? { ...m, progress: clampedProgress } : m
+      ),
+    }));
+  }, [user?.id]);
+
+  const saveModuleStepProgress = useCallback(async (moduleId: string, completedSteps: string[]) => {
+    if (!user?.id) return;
+
+    const { error } = await supabase
+      .from('user_module_progress')
+      .upsert({
+        user_id: user.id,
+        module_id: moduleId,
+        completed_steps: completedSteps,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,module_id' });
+
+    if (error) console.error('Erreur saveModuleStepProgress:', error);
+
+    setData(prev => ({
+      ...prev,
+      modules: prev.modules.map(m =>
+        m.id === moduleId ? { ...m, completedSteps } : m
       ),
     }));
   }, [user?.id]);
@@ -650,6 +674,7 @@ export function UserDataProvider({ children, initialData }: UserDataProviderProp
 
     updateUserProfile,
     updateModuleProgress,
+    saveModuleStepProgress,
     completeModule,
     startModule,
     addTrackedOffer,

@@ -26,11 +26,9 @@ export function StudentDashboard({ onNavigate }: StudentDashboardProps) {
 
   // Récupérer le prénom de l'utilisateur ou utiliser un placeholder
   const firstName = userProfile?.firstName || 'Candidat';
-  
-  // Message d'accueil adapté au statut de l'utilisateur
-  const welcomeMessage = isNewUser
-    ? `Bienvenue, ${firstName} ! 👋 Commence ton parcours pour trouver ton alternance`
-    : `Bienvenue, ${firstName} ! 👋 Continue ton parcours vers l'alternance. Tu es sur la bonne voie !`;
+
+  // Parcours entièrement complété ?
+  const allModulesCompleted = !isNewUser && totalModulesCount > 0 && completedModulesCount === totalModulesCount;
   
   // Formater le temps d'étude
   const studyTimeFormatted = formatStudyTime(statistics.totalTimeSpentMinutes);
@@ -61,15 +59,21 @@ export function StudentDashboard({ onNavigate }: StudentDashboardProps) {
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8">
         {/* Welcome Header */}
         <div className="bg-gradient-to-br from-primary/10 to-secondary rounded-2xl p-6 lg:p-8">
-          <h2 className="mb-2">{welcomeMessage.split('!')[0]}! {welcomeMessage.split('!')[1]?.split('👋')[0]}</h2>
+          <h2 className="mb-2">
+            {allModulesCompleted
+              ? `Bravo, ${firstName} ! 🎉`
+              : `Bienvenue, ${firstName} ! 👋`}
+          </h2>
           <p className="text-muted-foreground mb-6">
-            {isNewUser 
+            {allModulesCompleted
+              ? 'Tu as terminé ton parcours ! Tu es maintenant prêt(e) à décrocher ton alternance. 🚀'
+              : isNewUser
               ? 'Commence ton parcours pour trouver ton alternance'
               : 'Continue ton parcours vers l\'alternance. Tu es sur la bonne voie !'}
           </p>
-         <div className="w-full max-w-none">
-         <ProgressBar progress={globalProgress} showLabel size="lg" className="w-full" />
-         </div>
+          <div className="w-full max-w-none">
+            <ProgressBar progress={globalProgress} showLabel size="lg" className="w-full" />
+          </div>
           {isNewUser && (
             <p className="text-sm text-muted-foreground mt-3">
               💡 Commence pour débloquer tes statistiques et suivre ta progression
@@ -110,47 +114,54 @@ export function StudentDashboard({ onNavigate }: StudentDashboardProps) {
           {/* Current Modules */}
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center justify-between">
-              <h3>{isNewUser ? 'Commence ton parcours' : 'Mes modules en cours'}</h3>
-              <Button 
-                variant="ghost" 
-                onClick={() => onNavigate('student-journey')}
-              >
-                Voir tout
-              </Button>
+              <h3>
+                {allModulesCompleted
+                  ? 'Parcours terminé 🏆'
+                  : isNewUser
+                  ? 'Commence ton parcours'
+                  : 'Mes modules en cours'}
+              </h3>
+              {!allModulesCompleted && (
+                <Button
+                  variant="ghost"
+                  onClick={() => onNavigate('student-journey')}
+                >
+                  Voir tout
+                </Button>
+              )}
             </div>
-            
-            {modulesToShow.length === 0 ? (
-              <div className="bg-card border border-border rounded-2xl p-12 text-center">
-                <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h4 className="font-semibold text-lg mb-2">Aucun module disponible</h4>
-                <p className="text-sm text-muted-foreground">
-                  Les modules seront bientôt disponibles
+
+            {/* Bloc félicitation - parcours terminé */}
+            {allModulesCompleted && (
+              <div className="bg-gradient-to-br from-[#10B981] to-[#059669] rounded-2xl p-6 text-white">
+                <div className="text-center mb-4">
+                  <span className="text-5xl">🎉</span>
+                </div>
+                <h3 className="text-xl font-bold text-center mb-2">
+                  Tu as tout terminé !
+                </h3>
+                <p className="text-sm text-white/90 text-center mb-6 leading-relaxed">
+                  Félicitations ! Tu as complété les {totalModulesCount} modules de ton parcours TBEE. Tu es maintenant armé(e) pour décrocher ton alternance.
                 </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {modulesToShow.map((module) => (
-                  <ModuleCard
-                    key={module.id}
-                    id={module.id}
-                    title={module.title}
-                    description={module.description}
-                    duration={`Semaine ${module.weekNumber}`}
-                    videoCount={0}
-                    progress={module.progress}
-                    status={module.status}
-                    onClick={() => onNavigate(module.id)}
-                  />
-                ))}
+                <Button
+                  onClick={() => onNavigate('student-journey')}
+                  className="w-full bg-white text-[#059669] hover:bg-white/90 font-semibold"
+                >
+                  Revoir mes modules →
+                </Button>
               </div>
             )}
-            
+
             {/* CTA Module en cours */}
-            {currentModule && (
+            {!allModulesCompleted && currentModule && (
               <div className="bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-6 text-[#1E1548]">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <p className="text-sm font-medium opacity-90 mb-1">Semaine {currentModule.weekNumber} en cours</p>
+                    <p className="text-sm font-medium opacity-90 mb-1">
+                      {currentModule.progress === 0 && currentModule.status === 'available'
+                        ? 'Commence ton parcours'
+                        : 'Continue ton parcours'}
+                    </p>
                     <h3 className="text-xl font-bold mb-2">{currentModule.title}</h3>
                     <p className="text-sm opacity-90">{currentModule.description}</p>
                   </div>
@@ -171,7 +182,9 @@ export function StudentDashboard({ onNavigate }: StudentDashboardProps) {
                   onClick={() => onNavigate(currentModule.id)}
                   className="w-full bg-[#1E1548] text-primary hover:bg-[#2D2166]"
                 >
-                  {isNewUser ? 'Commencer' : 'Continuer'} →
+                  {currentModule.progress === 0 && currentModule.status === 'available'
+                    ? 'Commencer'
+                    : 'Continuer'} →
                 </Button>
               </div>
             )}
@@ -226,13 +239,6 @@ export function StudentDashboard({ onNavigate }: StudentDashboardProps) {
                   onClick={() => onNavigate('student-tracking')}
                 >
                   💼 Suivre mes offres
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={() => onNavigate('student-profile')}
-                >
-                  👤 Modifier mon profil
                 </Button>
               </div>
             </div>

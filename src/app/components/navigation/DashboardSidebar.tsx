@@ -74,12 +74,12 @@ export function DashboardSidebar({
   const isModulePage = currentPage.startsWith('module-');
 
   // Determine if a nav item should be active
-  const isNavItemActive = (itemId: string) => {
-    if (itemId === 'student-modules' && isModulePage) {
+  const isNavItemActive = (itemPath: string) => {
+    // Quand on est dans un module, "Mon parcours" doit être actif
+    if (isModulePage && itemPath === routes.StudentModules.path) {
       return true;
     }
-    console.log(`currentPage  ${currentPage}, itemId : ${itemId}`);
-    return currentPage === itemId;
+    return currentPage === itemPath;
   };
 
   const SidebarContent = () => (

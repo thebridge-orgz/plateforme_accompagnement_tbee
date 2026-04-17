@@ -1,6 +1,56 @@
 import { ArrowLeft, Lock, CheckCircle, Trophy, Star, Zap, Target, Award } from 'lucide-react';
 import { useUserData } from '../../../context/UserDataContext';
 
+// Astuces par niveau (0 = nouveau, 1-4 = modules complétés)
+const TIPS_BY_LEVEL: Record<number, string[]> = {
+  0: [
+    'Consacre 20 minutes par jour à ton parcours. La régularité est la clé du succès !',
+    'Définis tes valeurs professionnelles avant de choisir ton secteur d\'activité.',
+    'Note tes idées au fur et à mesure, ça t\'aidera à mieux te connaître.',
+    'Parle de ton projet à ton entourage, les opportunités viennent souvent du réseau !',
+  ],
+  1: [
+    'Pour ton CV, mets en avant tes soft skills : elles sont très valorisées en alternance.',
+    'Un CV aéré et lisible est souvent préféré à un CV trop chargé d\'informations.',
+    'Personnalise ton CV pour chaque offre en mettant en avant les compétences demandées.',
+    'Fais relire ton CV par quelqu\'un de confiance avant de l\'envoyer.',
+  ],
+  2: [
+    'Utilise LinkedIn pour suivre les entreprises qui t\'intéressent et leurs actualités.',
+    'Une candidature spontanée bien ciblée vaut souvent mieux qu\'une candidature standard.',
+    'Ton réseau est ta meilleure ressource : parle de ta recherche autour de toi.',
+    'Cible des entreprises précises plutôt que d\'envoyer ton CV en masse.',
+  ],
+  3: [
+    'Prépare-toi à l\'entretien en faisant des simulations avec un ami ou devant un miroir.',
+    'Renseigne-toi en profondeur sur l\'entreprise avant chaque entretien.',
+    'Prépare 3 questions à poser au recruteur, ça montre ton intérêt sérieux.',
+    'Arrive 10 minutes en avance et prépare un pitch de présentation de 2 minutes.',
+  ],
+  4: [
+    'Félicitations ! Partage ton expérience avec d\'autres étudiants pour les inspirer.',
+    'Continue de te former même après ton alternance, les compétences s\'entretiennent.',
+    'Garde le contact avec tes interlocuteurs, le réseau professionnel se construit sur la durée.',
+    'Ton parcours TBEE est un atout : mets-le en avant dans tes candidatures !',
+  ],
+};
+
+function getSessionTip(completedCount: number): string {
+  const level = Math.min(completedCount, 4);
+  const tips = TIPS_BY_LEVEL[level];
+  const storageKey = 'tbee_session_tip';
+  const stored = sessionStorage.getItem(storageKey);
+  if (stored) {
+    try {
+      const { text, storedLevel } = JSON.parse(stored);
+      if (storedLevel === level) return text;
+    } catch {}
+  }
+  const text = tips[Math.floor(Math.random() * tips.length)];
+  sessionStorage.setItem(storageKey, JSON.stringify({ text, storedLevel: level }));
+  return text;
+}
+
 interface StudentJourneyPageProps {
   onNavigate: (page: string) => void;
   userData?: any;
@@ -22,6 +72,10 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
 
   // Trouver le prochain module non complété
   const nextModule = modules.find(m => m.status === 'in_progress' || m.status === 'available');
+
+
+  // Astuce du jour dynamique
+  const dailyTip = getSessionTip(completedModulesCount);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -315,7 +369,7 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
                   💡 Astuce du jour
                 </h3>
                 <p className="text-[14px] text-[#6B7280] leading-[22px]">
-                  Consacre 20 minutes par jour à ton parcours. La régularité est la clé du succès dans ta recherche d'alternance !
+                  {dailyTip}
                 </p>
               </div>
             </div>

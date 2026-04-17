@@ -8,8 +8,8 @@ export default function DashboardPage() {
 
   const handleNavigate = (page: string) => {
     const routeMap: Record<string, string> = {
-      'student-journey': '/student/parcours',
-      'student-modules': '/student/parcours',
+      'student-journey': '/student/modules',
+      'student-modules': '/student/modules',
       'student-cv': '/student/cv',
       'student-tracking': '/student/offres',
       'student-profile': '/student/profil',

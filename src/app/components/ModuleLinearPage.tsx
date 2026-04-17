@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle2, ChevronLeft, Clock, FileText, Lock, Play, Upload, Video } from 'lucide-react';
+import { CheckCircle2, ChevronLeft, ChevronRight, Clock, FileText, Lock, Play, Trophy, Upload, Video, X } from 'lucide-react';
 import { useUserData } from '../../context/UserDataContext';
 
 interface ModuleLinearPageProps {
@@ -27,7 +27,7 @@ const moduleStaticContent: Record<string, any> = {
         title: 'Bienvenue dans ton parcours',
         description: 'Introduction au programme et à la plateforme',
         duration: '8min',
-        content: { videoUrl: '#', pdfUrl: null }
+        content: { videoUrl: 'https://www.youtube.com/embed/jNQXAC9IVRw', pdfUrl: null }
       },
       {
         id: 'step2',
@@ -35,7 +35,7 @@ const moduleStaticContent: Record<string, any> = {
         title: 'Les formations The Bridge',
         description: 'Découvre tous les domaines proposés',
         duration: '15min',
-        content: { videoUrl: '#', pdfUrl: '/pdf/formations.pdf' }
+        content: { videoUrl: 'https://www.youtube.com/embed/jNQXAC9IVRw', pdfUrl: '/pdf/formations.pdf' }
       },
       {
         id: 'step3',
@@ -59,7 +59,7 @@ const moduleStaticContent: Record<string, any> = {
         title: 'Plan d\'action personnalisé',
         description: 'Validation de ton parcours',
         duration: '10min',
-        content: { videoUrl: '#' }
+        content: { videoUrl: 'https://www.youtube.com/embed/jNQXAC9IVRw' }
       }
     ]
   },
@@ -75,7 +75,7 @@ const moduleStaticContent: Record<string, any> = {
         title: 'Les fondamentaux du CV',
         description: 'Structure, mise en page et contenu',
         duration: '12min',
-        content: { videoUrl: '#', pdfUrl: '/pdf/cv-guide.pdf' }
+        content: { videoUrl: 'https://www.youtube.com/embed/jNQXAC9IVRw', pdfUrl: '/pdf/cv-guide.pdf' }
       },
       {
         id: 'step2',
@@ -101,7 +101,7 @@ const moduleStaticContent: Record<string, any> = {
         description: 'Renseigne l\'URL de ton profil',
         duration: '2min',
         reviewStatus: null,
-        content: { placeholder: 'https://linkedin.com/in/...' }
+        content: { placeholder: 'https://linkedin.com/in/...'}
       },
       {
         id: 'step5',
@@ -109,7 +109,7 @@ const moduleStaticContent: Record<string, any> = {
         title: 'Le marché caché',
         description: 'Stratégies de recherche efficaces',
         duration: '18min',
-        content: { videoUrl: '#' }
+        content: { videoUrl: 'https://www.youtube.com/embed/jNQXAC9IVRw' }
       },
       {
         id: 'step6',
@@ -125,7 +125,7 @@ const moduleStaticContent: Record<string, any> = {
         title: 'Lettres de motivation efficaces',
         description: 'Personnalisation et impact',
         duration: '12min',
-        content: { videoUrl: '#' }
+        content: { videoUrl: 'https://www.youtube.com/embed/jNQXAC9IVRw' }
       },
       {
         id: 'step8',
@@ -149,7 +149,7 @@ const moduleStaticContent: Record<string, any> = {
         title: 'Comprendre le marché de l\'alternance',
         description: 'Vue d\'ensemble des opportunités',
         duration: '15min',
-        content: { videoUrl: '#' }
+        content: { videoUrl: 'https://www.youtube.com/embed/jNQXAC9IVRw' }
       },
       {
         id: 'step2',
@@ -223,8 +223,10 @@ export function ModuleLinearPage({ moduleId, onNavigate }: ModuleLinearPageProps
   // -------------------- HOOKS --------------------
   const {
     modules,
+    totalModulesCount,
     startModule,
     updateModuleProgress,
+    saveModuleStepProgress,
     completeModule,
     incrementStudyTime,
     updateStreak
@@ -234,9 +236,19 @@ export function ModuleLinearPage({ moduleId, onNavigate }: ModuleLinearPageProps
   const userModule = modules.find(m => m.id === `module-${moduleId}`);
   const staticModule = moduleStaticContent[moduleId];
 
-  // États locaux pour la page
-  const [completedStepsLocal, setCompletedStepsLocal] = useState<string[]>([]);
+  // Initialiser avec les steps déjà complétés (persistés en DB)
+  const [completedStepsLocal, setCompletedStepsLocal] = useState<string[]>(
+    () => userModule?.completedSteps ?? []
+  );
   const [activeStepId, setActiveStepId] = useState<string | null>(null);
+  // Garde pour savoir si on a déjà initialisé depuis la DB (évite d'écraser au re-render)
+  const [initialized, setInitialized] = useState(false);
+  // Popup félicitation fin de parcours
+  const [showCelebration, setShowCelebration] = useState(false);
+
+  // Ce module est-il le dernier du parcours ?
+  const moduleIndex = modules.findIndex(m => m.id === `module-${moduleId}`);
+  const isLastModule = totalModulesCount > 0 && moduleIndex === totalModulesCount - 1;
 
   // -------------------- INITIALIZATION --------------------
 
@@ -245,15 +257,23 @@ export function ModuleLinearPage({ moduleId, onNavigate }: ModuleLinearPageProps
       // Démarrer le module s'il est disponible mais pas encore commencé
       if (userModule.status === 'available') {
         startModule(userModule.id);
-        updateStreak(); // Mettre à jour la série
+        updateStreak();
       }
 
-      // Initialiser l'étape active (première non complétée ou première)
-      if (!activeStepId) {
-        setActiveStepId(staticModule.steps[0]?.id || null);
+      // Charger les steps persistés en DB (une seule fois au montage)
+      if (!initialized) {
+        const persisted = userModule.completedSteps ?? [];
+        setCompletedStepsLocal(persisted);
+        setInitialized(true);
+
+        // Reprendre à la première étape non complétée, ou la première
+        const firstIncomplete = staticModule.steps.find(
+          (s: any) => !persisted.includes(s.id)
+        );
+        setActiveStepId(firstIncomplete?.id ?? staticModule.steps[0]?.id ?? null);
       }
     }
-  }, [userModule, staticModule, startModule, updateStreak, activeStepId]);
+  }, [userModule, staticModule, startModule, updateStreak, initialized]);
 
   // -------------------- HANDLERS --------------------
 
@@ -263,9 +283,12 @@ export function ModuleLinearPage({ moduleId, onNavigate }: ModuleLinearPageProps
     const step = staticModule.steps.find((s: any) => s.id === stepId);
     if (!step) return;
 
-    // Ajouter aux étapes complétées localement
     if (!completedStepsLocal.includes(stepId)) {
-      setCompletedStepsLocal(prev => [...prev, stepId]);
+      const newCompleted = [...completedStepsLocal, stepId];
+      setCompletedStepsLocal(newCompleted);
+
+      // Persister les steps complétés en DB
+      await saveModuleStepProgress(userModule.id, newCompleted);
 
       // Incrémenter le temps d'étude
       const minutes = parseDuration(step.duration);
@@ -273,7 +296,7 @@ export function ModuleLinearPage({ moduleId, onNavigate }: ModuleLinearPageProps
 
       // Calculer la nouvelle progression
       const totalSteps = staticModule.steps.length;
-      const completedCount = completedStepsLocal.length + 1;
+      const completedCount = newCompleted.length;
       const newProgress = Math.round((completedCount / totalSteps) * 100);
 
       // Mettre à jour la progression du module
@@ -282,6 +305,10 @@ export function ModuleLinearPage({ moduleId, onNavigate }: ModuleLinearPageProps
       // Si toutes les étapes sont complétées, marquer le module comme terminé
       if (completedCount === totalSteps) {
         await completeModule(userModule.id);
+        // Si c'est le dernier module du parcours → popup félicitation
+        if (isLastModule) {
+          setTimeout(() => setShowCelebration(true), 600);
+        }
       }
 
       // Passer à l'étape suivante
@@ -356,13 +383,14 @@ export function ModuleLinearPage({ moduleId, onNavigate }: ModuleLinearPageProps
   // -------------------- RENDER --------------------
 
   return (
+    <>
     <div className="min-h-screen bg-[#F8F9FD] pb-16">
       {/* Header */}
       <div className="bg-white border-b border-[rgba(30,21,72,0.08)] sticky top-0 z-30">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex items-start gap-3 sm:gap-6">
             <button
-              onClick={() => onNavigate('student-dashboard')}
+              onClick={() => onNavigate('student-journey')}
               className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
               aria-label="Retour"
             >
@@ -383,11 +411,17 @@ export function ModuleLinearPage({ moduleId, onNavigate }: ModuleLinearPageProps
 
       <div className="max-w-[1152px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8 lg:pt-8 lg:pb-8">
         {/* Progress Bar */}
-        <div className="relative w-full h-3 bg-[#E8ECFF] rounded-full overflow-hidden mb-6 sm:mb-8">
-          <div 
-            className="absolute left-0 top-0 h-full bg-[#FFD600] rounded-full transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-center justify-between text-[13px] font-medium text-[#6B7280] mb-2">
+            <span>Progression du module</span>
+            <span className="font-bold text-[#1E1548]">{progress}%</span>
+          </div>
+          <div className="relative w-full h-3 bg-[#E8ECFF] rounded-full overflow-hidden">
+            <div
+              className="absolute left-0 top-0 h-full bg-[#FFD600] rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
         </div>
 
         {/* Content Grid */}
@@ -503,16 +537,29 @@ export function ModuleLinearPage({ moduleId, onNavigate }: ModuleLinearPageProps
                 {activeStep.type === 'video' && (
                   <div className="space-y-4 sm:space-y-6">
                     {/* Video Player */}
-                    <div className="bg-[#1E1548] rounded-[16px] overflow-hidden aspect-video flex items-center justify-center relative">
-                      <div className="absolute inset-0" style={{
-                        background: 'linear-gradient(135deg, rgba(255, 214, 0, 0.1) 0%, rgba(232, 236, 255, 0.1) 100%)'
-                      }} />
-                      <div className="relative z-10">
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[rgba(255,214,0,0.2)] rounded-full flex items-center justify-center backdrop-blur-sm mb-4">
-                          <Play className="w-8 h-8 sm:w-10 sm:h-10 text-[#FFD600]" fill="#FFD600" />
+                    {activeStep.content.videoUrl && activeStep.content.videoUrl !== '#' ? (
+                      <div className="rounded-[16px] overflow-hidden aspect-video">
+                        <iframe
+                          src={activeStep.content.videoUrl}
+                          className="w-full h-full"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                          title={activeStep.title}
+                        />
+                      </div>
+                    ) : (
+                      <div className="bg-[#1E1548] rounded-[16px] overflow-hidden aspect-video flex items-center justify-center relative">
+                        <div className="absolute inset-0" style={{
+                          background: 'linear-gradient(135deg, rgba(255, 214, 0, 0.1) 0%, rgba(232, 236, 255, 0.1) 100%)'
+                        }} />
+                        <div className="relative z-10 text-center px-4">
+                          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[rgba(255,214,0,0.2)] rounded-full flex items-center justify-center backdrop-blur-sm mb-4 mx-auto">
+                            <Play className="w-8 h-8 sm:w-10 sm:h-10 text-[#FFD600]" fill="#FFD600" />
+                          </div>
+                          <p className="text-white/60 text-sm">Vidéo à venir</p>
                         </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* PDF Resources */}
                     {activeStep.content.pdfUrl && (
@@ -723,5 +770,74 @@ export function ModuleLinearPage({ moduleId, onNavigate }: ModuleLinearPageProps
         </div>
       </div>
     </div>
+
+    {/* Popup félicitation - fin du parcours complet */}
+    {showCelebration && (
+      <>
+        <style>{`
+          @keyframes popIn {
+            0%   { transform: scale(0.3) translateY(40px); opacity: 0; }
+            60%  { transform: scale(1.08) translateY(-8px); opacity: 1; }
+            80%  { transform: scale(0.97) translateY(2px); }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+          }
+          .animate-pop-in { animation: popIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+          @keyframes floatStar {
+            0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-60px) rotate(20deg); opacity: 0; }
+          }
+          .star-float-1 { animation: floatStar 1.4s ease-out 0.2s forwards; }
+          .star-float-2 { animation: floatStar 1.6s ease-out 0.5s forwards; }
+          .star-float-3 { animation: floatStar 1.3s ease-out 0.8s forwards; }
+        `}</style>
+
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="animate-pop-in relative bg-white rounded-[24px] p-8 max-w-md w-full text-center shadow-2xl">
+            <button
+              onClick={() => setShowCelebration(false)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#F3F4F6] flex items-center justify-center hover:bg-[#E5E7EB] transition-colors"
+            >
+              <X className="w-4 h-4 text-[#6B7280]" />
+            </button>
+
+            <div className="relative flex justify-center mb-6">
+              <span className="star-float-1 absolute -left-4 top-0 text-2xl">⭐</span>
+              <span className="star-float-2 absolute left-2 -top-2 text-xl">✨</span>
+              <span className="star-float-3 absolute -right-4 top-0 text-2xl">⭐</span>
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#FFD600] to-[#FFA500] flex items-center justify-center shadow-lg animate-bounce">
+                <Trophy className="w-12 h-12 text-[#1E1548]" />
+              </div>
+            </div>
+
+            <h2 className="text-[28px] font-bold text-[#1E1548] mb-3">
+              🎉 Félicitations !
+            </h2>
+            <p className="text-[16px] text-[#6B7280] leading-[26px] mb-2">
+              Tu as terminé l'intégralité de ton parcours TBEE !
+            </p>
+            <p className="text-[15px] font-semibold text-[#10B981] mb-6">
+              Tu es maintenant prêt(e) à décrocher ton alternance. 🚀
+            </p>
+
+            <div className="flex justify-center gap-4 mb-6">
+              {[['🎯','Projet'],['📄','CV'],['🔍','Recherche'],['💼','Entretien']].map(([emoji, label]) => (
+                <div key={label} className="flex flex-col items-center gap-1">
+                  <span className="text-3xl">{emoji}</span>
+                  <span className="text-[11px] text-[#6B7280]">{label}</span>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => { setShowCelebration(false); onNavigate('student-journey'); }}
+              className="w-full h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[16px] font-semibold hover:bg-[#FDC700] transition-all hover:scale-[1.02]"
+            >
+              Voir mon parcours complet 🏆
+            </button>
+          </div>
+        </div>
+      </>
+    )}
+    </>
   );
 }

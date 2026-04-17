@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Briefcase, Clock, CheckCircle2, Trophy, Star } from 'lucide-react';
+import { ArrowLeft, Briefcase, Clock, CheckCircle2, Trophy, Star, X, Play } from 'lucide-react';
 import { Button } from './Button';
 import { ProgressBar } from './ui/ProgressBar';
 
@@ -16,8 +16,8 @@ const practicalCases = [
     difficulty: 'Débutant',
     duration: '15 min',
     points: 50,
-    status: 'available' as const, // Changé de 'completed' à 'available'
-    score: undefined // Retiré le score
+    status: 'available' as const,
+    videoUrl: 'https://www.youtube.com/embed/jNQXAC9IVRw'
   },
   {
     id: '2',
@@ -26,8 +26,8 @@ const practicalCases = [
     difficulty: 'Intermédiaire',
     duration: '30 min',
     points: 75,
-    status: 'available' as const, // Changé de 'in-progress' à 'available'
-    progress: undefined // Retiré la progression
+    status: 'available' as const,
+    videoUrl: 'https://www.youtube.com/embed/jNQXAC9IVRw'
   },
   {
     id: '3',
@@ -36,7 +36,8 @@ const practicalCases = [
     difficulty: 'Intermédiaire',
     duration: '20 min',
     points: 75,
-    status: 'available' as const
+    status: 'available' as const,
+    videoUrl: 'https://www.youtube.com/embed/jNQXAC9IVRw'
   },
   {
     id: '4',
@@ -45,7 +46,8 @@ const practicalCases = [
     difficulty: 'Avancé',
     duration: '25 min',
     points: 100,
-    status: 'available' as const // Changé de 'locked' à 'available'
+    status: 'available' as const,
+    videoUrl: 'https://www.youtube.com/embed/jNQXAC9IVRw'
   },
   {
     id: '5',
@@ -54,7 +56,8 @@ const practicalCases = [
     difficulty: 'Avancé',
     duration: '40 min',
     points: 100,
-    status: 'available' as const // Changé de 'locked' à 'available'
+    status: 'available' as const,
+    videoUrl: 'https://www.youtube.com/embed/jNQXAC9IVRw'
   }
 ];
 
@@ -67,6 +70,7 @@ const userStats = {
 
 export function PracticalCasePage({ onNavigate }: PracticalCasePageProps) {
   const [selectedCase, setSelectedCase] = useState<string | null>(null);
+  const [videoModal, setVideoModal] = useState<{ title: string; videoUrl: string } | null>(null);
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -211,15 +215,27 @@ export function PracticalCasePage({ onNavigate }: PracticalCasePageProps) {
                         Verrouillé
                       </div>
                     ) : practicalCase.status === 'completed' ? (
-                      <Button variant="outline">
-                        Refaire
+                      <Button
+                        variant="secondary"
+                        onClick={() => setVideoModal({ title: practicalCase.title, videoUrl: practicalCase.videoUrl })}
+                      >
+                        Revoir
                       </Button>
                     ) : practicalCase.status === 'in-progress' ? (
-                      <Button variant="primary">
+                      <Button
+                        variant="primary"
+                        onClick={() => setVideoModal({ title: practicalCase.title, videoUrl: practicalCase.videoUrl })}
+                      >
                         Continuer
                       </Button>
                     ) : (
-                      <Button variant="primary">
+                      <Button
+                        variant="primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setVideoModal({ title: practicalCase.title, videoUrl: practicalCase.videoUrl });
+                        }}
+                      >
                         Commencer
                       </Button>
                     )}
@@ -279,6 +295,62 @@ export function PracticalCasePage({ onNavigate }: PracticalCasePageProps) {
           </div>
         </div>
       </div>
+
+      {/* Video Modal */}
+      {videoModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          onClick={() => setVideoModal(null)}
+        >
+          <div
+            className="bg-white rounded-[20px] overflow-hidden w-full max-w-3xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(30,21,72,0.08)]">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-[#FFF4CC] rounded-full flex items-center justify-center">
+                  <Play className="w-4 h-4 text-[#1E1548]" fill="#1E1548" />
+                </div>
+                <div>
+                  <p className="text-[12px] text-[#6B7280]">Cas pratique</p>
+                  <h3 className="text-[16px] font-semibold text-[#1E1548] leading-tight">
+                    {videoModal.title}
+                  </h3>
+                </div>
+              </div>
+              <button
+                onClick={() => setVideoModal(null)}
+                className="w-9 h-9 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors"
+                aria-label="Fermer"
+              >
+                <X className="w-5 h-5 text-[#1E1548]" />
+              </button>
+            </div>
+
+            {/* Video */}
+            <div className="aspect-video">
+              <iframe
+                src={videoModal.videoUrl}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                title={videoModal.title}
+              />
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-5 py-4 flex justify-end">
+              <button
+                onClick={() => setVideoModal(null)}
+                className="h-10 px-5 bg-[#1E1548] text-white rounded-[10px] text-[14px] font-semibold hover:bg-[#2D2166] transition-colors"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

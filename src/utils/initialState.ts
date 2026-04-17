@@ -77,6 +77,7 @@ export const initialModules: ModuleWithProgress[] = [
     status: 'available', // ✅ Disponible dès le début
     progress: 0,
     xp: 0,
+    completedSteps: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -93,6 +94,7 @@ export const initialModules: ModuleWithProgress[] = [
     status: 'locked', // 🔒 Verrouillé jusqu'à complétion du module 1
     progress: 0,
     xp: 0,
+    completedSteps: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -109,6 +111,7 @@ export const initialModules: ModuleWithProgress[] = [
     status: 'locked', // 🔒 Verrouillé jusqu'à complétion du module 2
     progress: 0,
     xp: 0,
+    completedSteps: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -125,6 +128,7 @@ export const initialModules: ModuleWithProgress[] = [
     status: 'locked', // 🔒 Verrouillé jusqu'à complétion du module 3
     progress: 0,
     xp: 0,
+    completedSteps: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
