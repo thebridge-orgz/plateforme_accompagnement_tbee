@@ -1,9 +1,7 @@
 import type { ReactNode } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { DashboardSidebar } from '../components/navigation/DashboardSidebar';
-
-import { navIdToPath } from '../router/navMap';
 
 type Props = {
     currentPage: string;
@@ -11,28 +9,8 @@ type Props = {
 };
 
 export default function AdminLayout({ children }: Props) {
-    const navigate = useNavigate();
     const auth = useAuth();
     const location = useLocation();
-
-    const handleNavigate = (id: string) => {
-        if (!id) return;
-
-        /*if (id === 'logout') {
-            void doLogout();
-            return;
-        }*/
-
-        // si clic sur un module du type "module-2"
-        if (id.startsWith('module-')) {
-            navigate(`/student/modules/${id}`);
-            return;
-        }
-
-        // mapping central (recommandé)
-        const path = navIdToPath[id] || '/student/dashboard';
-        navigate(path);
-    };
 
     // Nom affiché dans la sidebar
     const user = (auth as any).user;
@@ -41,14 +19,12 @@ export default function AdminLayout({ children }: Props) {
             ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ''}`
             : user?.email || 'Utilisateur';
 
-
     const { hash, pathname, search } = location;
 
     return (
         <div className="min-h-screen bg-background">
             <DashboardSidebar
                 currentPage={pathname}
-                onNavigate={handleNavigate}
                 role="admin"
                 userName={userName}
             />

@@ -3,10 +3,8 @@ import { ArrowLeft, CheckCircle2, FileText, Download, Eye, Upload } from 'lucide
 import { Button } from './Button';
 import { FileUploader } from './FileUploader';
 import { useUserData } from '../../context/UserDataContext';
-
-interface CVUploadPageProps {
-  onNavigate: (page: string) => void;
-}
+import { routes } from '../router/routes';
+import { Link } from 'react-router-dom';
 
 const cvTips = [
   {
@@ -31,7 +29,7 @@ const cvTips = [
   }
 ];
 
-export function CVUploadPage({ onNavigate }: CVUploadPageProps) {
+export function CVUploadPage() {
   // TODO: fetch from Supabase - using context for now
   const { cvData, updateCVData } = useUserData();
 
@@ -81,13 +79,14 @@ export function CVUploadPage({ onNavigate }: CVUploadPageProps) {
       <div className="bg-white border-b border-[rgba(30,21,72,0.08)] sticky top-0 z-30">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex items-start gap-3 sm:gap-6">
-            <button
-              onClick={() => onNavigate('student-dashboard')}
-              className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
-              aria-label="Retour"
-            >
-              <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
-            </button>
+            <Link to={routes.StudentDashboard.path}>
+              <button
+                className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
+                aria-label="Retour"
+              >
+                <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
+              </button>
+            </Link>
             
             <div className="flex-1 min-w-0">
               <h1 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold leading-tight text-[#1E1548] mb-1 sm:mb-2">

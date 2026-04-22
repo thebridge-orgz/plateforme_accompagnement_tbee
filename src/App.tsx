@@ -20,6 +20,7 @@ import NotFound from './app/pages/NotFound';
 import DashboardPage from './app/pages/student/Dashboard';
 import Onboarding from './app/pages/student/Onboarding';
 import ParcoursPage from './app/pages/student/Parcours';
+import ModuleDetail from './app/pages/student/ModulePageWrapper';
 import CvPage from './app/pages/student/CvPage';
 import OffersPage from './app/pages/student/OffersPage';
 import PracticalCasePageWrapper from './app/pages/student/PracticalCasePageWrapper';
@@ -32,7 +33,8 @@ import AdminCvReview from './app/pages/admin/CvReview';
 import AdminExerciceReview from './app/pages/admin/ExerciceReview';
 import AdminModules from './app/pages/admin/Modules';
 import AdminOfferSupport from './app/pages/admin/OfferSupport';
-import AdminTracking from './app/pages/admin/Tracking';
+import AdminStudentTracking from './app/pages/admin/Tracking';
+import AdminStudentList from './app/pages/admin/StudentList';
 import AdminProfile from './app/pages/admin/Profile';
 import AdmimSettings from './app/pages/admin/Settings';
 
@@ -48,7 +50,9 @@ function App() {
       if (route.path === '*') return false;
       // Gestion des routes paramétrées (ex: /student/modules/:moduleId)
       if (route.path.includes(':')) {
+        console.log(`route.path : ${route.path}`);
         const pattern = route.path.replace(/:[^/]+/g, '[^/]+');
+        console.log(`pattern : ${pattern}`);
         const regex = new RegExp(`^${pattern}$`);
         return regex.test(location.pathname);
       }
@@ -108,6 +112,16 @@ function App() {
             <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
               <UserDataProvider>
                 <ParcoursPage />
+              </UserDataProvider>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={routes.StudentModulesDetails.path}
+          element={
+            <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
+              <UserDataProvider>
+                <ModuleDetail />
               </UserDataProvider>
             </ProtectedRoute>
           }
@@ -220,11 +234,22 @@ function App() {
         />
 
         <Route
-          path={routes.AdminTracking.path}
+          path={routes.AdminStudentList.path}
           element={
             <ProtectedRoute allowedRoles={['admin']} requireOnboarding={false}>
               <AdminDataProvider>
-                <AdminTracking />
+                <AdminStudentList />
+              </AdminDataProvider>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path={routes.AdminStudentTracking.path}
+          element={
+            <ProtectedRoute allowedRoles={['admin']} requireOnboarding={false}>
+              <AdminDataProvider>
+                <AdminStudentTracking />
               </AdminDataProvider>
             </ProtectedRoute>
           }

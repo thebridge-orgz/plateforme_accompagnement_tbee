@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom';
-import { StudentTrackingPage } from '../../components/StudentTrackingPage';
+import { StudentsListPage } from '../../components/StudentsListPage';
 import AdminLayout from '../../layouts/AdminLayout';
 import { routes } from '../../router/routes';
 
-export default function Tracking() {
+export default function StudentList() {
     const navigate = useNavigate();
     //console.log(`Routes : ${JSON.stringify(routes, null, 2)}`);
 
@@ -25,8 +25,8 @@ export default function Tracking() {
     };
 
     return (
-        <AdminLayout currentPage={routes.AdminStudentTracking.path}>
-            <StudentTrackingPage onNavigate={handleNavigate} />
+        <AdminLayout currentPage={routes.AdminStudentList.path}>
+            <StudentsListPage onNavigate={handleNavigate} />
         </AdminLayout>
     );
 }

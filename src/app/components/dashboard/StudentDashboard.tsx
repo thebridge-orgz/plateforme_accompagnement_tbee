@@ -1,16 +1,13 @@
 import { Award, BookOpen, Clock, Target, TrendingUp } from 'lucide-react';
 import { StatCard } from '../../components/StatCard';
-import { ModuleCard } from '../parcours/ModuleCard';
 import { ProgressBar } from '../ui/ProgressBar';
 import { Button } from '../ui/button';
 import { useUserData } from '../../../context/UserDataContext';
 import { formatStudyTime } from '../../../utils/initialState';
+import { routes } from '../../router/routes';
+import { Link } from 'react-router-dom';
 
-interface StudentDashboardProps {
-  onNavigate: (page: string) => void;
-}
-
-export function StudentDashboard({ onNavigate }: StudentDashboardProps) {
+export function StudentDashboard() {
   // TODO: fetch from Supabase - using context for now
   const {
     isLoading,
@@ -122,12 +119,13 @@ export function StudentDashboard({ onNavigate }: StudentDashboardProps) {
                   : 'Mes modules en cours'}
               </h3>
               {!allModulesCompleted && (
-                <Button
-                  variant="ghost"
-                  onClick={() => onNavigate('student-journey')}
-                >
-                  Voir tout
-                </Button>
+                <Link to={routes.StudentModules.path}>
+                  <Button
+                    variant="ghost"
+                  >
+                    Voir tout
+                  </Button>
+                </Link>
               )}
             </div>
 
@@ -143,12 +141,13 @@ export function StudentDashboard({ onNavigate }: StudentDashboardProps) {
                 <p className="text-sm text-white/90 text-center mb-6 leading-relaxed">
                   Félicitations ! Tu as complété les {totalModulesCount} modules de ton parcours TBEE. Tu es maintenant armé(e) pour décrocher ton alternance.
                 </p>
-                <Button
-                  onClick={() => onNavigate('student-journey')}
-                  className="w-full bg-white text-[#059669] hover:bg-white/90 font-semibold"
-                >
-                  Revoir mes modules →
-                </Button>
+                <Link to={routes.StudentModules.path} className="block w-full">
+                  <Button
+                    className="w-full bg-white text-[#059669] hover:bg-white/90 font-semibold"
+                  >
+                    Revoir mes modules →
+                  </Button>
+                </Link>
               </div>
             )}
 
@@ -178,14 +177,15 @@ export function StudentDashboard({ onNavigate }: StudentDashboardProps) {
                     />
                   </div>
                 </div>
-                <Button
-                  onClick={() => onNavigate(currentModule.id)}
-                  className="w-full bg-[#1E1548] text-primary hover:bg-[#2D2166]"
-                >
-                  {currentModule.progress === 0 && currentModule.status === 'available'
-                    ? 'Commencer'
-                    : 'Continuer'} →
-                </Button>
+                <Link to={routes.StudentModulesDetails.path.replace(":id",currentModule.id)} className="block w-full">
+                  <Button
+                    className="w-full bg-[#1E1548] text-primary hover:bg-[#2D2166]"
+                  >
+                    {currentModule.progress === 0 && currentModule.status === 'available'
+                      ? 'Commencer'
+                      : 'Continuer'} →
+                  </Button>
+                </Link>
               </div>
             )}
           </div>
@@ -226,20 +226,22 @@ export function StudentDashboard({ onNavigate }: StudentDashboardProps) {
             <div className="bg-card border border-border rounded-2xl p-6">
               <h4 className="mb-4">Actions rapides</h4>
               <div className="space-y-3">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={() => onNavigate('student-cv')}
-                >
-                  📄 {isNewUser ? 'Importer' : 'Télécharger'} mon CV
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={() => onNavigate('student-tracking')}
-                >
-                  💼 Suivre mes offres
-                </Button>
+                <Link to={routes.StudentCv.path} className="block w-full">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                  >
+                    📄 {isNewUser ? 'Importer' : 'Télécharger'} mon CV
+                  </Button>
+                </Link>
+                <Link to={routes.StudentJobTracking.path} className="block w-full">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                  >
+                    💼 Suivre mes offres
+                  </Button>
+                </Link>
               </div>
             </div>
 

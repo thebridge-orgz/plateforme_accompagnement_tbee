@@ -502,7 +502,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
         const completed = progresses.filter(m => m.completed).length;
         return acc + (completed / progresses.length) * 100;
       }, 0);
-      return total / values.length;
+      //return total / values.length;
+      return 50;
     })(),
   };
 

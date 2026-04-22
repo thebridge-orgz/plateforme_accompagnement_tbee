@@ -1,5 +1,7 @@
 import { ArrowLeft, Lock, CheckCircle, Trophy, Star, Zap, Target, Award } from 'lucide-react';
 import { useUserData } from '../../../context/UserDataContext';
+import { routes } from '../../../app/router/routes';
+import { Link } from 'react-router-dom';
 
 // Astuces par niveau (0 = nouveau, 1-4 = modules complétés)
 const TIPS_BY_LEVEL: Record<number, string[]> = {
@@ -312,15 +314,13 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
 
                     {/* Call to Action */}
                     {(module.status === 'in_progress' || module.status === 'available') && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onNavigate(module.id);
-                        }}
-                        className="w-full mt-4 h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[16px] font-semibold hover:bg-[#FDC700] transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-[#FFD600] focus:ring-offset-2 shadow-sm flex items-center justify-center gap-2"
-                      >
-                        {module.progress === 0 ? 'Commencer le module' : 'Continuer le module'} →
-                      </button>
+                      <Link to={routes.StudentModulesDetails.path.replace(":id",module.id)} className="block w-full">
+                        <button
+                          className="w-full mt-4 h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[16px] font-semibold hover:bg-[#FDC700] transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-[#FFD600] focus:ring-offset-2 shadow-sm flex items-center justify-center gap-2"
+                        >
+                          {module.progress === 0 ? 'Commencer le module' : 'Continuer le module'} →
+                        </button>
+                      </Link>
                     )}
 
                     {module.status === 'completed' && (
