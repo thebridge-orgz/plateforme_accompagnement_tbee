@@ -50,9 +50,7 @@ function App() {
       if (route.path === '*') return false;
       // Gestion des routes paramétrées (ex: /student/modules/:moduleId)
       if (route.path.includes(':')) {
-        console.log(`route.path : ${route.path}`);
         const pattern = route.path.replace(/:[^/]+/g, '[^/]+');
-        console.log(`pattern : ${pattern}`);
         const regex = new RegExp(`^${pattern}$`);
         return regex.test(location.pathname);
       }

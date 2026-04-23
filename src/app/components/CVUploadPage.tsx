@@ -87,13 +87,13 @@ export function CVUploadPage() {
                 <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
               </button>
             </Link>
-            
+
             <div className="flex-1 min-w-0">
               <h1 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold leading-tight text-[#1E1548] mb-1 sm:mb-2">
                 Mon CV
               </h1>
               <p className="text-[14px] sm:text-[16px] leading-[20px] sm:leading-[24px] text-[#6B7280]">
-                {hasCV 
+                {hasCV
                   ? 'Gérez votre CV et recevez des conseils personnalisés'
                   : 'Téléchargez votre CV et recevez des conseils personnalisés'}
               </p>
@@ -145,17 +145,16 @@ export function CVUploadPage() {
                         Téléchargé le {cvData.uploadedAt ? new Date(cvData.uploadedAt).toLocaleDateString('fr-FR') : 'N/A'}
                       </p>
                     </div>
-                    
+
                     {/* Status Badge */}
-                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      cvData.status === 'approved' 
+                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${cvData.status === 'approved'
                         ? 'bg-green-100 text-green-800'
                         : cvData.status === 'under_review'
-                        ? 'bg-blue-100 text-blue-800'
-                        : cvData.status === 'needs_revision'
-                        ? 'bg-orange-100 text-orange-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
+                          ? 'bg-blue-100 text-blue-800'
+                          : cvData.status === 'needs_revision'
+                            ? 'bg-orange-100 text-orange-800'
+                            : 'bg-gray-100 text-gray-800'
+                      }`}>
                       {cvData.status === 'approved' && '✓ Validé'}
                       {cvData.status === 'under_review' && '⏳ En cours d\'analyse'}
                       {cvData.status === 'needs_revision' && '⚠ À améliorer'}
@@ -182,7 +181,7 @@ export function CVUploadPage() {
                       Supprimer
                     </Button>
                   </div>
-                  
+
                   {cvData.status === 'uploaded' && (
                     <p className="text-xs text-muted-foreground mt-4 text-center">
                       💡 L'équipe Admission analysera ton CV sous 48h

@@ -101,6 +101,25 @@ export interface AdminActivity {
   urgent: boolean;
   metadata?: Record<string, any>;
 }
+export interface studentModules {
+  id: string;
+  title: string;
+  description: string | null;
+  week_number: number;
+  difficulty_level: string | null;
+  estimated_hours: number | null;
+  objectives: string[] | null;
+  key_concepts: string[] | null;
+  resources: Record<string, any> | null;
+  is_published: boolean;
+  order_index: number | null;
+  created_at: Date | string | null;
+  updated_at: Date | string | null;
+  icon_name: string | null;
+  color_accent: string | null;
+  unlock_condition: string;
+  unlock_date: Date | string | null;
+}
 
 interface AdminDataContextType {
   students: studentProfile[];
@@ -119,6 +138,8 @@ interface AdminDataContextType {
     averageProgress: number;
     completionRate: number;
   };
+  modules: studentModules[];
+  studentModulesProgress: [];
   loadAllData: () => Promise<void>;
   reviewCV: (cvId: string, status: CVSubmission['status'], feedback: string, score?: number) => Promise<void>;
   gradeExercise: (exerciseId: string, score: number, feedback: string) => Promise<void>;
@@ -198,6 +219,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [exerciseSubmissions, setExerciseSubmissions] = useState<ExerciseSubmission[]>([]);
   const [offerTrackings, setOfferTrackings] = useState<OfferTracking[]>([]);
   const [recentActivities, setRecentActivities] = useState<AdminActivity[]>([]);
+  const [modules, setmodules] = useState<studentModules[]>([]);
+  const [studentModulesProgress, setstudentModulesProgress] = useState<[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // ============================================
@@ -217,6 +240,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       if (studentsError) throw studentsError;
 
       const mappedStudents = (studentsData || []).map(mapStudent);
+      //console.log(`mappedStudents : ${JSON.stringify(mappedStudents, null, 2)}`);
       setstudents(mappedStudents);
 
       // Construire un index nom par userId
@@ -232,6 +256,12 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
 
       const statsMap = new Map<string, studentStatistics>();
       (statsData || []).forEach((stat: any) => {
+        /*console.log(`studentId : ${stat.user_id}`);
+        console.log(`totalLessonsCompleted : ${stat.total_lessons_completed ?? 0}`);
+        console.log(`totalTimeSpentMinutes : ${stat.total_time_spent_minutes ?? 0}`);
+        console.log(`currentStreakDays : ${stat.current_streak_days ?? 0}`);
+        console.log(`longestStreakDays : ${stat.longest_streak_days ?? 0}`);
+        console.log("\n")*/
         statsMap.set(stat.user_id, {
           studentId: stat.user_id,
           totalLessonsCompleted: stat.total_lessons_completed ?? 0,
@@ -241,11 +271,13 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
           moduleProgress: {},
         });
       });
+      //console.log(`statsMap : ${JSON.stringify(Object.fromEntries(statsMap), null, 2)}`);
 
       // 3. Charger les progressions modules pour enrichir statsMap
       const { data: moduleProgressData } = await supabase
         .from('user_module_progress')
         .select('*');
+      //console.log(`moduleProgressData : ${JSON.stringify(moduleProgressData, null, 2)}`);
 
       (moduleProgressData || []).forEach((mp: any) => {
         const existing = statsMap.get(mp.user_id);
@@ -259,6 +291,15 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       });
 
       setstudentStats(statsMap);
+      setstudentModulesProgress(moduleProgressData);
+
+      const { data: modulesData, error: modulesError } = await supabase
+        .from('modules')
+        .select('*')
+        .order('order_index', { ascending: true });
+      setmodules(modulesData);
+
+      if (modulesError) throw modulesError;
 
       // 4. Charger les CVs soumis
       const { data: cvsData } = await supabase
@@ -522,6 +563,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     updateOfferTracking,
     getstudentById,
     getstudentStats,
+    modules,
+    studentModulesProgress
   };
 
   return (

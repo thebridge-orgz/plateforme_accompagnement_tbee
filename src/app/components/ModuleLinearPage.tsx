@@ -351,7 +351,7 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
             <button
               className="mt-4 text-[#FFD600] hover:underline"
             >
-              Retour au dashboard
+              Retour au dashboardv
             </button>
           </Link>
         </div>

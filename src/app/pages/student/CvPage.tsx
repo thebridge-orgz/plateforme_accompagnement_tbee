@@ -5,7 +5,7 @@ import { routes } from '../../router/routes';
 export default function CvPage() {
   return (
     <StudentLayout currentPage={routes.StudentCv.path}>
-      <CVUploadPage/>
+      <CVUploadPage />
     </StudentLayout>
   );
 }

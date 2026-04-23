@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { 
-  Search, 
-  Filter, 
-  Grid, 
-  List, 
-  ChevronLeft, 
+import {
+  Search,
+  Filter,
+  Grid,
+  List,
+  ChevronLeft,
   ChevronRight,
   User,
   GraduationCap,
@@ -22,202 +22,35 @@ import { Input } from '../components/ui/input';
 import { Card } from '../components/ui/card';
 import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
+import { useAdminData, studentProfile } from '../../context/AdminDataContext';
+import { formatDateTime } from '../../utils/date';
+import { calculateGlobalProgress } from '../../utils/initialState';
 
-interface StudentsListPageProps {
-  onNavigate: (page: string) => void;
-}
-
-interface Student {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  joinedDate: string;
-  rqth: boolean;
-  formation: string;
-  niveau: string;
-  overallProgress: number;
-  stats: {
-    studyTime: string;
-    completedModules: number;
-    totalModules: number;
-    practicalCases: number;
-  };
-  lastActivity: string;
-}
-
-// Mock data for all students
-const allStudents: Student[] = [
-  {
-    id: '1',
-    name: 'Sophie Martind',
-    email: 'sophie.martin@example.fr',
-    phone: '06 12 34 56 78',
-    joinedDate: '15/01/2025',
-    rqth: false,
-    formation: 'Bachelor Marketing Digital',
-    niveau: 'Bac+3',
-    overallProgress: 75,
-    stats: {
-      studyTime: '12h 30min',
-      completedModules: 4,
-      totalModules: 6,
-      practicalCases: 3
-    },
-    lastActivity: 'Il y a 2 heures'
-  },
-  {
-    id: '2',
-    name: 'Thomas Bernard',
-    email: 'thomas.bernard@example.fr',
-    phone: '06 23 45 67 89',
-    joinedDate: '10/01/2025',
-    rqth: true,
-    formation: 'Master Data Science',
-    niveau: 'Bac+5',
-    overallProgress: 45,
-    stats: {
-      studyTime: '8h 15min',
-      completedModules: 2,
-      totalModules: 6,
-      practicalCases: 1
-    },
-    lastActivity: 'Il y a 1 jour'
-  },
-  {
-    id: '3',
-    name: 'Emma Petit',
-    email: 'emma.petit@example.fr',
-    phone: '06 34 56 78 90',
-    joinedDate: '05/01/2025',
-    rqth: false,
-    formation: 'Bachelor Commerce International',
-    niveau: 'Bac+3',
-    overallProgress: 90,
-    stats: {
-      studyTime: '15h 45min',
-      completedModules: 5,
-      totalModules: 6,
-      practicalCases: 4
-    },
-    lastActivity: 'Il y a 30 minutes'
-  },
-  {
-    id: '4',
-    name: 'Lucas Dubois',
-    email: 'lucas.dubois@example.fr',
-    phone: '06 45 67 89 01',
-    joinedDate: '20/01/2025',
-    rqth: false,
-    formation: 'Master RH',
-    niveau: 'Bac+5',
-    overallProgress: 20,
-    stats: {
-      studyTime: '3h 20min',
-      completedModules: 1,
-      totalModules: 6,
-      practicalCases: 0
-    },
-    lastActivity: 'Il y a 3 jours'
-  },
-  {
-    id: '5',
-    name: 'Camille Rousseau',
-    email: 'camille.rousseau@example.fr',
-    phone: '06 56 78 90 12',
-    joinedDate: '12/01/2025',
-    rqth: false,
-    formation: 'Bachelor Design Graphique',
-    niveau: 'Bac+3',
-    overallProgress: 60,
-    stats: {
-      studyTime: '10h 00min',
-      completedModules: 3,
-      totalModules: 6,
-      practicalCases: 2
-    },
-    lastActivity: 'Il y a 5 heures'
-  },
-  {
-    id: '6',
-    name: 'Hugo Lefevre',
-    email: 'hugo.lefevre@example.fr',
-    phone: '06 67 89 01 23',
-    joinedDate: '08/01/2025',
-    rqth: true,
-    formation: 'Master Cybersécurité',
-    niveau: 'Bac+5',
-    overallProgress: 85,
-    stats: {
-      studyTime: '14h 20min',
-      completedModules: 5,
-      totalModules: 6,
-      practicalCases: 3
-    },
-    lastActivity: 'Il y a 1 heure'
-  },
-  {
-    id: '7',
-    name: 'Julie Moreau',
-    email: 'julie.moreau@example.fr',
-    phone: '06 78 90 12 34',
-    joinedDate: '18/01/2025',
-    rqth: false,
-    formation: 'Bachelor Communication',
-    niveau: 'Bac+3',
-    overallProgress: 30,
-    stats: {
-      studyTime: '5h 45min',
-      completedModules: 2,
-      totalModules: 6,
-      practicalCases: 1
-    },
-    lastActivity: 'Il y a 2 jours'
-  },
-  {
-    id: '8',
-    name: 'Nicolas Girard',
-    email: 'nicolas.girard@example.fr',
-    phone: '06 89 01 23 45',
-    joinedDate: '25/01/2025',
-    rqth: false,
-    formation: 'Master Finance',
-    niveau: 'Bac+5',
-    overallProgress: 15,
-    stats: {
-      studyTime: '2h 30min',
-      completedModules: 1,
-      totalModules: 6,
-      practicalCases: 0
-    },
-    lastActivity: 'Il y a 5 jours'
-  }
-];
-
-// Extract unique formations for filter
-const formations = ['Tous', ...new Set(allStudents.map(s => s.formation))];
-
-export function StudentsListPage({ onNavigate }: StudentsListPageProps) {
+export function StudentsListPage() {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedFormation, setSelectedFormation] = useState('Tous');
   const [rqthFilter, setRqthFilter] = useState<'all' | 'rqth' | 'non-rqth'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
+  const {
+    students,
+    getstudentStats,
+    modules,
+    studentModulesProgress
+  } = useAdminData();
+
   // Filter students
-  const filteredStudents = allStudents.filter(student => {
-    const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.formation.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesFormation = selectedFormation === 'Tous' || student.formation === selectedFormation;
-    
-    const matchesRqth = rqthFilter === 'all' || 
-                        (rqthFilter === 'rqth' && student.rqth) ||
-                        (rqthFilter === 'non-rqth' && !student.rqth);
-    
-    return matchesSearch && matchesFormation && matchesRqth;
+  const filteredStudents = students.filter(student => {
+    const matchesSearch = student.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.email.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesRqth = rqthFilter === 'all' ||
+      (rqthFilter === 'rqth' && student.hasRQTH) ||
+      (rqthFilter === 'non-rqth' && !student.hasRQTH);
+
+    return matchesSearch && matchesRqth;
   });
 
   // Pagination
@@ -237,8 +70,8 @@ export function StudentsListPage({ onNavigate }: StudentsListPageProps) {
     return 'bg-gray-500';
   };
 
-  const StudentCard = ({ student }: { student: Student }) => (
-    <Link to={`${routes.AdminStudentTracking.path.replace(":id",student.id)}`}>
+  const StudentCard = ({ student }: { student: studentProfile }) => (
+    <Link to={`${routes.AdminStudentTracking.path.replace(":id", student.id)}`}>
       <div className="bg-card border border-border rounded-2xl p-6 hover:shadow-lg transition-all cursor-pointer group gap-15">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -247,13 +80,13 @@ export function StudentsListPage({ onNavigate }: StudentsListPageProps) {
             </div>
             <div>
               <h4 className="font-semibold group-hover:text-primary transition-colors">
-                {student.name}
+                {student.firstName} {student.lastName}
               </h4>
-              <p className="text-sm text-muted-foreground">{student.formation}</p>
             </div>
           </div>
-          {student.rqth && (
-            <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">
+          {student.hasRQTH && (
+            <span className="px-3 py-1 bg-accent rounded-full text-xs font-medium flex items-center gap-1">
+              <Shield className="w-3.5 h-3.5" />
               RQTH
             </span>
           )}
@@ -262,12 +95,14 @@ export function StudentsListPage({ onNavigate }: StudentsListPageProps) {
         <div className="space-y-3 mb-4">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Progression</span>
-            <span className="font-medium">{student.overallProgress}%</span>
+            <span className="font-medium">
+              {calculateGlobalProgress(studentModulesProgress.filter(progress => progress.user_id === student.id))}%
+            </span>
           </div>
           <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
-            <div 
-              className={`h-full transition-all ${getProgressColor(student.overallProgress)}`}
-              style={{ width: `${student.overallProgress}%` }}
+            <div
+              className={`h-full transition-all ${getProgressColor(calculateGlobalProgress(studentModulesProgress.filter(progress => progress.user_id === student.id)))}`}
+              style={{ width: `${calculateGlobalProgress(studentModulesProgress.filter(progress => progress.user_id === student.id))}%` }}
             />
           </div>
         </div>
@@ -275,24 +110,26 @@ export function StudentsListPage({ onNavigate }: StudentsListPageProps) {
         <div className="grid grid-cols-2 gap-3 mb-4 pt-3 border-t border-border">
           <div className="flex items-center gap-2 text-sm">
             <Clock className="w-4 h-4 text-muted-foreground" />
-            <span>{student.stats.studyTime}</span>
+            <span>student.stats.studyTime</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Award className="w-4 h-4 text-muted-foreground" />
-            <span>{student.stats.completedModules}/{student.stats.totalModules}</span>
+            <span>{getstudentStats(student.id)
+              ? Object.values(getstudentStats(student.id).moduleProgress).filter(module => module.completed === true).length
+              : 0}/{modules.length}</span>
           </div>
         </div>
 
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Dernière activité: {student.lastActivity}</span>
+          <span>Dernière activité: {formatDateTime(student.lastActiveAt)}</span>
           <Eye className="w-4 h-4 group-hover:text-primary transition-colors" />
         </div>
       </div>
     </Link>
   );
 
-  const StudentListItem = ({ student }: { student: Student }) => (
-    <Link to={`${routes.AdminStudentTracking.path.replace(":id",student.id)}`}>
+  const StudentListItem = ({ student }: { student: studentProfile }) => (
+    <Link to={`${routes.AdminStudentTracking.path.replace(":id", student.id)}`}>
       <div className="bg-card border border-border rounded-2xl p-4 hover:shadow-lg transition-all cursor-pointer group">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-start gap-4 flex-1 min-w-[200px]">
@@ -301,11 +138,11 @@ export function StudentsListPage({ onNavigate }: StudentsListPageProps) {
             </div>
             <div>
               <h4 className="font-semibold hover:text-primary transition-colors">
-                {student.name}
+                {student.firstName} {student.lastName}
               </h4>
               <p className="text-sm text-muted-foreground">{student.email}</p>
             </div>
-            {student.rqth && (
+            {student.hasRQTH && (
               <span className="px-3 py-1 bg-accent rounded-full text-xs font-medium flex items-center gap-1">
                 <Shield className="w-3.5 h-3.5" />
                 RQTH
@@ -316,12 +153,12 @@ export function StudentsListPage({ onNavigate }: StudentsListPageProps) {
           <div className="flex-1 min-w-[150px]">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-sm text-muted-foreground">Progression:</span>
-              <span className="text-sm font-medium">{student.overallProgress}%</span>
+              <span className="text-sm font-medium">{calculateGlobalProgress(studentModulesProgress.filter(progress => progress.user_id === student.id))}%</span>
             </div>
             <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
-              <div 
-                className={`h-full transition-all ${getProgressColor(student.overallProgress)}`}
-                style={{ width: `${student.overallProgress}%` }}
+              <div
+                className={`h-full transition-all ${getProgressColor(calculateGlobalProgress(studentModulesProgress.filter(progress => progress.user_id === student.id)))}`}
+                style={{ width: `${calculateGlobalProgress(studentModulesProgress.filter(progress => progress.user_id === student.id))}%` }}
               />
             </div>
           </div>
@@ -329,7 +166,7 @@ export function StudentsListPage({ onNavigate }: StudentsListPageProps) {
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <Clock className="w-4 h-4" />
-              <span>{student.stats.studyTime}</span>
+              <span>student.stats.studyTime</span>
             </div>
             <Eye className="w-4 h-4 group-hover:text-primary transition-colors" />
           </div>
@@ -367,20 +204,6 @@ export function StudentsListPage({ onNavigate }: StudentsListPageProps) {
               />
             </div>
 
-            {/* Formation Filter */}
-            <select
-              value={selectedFormation}
-              onChange={(e) => {
-                setSelectedFormation(e.target.value);
-                handleFilterChange();
-              }}
-              className="px-4 py-2 bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              {formations.map(formation => (
-                <option key={formation} value={formation}>{formation}</option>
-              ))}
-            </select>
-
             {/* RQTH Filter */}
             <select
               value={rqthFilter}
@@ -399,21 +222,19 @@ export function StudentsListPage({ onNavigate }: StudentsListPageProps) {
             <div className="flex gap-2 p-1 bg-card border border-border rounded-xl">
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg transition-colors ${
-                  viewMode === 'list' 
-                    ? 'bg-primary text-white' 
-                    : 'text-muted-foreground hover:bg-secondary'
-                }`}
+                className={`p-2 rounded-lg transition-colors ${viewMode === 'list'
+                  ? 'bg-primary text-white'
+                  : 'text-muted-foreground hover:bg-secondary'
+                  }`}
               >
                 <List className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg transition-colors ${
-                  viewMode === 'grid' 
-                    ? 'bg-primary text-white' 
-                    : 'text-muted-foreground hover:bg-secondary'
-                }`}
+                className={`p-2 rounded-lg transition-colors ${viewMode === 'grid'
+                  ? 'bg-primary text-white'
+                  : 'text-muted-foreground hover:bg-secondary'
+                  }`}
               >
                 <Grid className="w-4 h-4" />
               </button>

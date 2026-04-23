@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Building2, Calendar, ChevronLeft, ChevronRight, ExternalLink, Plus, Search, AlertCircle } from 'lucide-react';
-import { useUserData } from '@/context/UserDataContext';
-import { MAX_TRACKED_OFFERS } from '@/utils/initialState';
-import type { UserTrackedOffer } from '@/types';
-
-interface JobTrackingPageProps {
-  onNavigate: (page: string) => void;
-}
+import { useUserData } from '../../context/UserDataContext';
+import { MAX_TRACKED_OFFERS } from '../../utils/initialState';
+import type { UserTrackedOffer } from '../../types/index';
+import { routes } from '../router/routes';
+import { Link } from 'react-router-dom';
 
 const statusConfig = {
   interested: { label: 'À contacter', color: 'bg-[#E8ECFF] text-[#1E1548]' },
@@ -19,21 +17,21 @@ const statusConfig = {
   withdrawn: { label: 'Retiré', color: 'bg-[#F3F4F6] text-[#6B7280]' }
 } as const;
 
-export function JobTrackingPage({ onNavigate }: JobTrackingPageProps) {
+export function JobTrackingPage() {
   // TODO: fetch from Supabase - using context for now
-  const { 
-    trackedOffers, 
-    addTrackedOffer, 
-    updateTrackedOffer, 
+  const {
+    trackedOffers,
+    addTrackedOffer,
+    updateTrackedOffer,
     removeTrackedOffer,
-    canTrackMoreOffers 
+    canTrackMoreOffers
   } = useUserData();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   const itemsPerPage = 5;
 
   // New offer form state
@@ -52,8 +50,8 @@ export function JobTrackingPage({ onNavigate }: JobTrackingPageProps) {
 
   // Filter offers
   const filteredOffers = trackedOffers.filter(offer => {
-    const matchesSearch = 
-      searchQuery === '' || 
+    const matchesSearch =
+      searchQuery === '' ||
       offer.userNotes?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = filterStatus === 'all' || offer.applicationStatus === filterStatus;
     return matchesSearch && matchesStatus;
@@ -89,7 +87,7 @@ export function JobTrackingPage({ onNavigate }: JobTrackingPageProps) {
           interviewDate: newOffer.interviewDate,
           reminderDate: newOffer.reminderDate,
         });
-        
+
         // Reset form
         setNewOffer({
           offerId: '',
@@ -125,15 +123,15 @@ export function JobTrackingPage({ onNavigate }: JobTrackingPageProps) {
 
   const handleUpdateStatus = async (offerId: string, newStatus: UserTrackedOffer['applicationStatus']) => {
     try {
-      const updates: Partial<UserTrackedOffer> = { 
-        applicationStatus: newStatus 
+      const updates: Partial<UserTrackedOffer> = {
+        applicationStatus: newStatus
       };
-      
+
       // Si passage à "applied", mettre la date de candidature
       if (newStatus === 'applied' && !trackedOffers.find(o => o.id === offerId)?.applicationDate) {
         updates.applicationDate = new Date().toISOString().split('T')[0];
       }
-      
+
       await updateTrackedOffer(offerId, updates);
     } catch (error) {
       alert('Erreur lors de la mise à jour');
@@ -154,14 +152,15 @@ export function JobTrackingPage({ onNavigate }: JobTrackingPageProps) {
       <div className="bg-white border-b border-[rgba(30,21,72,0.08)] sticky top-0 z-30">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex items-start gap-3 sm:gap-6">
-            <button
-              onClick={() => onNavigate('student-dashboard')}
-              className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
-              aria-label="Retour"
-            >
-              <ChevronRight className="w-5 h-5 text-[#1E1548] rotate-180" />
-            </button>
-            
+            <Link to={routes.StudentDashboard.path}>
+              <button
+                className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
+                aria-label="Retour"
+              >
+                <ChevronRight className="w-5 h-5 text-[#1E1548] rotate-180" />
+              </button>
+            </Link>
+
             <div className="flex-1 min-w-0">
               <h1 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold leading-tight text-[#1E1548] mb-1 sm:mb-2">
                 Suivi des offres
@@ -218,7 +217,7 @@ export function JobTrackingPage({ onNavigate }: JobTrackingPageProps) {
                 Pourquoi seulement {MAX_TRACKED_OFFERS} offres ?
               </h4>
               <p className="text-sm sm:text-[14px] font-normal leading-[20px] text-[#1E1548]/80 mb-2">
-                Concentrer tes efforts sur un nombre restreint d'offres vraiment pertinentes maximise tes chances de succès. 
+                Concentrer tes efforts sur un nombre restreint d'offres vraiment pertinentes maximise tes chances de succès.
                 L'équipe Admission pourra aussi mieux t'accompagner sur ces candidatures ciblées.
               </p>
               <div className="flex items-center gap-2 text-sm sm:text-[14px] font-medium text-[#1E1548]">

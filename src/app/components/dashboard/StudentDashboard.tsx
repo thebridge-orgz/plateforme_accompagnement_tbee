@@ -25,19 +25,19 @@ export function StudentDashboard() {
   const firstName = userProfile?.firstName || 'Candidat';
 
   // Parcours entièrement complété ?
-  const allModulesCompleted = !isNewUser && totalModulesCount > 0 && completedModulesCount === totalModulesCount;
-  
+  const allModulesCompleted = isNewUser && totalModulesCount > 0 && completedModulesCount === totalModulesCount;
+
   // Formater le temps d'étude
   const studyTimeFormatted = formatStudyTime(statistics.totalTimeSpentMinutes);
-  
+
   // Modules à afficher (limiter à 3 pour l'affichage)
   const displayModules = modules
     .filter(m => m.status === 'in_progress' || m.status === 'available')
     .slice(0, 3);
 
   // Si aucun module en cours/disponible, afficher les premiers modules
-  const modulesToShow = displayModules.length > 0 
-    ? displayModules 
+  const modulesToShow = displayModules.length > 0
+    ? displayModules
     : modules.slice(0, 3);
 
   if (isLoading) {
@@ -65,8 +65,8 @@ export function StudentDashboard() {
             {allModulesCompleted
               ? 'Tu as terminé ton parcours ! Tu es maintenant prêt(e) à décrocher ton alternance. 🚀'
               : isNewUser
-              ? 'Commence ton parcours pour trouver ton alternance'
-              : 'Continue ton parcours vers l\'alternance. Tu es sur la bonne voie !'}
+                ? 'Commence ton parcours pour trouver ton alternance'
+                : 'Continue ton parcours vers l\'alternance. Tu es sur la bonne voie !'}
           </p>
           <div className="w-full max-w-none">
             <ProgressBar progress={globalProgress} showLabel size="lg" className="w-full" />
@@ -115,8 +115,8 @@ export function StudentDashboard() {
                 {allModulesCompleted
                   ? 'Parcours terminé 🏆'
                   : isNewUser
-                  ? 'Commence ton parcours'
-                  : 'Mes modules en cours'}
+                    ? 'Commence ton parcours'
+                    : 'Mes modules en cours'}
               </h3>
               {!allModulesCompleted && (
                 <Link to={routes.StudentModules.path}>
@@ -177,7 +177,7 @@ export function StudentDashboard() {
                     />
                   </div>
                 </div>
-                <Link to={routes.StudentModulesDetails.path.replace(":id",currentModule.id)} className="block w-full">
+                <Link to={routes.StudentModulesDetails.path.replace(":id", currentModule.id)} className="block w-full">
                   <Button
                     className="w-full bg-[#1E1548] text-primary hover:bg-[#2D2166]"
                   >

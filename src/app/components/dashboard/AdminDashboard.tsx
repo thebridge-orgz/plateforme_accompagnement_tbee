@@ -4,12 +4,8 @@ import { useAuth } from '../../auth/AuthContext';
 import { routes } from '../../router/routes';
 import { Link } from 'react-router-dom';
 
-interface AdminDashboardProps {
-    onNavigate: (page: string) => void;
-}
 
-
-export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
+export function AdminDashboard() {
     const user = useAuth().user;
     const adminName = user ? user.firstName : 'adminName';
 

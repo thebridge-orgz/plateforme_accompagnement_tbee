@@ -111,7 +111,7 @@ export function DashboardSidebar({
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1">
         {navItems.map((item) => (
-          <Link to={item.path}>
+          <Link key={item.path} to={item.path}>
             <button
               /*setIsMobileOpen(false);*/
               className={`

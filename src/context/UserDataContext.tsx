@@ -239,6 +239,7 @@ export function UserDataProvider({ children, initialData }: UserDataProviderProp
   // -------------------- COMPUTED VALUES --------------------
 
   const globalProgress = calculateGlobalProgress(data.modules);
+  console.log(JSON.stringify(data.modules, null, 2));
   const completedModulesCount = countCompletedModules(data.modules);
   const totalModulesCount = data.modules.length;
   const currentModule = getCurrentModule(data.modules);
@@ -510,8 +511,8 @@ export function UserDataProvider({ children, initialData }: UserDataProviderProp
         statistics: nowApplied
           ? { ...prev.statistics, totalApplications: prev.statistics.totalApplications + 1 }
           : nowInterview
-          ? { ...prev.statistics, totalInterviews: prev.statistics.totalInterviews + 1 }
-          : prev.statistics,
+            ? { ...prev.statistics, totalInterviews: prev.statistics.totalInterviews + 1 }
+            : prev.statistics,
       };
     });
   }, [user?.id]);

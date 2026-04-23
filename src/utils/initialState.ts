@@ -4,26 +4,26 @@
 // Cet état représente un utilisateur qui vient de s'inscrire
 // et n'a encore rien complété sur la plateforme
 
-import type { 
-  UserProfile, 
-  UserStatistics, 
+import type {
+  UserProfile,
+  UserStatistics,
   ModuleWithProgress,
   CVData,
-  UserTrackedOffer 
+  UserTrackedOffer
 } from '../types';
 
 // -------------------- USER PROFILE --------------------
 
 export const initialUserProfile: Partial<UserProfile> = {
   role: 'student',
-  
+
   // Onboarding Step 1 - vide jusqu'à complétion
   firstName: null,
   lastName: null,
   phone: null,
   birthDate: null,
   hasRQTH: false,
-  
+
   // Onboarding Step 2 - vide jusqu'à complétion
   currentLevel: null,
   targetLevel: null,
@@ -31,7 +31,7 @@ export const initialUserProfile: Partial<UserProfile> = {
   city: null,
   postalCode: null,
   mobilityRadius: null,
-  
+
   // Status - nouvel utilisateur
   onboardingCompleted: false,
   onboardingStep: 1,
@@ -47,15 +47,15 @@ export const initialUserStatistics: Omit<UserStatistics, 'id' | 'userId'> = {
   currentWeek: 1, // Démarre à la semaine 1
   currentStreakDays: 0,
   longestStreakDays: 0,
-  
+
   // Activité - aucune pour le moment
   lastActivityDate: null,
   totalTimeSpentMinutes: 0,
-  
+
   // Offres - aucune candidature
   totalApplications: 0,
   totalInterviews: 0,
-  
+
   updatedAt: new Date().toISOString(),
 };
 
@@ -180,7 +180,7 @@ export const initialDashboardData: DashboardData = {
  */
 export function calculateGlobalProgress(modules: ModuleWithProgress[]): number {
   if (modules.length === 0) return 0;
-  
+
   const totalProgress = modules.reduce((sum, module) => sum + module.progress, 0);
   return Math.round(totalProgress / modules.length);
 }
@@ -201,18 +201,18 @@ export function countCompletedModules(modules: ModuleWithProgress[]): number {
  */
 export function formatStudyTime(totalMinutes: number): string {
   if (totalMinutes === 0) return '0min';
-  
+
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  
+
   if (hours === 0) {
     return `${minutes}min`;
   }
-  
+
   if (minutes === 0) {
     return `${hours}h`;
   }
-  
+
   return `${hours}h ${minutes}min`;
 }
 
@@ -225,11 +225,11 @@ export function getCurrentModule(modules: ModuleWithProgress[]): ModuleWithProgr
   // D'abord chercher un module en cours
   const inProgress = modules.find(m => m.status === 'in_progress');
   if (inProgress) return inProgress;
-  
+
   // Sinon retourner le premier module disponible
   const available = modules.find(m => m.status === 'available');
   if (available) return available;
-  
+
   return null;
 }
 
@@ -239,6 +239,6 @@ export function getCurrentModule(modules: ModuleWithProgress[]): ModuleWithProgr
  * @returns true si l'utilisateur est nouveau
  */
 export function isNewUser(statistics: UserStatistics | Omit<UserStatistics, 'id' | 'userId'>): boolean {
-  return statistics.totalLessonsCompleted === 0 && 
-         statistics.totalTimeSpentMinutes === 0;
+  return statistics.totalLessonsCompleted === 0 &&
+    statistics.totalTimeSpentMinutes === 0;
 }

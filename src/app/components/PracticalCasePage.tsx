@@ -2,10 +2,8 @@ import { useState } from 'react';
 import { ArrowLeft, Briefcase, Clock, CheckCircle2, Trophy, Star, X, Play } from 'lucide-react';
 import { Button } from './Button';
 import { ProgressBar } from './ui/ProgressBar';
-
-interface PracticalCasePageProps {
-  onNavigate: (page: string) => void;
-}
+import { routes } from '../router/routes';
+import { Link } from 'react-router-dom';
 
 // Mock data
 const practicalCases = [
@@ -68,7 +66,7 @@ const userStats = {
   averageScore: 0 // Changé de 85 à 0
 };
 
-export function PracticalCasePage({ onNavigate }: PracticalCasePageProps) {
+export function PracticalCasePage() {
   const [selectedCase, setSelectedCase] = useState<string | null>(null);
   const [videoModal, setVideoModal] = useState<{ title: string; videoUrl: string } | null>(null);
 
@@ -91,13 +89,14 @@ export function PracticalCasePage({ onNavigate }: PracticalCasePageProps) {
       <div className="bg-white border-b border-[rgba(30,21,72,0.08)] sticky top-0 z-30">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex items-start gap-3 sm:gap-6">
-            <button
-              onClick={() => onNavigate('student-dashboard')}
-              className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
-              aria-label="Retour"
-            >
-              <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
-            </button>
+            <Link to={routes.StudentDashboard.path}>
+              <button
+                className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
+                aria-label="Retour"
+              >
+                <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
+              </button>
+            </Link>
             <div className="flex-1 min-w-0">
               <h1 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold leading-tight text-[#1E1548] mb-1 sm:mb-2">
                 Cas pratiques
@@ -153,8 +152,8 @@ export function PracticalCasePage({ onNavigate }: PracticalCasePageProps) {
                 className={`
                   bg-white border-2 rounded-[16px] p-4 sm:p-6
                   transition-all duration-300
-                  ${practicalCase.status !== 'locked' 
-                    ? 'border-[rgba(30,21,72,0.08)] hover:shadow-[0_6px_20px_rgba(30,21,72,0.1)] hover:border-[#FFD600] cursor-pointer' 
+                  ${practicalCase.status !== 'locked'
+                    ? 'border-[rgba(30,21,72,0.08)] hover:shadow-[0_6px_20px_rgba(30,21,72,0.1)] hover:border-[#FFD600] cursor-pointer'
                     : 'border-[rgba(30,21,72,0.08)] opacity-60 cursor-not-allowed'
                   }
                 `}
@@ -177,7 +176,7 @@ export function PracticalCasePage({ onNavigate }: PracticalCasePageProps) {
                     <p className="text-[13px] sm:text-[14px] text-[#6B7280] mb-3 sm:mb-4 leading-[20px] sm:leading-[22px]">
                       {practicalCase.description}
                     </p>
-                    
+
                     {/* Meta Info */}
                     <div className="flex items-center flex-wrap gap-3 sm:gap-4 text-[13px] sm:text-[14px] text-[#6B7280]">
                       <div className="flex items-center gap-1.5">
@@ -253,8 +252,8 @@ export function PracticalCasePage({ onNavigate }: PracticalCasePageProps) {
               Comment ça fonctionne ?
             </h2>
             <p className="text-[14px] sm:text-[16px] text-[#6B7280] mb-6 leading-[22px] sm:leading-[24px]">
-              Les cas pratiques vous permettent de mettre en application les connaissances acquises 
-              dans les modules de formation. Complétez-les pour gagner des points et progresser dans 
+              Les cas pratiques vous permettent de mettre en application les connaissances acquises
+              dans les modules de formation. Complétez-les pour gagner des points et progresser dans
               votre parcours vers l'alternance.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">

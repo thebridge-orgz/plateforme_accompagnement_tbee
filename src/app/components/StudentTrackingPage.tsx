@@ -6,10 +6,6 @@ import { StatCard } from './StatCard';
 import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
 
-interface studentTrackingPageProps {
-  onNavigate: (page: string) => void;
-}
-
 // Mock data for selected student
 const studentData = {
   id: '1',
@@ -39,7 +35,7 @@ const studentData = {
   notes: []
 };
 
-export function StudentTrackingPage({ onNavigate }: studentTrackingPageProps) {
+export function StudentTrackingPage() {
   const [newNote, setNewNote] = useState('');
   const student = studentData;
 

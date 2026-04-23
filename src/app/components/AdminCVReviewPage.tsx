@@ -4,11 +4,7 @@ import { useAdminData } from '../../context/AdminDataContext';
 import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
 
-interface AdminCVReviewPageProps {
-  onNavigate: (page: string) => void;
-}
-
-export function AdminCVReviewPage({ onNavigate }: AdminCVReviewPageProps) {
+export function AdminCVReviewPage() {
   const { cvSubmissions, reviewCV } = useAdminData();
 
   const [selectedCVId, setSelectedCVId] = useState<string | null>(null);
