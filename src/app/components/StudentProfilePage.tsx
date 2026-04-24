@@ -26,7 +26,7 @@ import { FormInput } from './FormInput';
 import { useUserData } from '../../context/UserDataContext';
 import { supabase } from '../../app/auth/supabaseClient';
 import { routes } from '../router/routes';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 interface StudentProfilePageProps {
   userName?: string;
@@ -36,6 +36,7 @@ interface StudentProfilePageProps {
 }
 
 export function StudentProfilePage({ userName, authEmail, authFirstName, authLastName }: StudentProfilePageProps) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'profile' | 'privacy' | 'notifications'>('profile');
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -294,9 +295,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
       if (error) throw error;
 
       await supabase.auth.signOut();
-
-      alert('Votre compte a été supprimé.');
-      onNavigate('landing');
+      window.location.replace('/sign-in');
     } catch (error) {
       console.error('Erreur suppression compte:', error);
       alert('Erreur lors de la suppression du compte. Réessaie.');
@@ -313,7 +312,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex items-start gap-3 sm:gap-6">
             <button
-              onClick={() => onNavigate('student-dashboard')}
+              onClick={() => navigate(routes.StudentDashboard.path)}
               className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
               aria-label="Retour"
             >

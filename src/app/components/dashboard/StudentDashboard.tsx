@@ -25,13 +25,8 @@ export function StudentDashboard() {
   const firstName = userProfile?.firstName || 'Candidat';
 
   // Parcours entièrement complété ?
-<<<<<<< HEAD
   const allModulesCompleted = totalModulesCount > 0 && completedModulesCount === totalModulesCount;
-  
-=======
-  const allModulesCompleted = isNewUser && totalModulesCount > 0 && completedModulesCount === totalModulesCount;
 
->>>>>>> f001d84fcc86065c86244c223fa156aa0c12f765
   // Formater le temps d'étude
   const studyTimeFormatted = formatStudyTime(statistics.totalTimeSpentMinutes);
 
