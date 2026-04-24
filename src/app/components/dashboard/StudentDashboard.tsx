@@ -28,7 +28,7 @@ export function StudentDashboard({ onNavigate }: StudentDashboardProps) {
   const firstName = userProfile?.firstName || 'Candidat';
 
   // Parcours entièrement complété ?
-  const allModulesCompleted = !isNewUser && totalModulesCount > 0 && completedModulesCount === totalModulesCount;
+  const allModulesCompleted = totalModulesCount > 0 && completedModulesCount === totalModulesCount;
   
   // Formater le temps d'étude
   const studyTimeFormatted = formatStudyTime(statistics.totalTimeSpentMinutes);
@@ -113,7 +113,7 @@ export function StudentDashboard({ onNavigate }: StudentDashboardProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Current Modules */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
               <h3>
                 {allModulesCompleted
                   ? 'Parcours terminé 🏆'

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import {
+  ArrowLeft,
   User,
   Mail,
   Phone,
@@ -38,6 +39,7 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [showPasswordFields, setShowPasswordFields] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -61,10 +63,10 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
   const [profileData, setProfileData] = useState({
     firstName: authFirstName || userProfile?.firstName || 'Candidat',
     lastName: authLastName || userProfile?.lastName || '',
-    email: authEmail || 'Non renseigné',
+    email: authEmail || userProfile?.email || '',
     phone: userProfile?.phone || '',
     birthDate: userProfile?.birthDate || '',
-    address: '',
+    address: (userProfile as any)?.address || '',
     city: userProfile?.city || '',
     postalCode: userProfile?.postalCode || '',
     school: '',
@@ -147,13 +149,14 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
         phone: profileData.phone,
         birthDate: profileData.birthDate,
         hasRQTH: profileData.rqth,
+        address: profileData.address,
         currentLevel: profileData.level,
         targetLevel: profileData.targetLevel,
         fieldOfInterest: profileData.program,
         city: profileData.city,
         postalCode: profileData.postalCode,
         mobilityRadius: profileData.mobilityRadius ?? null,
-      });
+      } as any);
       setIsEditing(false);
       alert('✅ Profil mis à jour avec succès !');
     } catch (error) {
@@ -283,29 +286,20 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
   // SUPPRESSION DU COMPTE
   // ============================================
   const handleDeleteAccount = async () => {
+    setIsDeleting(true);
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
+      // Supprime l'utilisateur dans auth.users (cascade sur toutes les tables liées)
+      const { error } = await supabase.rpc('delete_user');
+      if (error) throw error;
 
-      const userId = authUser.id;
-
-      // Supprimer toutes les données utilisateur
-      await Promise.all([
-        supabase.from('user_statistics').delete().eq('user_id', userId),
-        supabase.from('user_module_progress').delete().eq('user_id', userId),
-        supabase.from('user_tracked_offers').delete().eq('user_id', userId),
-        supabase.from('cv_data').delete().eq('user_id', userId),
-        supabase.from('user_lesson_progress').delete().eq('user_id', userId),
-      ]);
-
-      await supabase.from('profiles').delete().eq('id', userId);
       await supabase.auth.signOut();
-
-      alert('Votre compte a été supprimé.');
-      onNavigate('landing');
+      window.location.replace('/sign-in');
     } catch (error) {
       console.error('Erreur suppression compte:', error);
-      alert('Erreur lors de la suppression du compte.');
+      alert('Erreur lors de la suppression du compte. Réessaie.');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
     }
   };
 
@@ -320,7 +314,7 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
               className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
               aria-label="Retour"
             >
-              <User className="w-5 h-5 text-[#1E1548]" />
+              <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
             </button>
             
             <div className="flex-1 min-w-0">
@@ -489,6 +483,7 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
                   label="Email"
                   type="email"
                   value={profileData.email}
+                  placeholder="Email"
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   disabled={!isEditing}
                   icon={<Mail className="w-4 h-4" />}
@@ -496,8 +491,10 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
                 <FormInput
                   label="Téléphone"
                   type="tel"
+                  inputMode="numeric"
                   value={profileData.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  placeholder="0612345678"
+                  onChange={(e) => handleInputChange('phone', e.target.value.replace(/\D/g, ''))}
                   disabled={!isEditing}
                   icon={<Phone className="w-4 h-4" />}
                 />
@@ -658,9 +655,9 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
                   placeholder="••••••••"
                   value={passwordData.currentPassword}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                  icon={
+                  rightIcon={
                     <button
-                      className="absolute right-3 top-3"
+                      type="button"
                       onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
                     >
                       {showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -673,9 +670,9 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
                   placeholder="••••••••"
                   value={passwordData.newPassword}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                  icon={
+                  rightIcon={
                     <button
-                      className="absolute right-3 top-3"
+                      type="button"
                       onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
                     >
                       {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -688,9 +685,9 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
                   placeholder="••••••••"
                   value={passwordData.confirmPassword}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                  icon={
+                  rightIcon={
                     <button
-                      className="absolute right-3 top-3"
+                      type="button"
                       onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
                     >
                       {showPasswords.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -851,29 +848,48 @@ export function StudentProfilePage({ onNavigate, userName, authEmail, authFirstN
 
       {/* Delete Account Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-card border border-border rounded-2xl p-6 w-96">
-            <div className="flex items-center gap-4 mb-4">
-              <AlertTriangle className="w-6 h-6 text-red-500" />
-              <h3 className="text-lg font-medium">Supprimer votre compte</h3>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[24px] p-8 max-w-md w-full shadow-2xl">
+            {/* Icon */}
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertTriangle className="w-8 h-8 text-red-500" />
             </div>
-            <p className="text-sm text-muted-foreground mb-6">
-              Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible et supprimera toutes vos données.
+
+            {/* Title */}
+            <h3 className="text-[22px] font-bold text-[#1E1548] text-center mb-3">
+              Supprimer mon compte
+            </h3>
+            <p className="text-[14px] text-[#6B7280] text-center leading-[22px] mb-2">
+              Cette action est <span className="font-semibold text-red-600">irréversible</span>. Toutes tes données seront définitivement supprimées :
             </p>
-            <div className="flex justify-end gap-4">
-              <Button
-                variant="secondary"
+            <ul className="text-[13px] text-[#6B7280] space-y-1 mb-8 bg-[#F8F9FD] rounded-[12px] p-4">
+              <li>• Progression des modules</li>
+              <li>• Suivi des offres</li>
+              <li>• CV et documents</li>
+              <li>• Informations de profil</li>
+            </ul>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
                 onClick={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+                className="flex-1 h-12 bg-white border border-[rgba(30,21,72,0.15)] text-[#1E1548] rounded-[12px] text-[15px] font-semibold hover:bg-[#F8F9FD] transition-colors disabled:opacity-50"
               >
                 Annuler
-              </Button>
-              <Button
-                variant="secondary"
-                className="border-red-300 text-red-700 hover:bg-red-100"
+              </button>
+              <button
                 onClick={handleDeleteAccount}
+                disabled={isDeleting}
+                className="flex-1 h-12 bg-red-500 text-white rounded-[12px] text-[15px] font-semibold hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                Supprimer
-              </Button>
+                {isDeleting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Suppression...
+                  </>
+                ) : 'Supprimer définitivement'}
+              </button>
             </div>
           </div>
         </div>

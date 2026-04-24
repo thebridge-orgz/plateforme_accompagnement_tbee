@@ -48,9 +48,10 @@ export function CVUploadPage({ onNavigate }: CVUploadPageProps) {
         },
         file
       );
-    } catch (error) {
-      alert('Erreur lors de l\'upload du CV');
-      console.error(error);
+    } catch (error: any) {
+      const message = error?.message || error?.error_description || JSON.stringify(error);
+      alert(`Erreur upload CV: ${message}`);
+      console.error('CV upload error:', error);
     } finally {
       setIsUploading(false);
     }

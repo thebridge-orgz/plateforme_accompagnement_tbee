@@ -21,6 +21,7 @@ export interface UserProfile {
   hasRQTH: boolean;
   
   // Onboarding Step 2
+  address: string | null;
   currentLevel: string | null; // 'bac', 'bac+2', 'bac+3', etc.
   targetLevel: string | null;
   fieldOfInterest: string | null;
@@ -177,8 +178,13 @@ export interface JobOffer {
 export interface UserTrackedOffer {
   id: string;
   userId: string;
-  offerId: string;
-  
+  offerId: string | null;
+
+  // Données pour offres ajoutées manuellement
+  companyName: string | null;
+  positionTitle: string | null;
+  offerUrl: string | null;
+
   // Status de candidature
   applicationStatus: ApplicationStatus;
   

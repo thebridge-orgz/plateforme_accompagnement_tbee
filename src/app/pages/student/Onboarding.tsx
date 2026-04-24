@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { routes } from '../../router/routes';
+import { OnboardingPersonalInfo, type PersonalInfoData } from '../../components/onboarding/OnboardingPersonalInfo';
 import { OnboardingStep1 } from '../../components/onboarding/OnboardingStep1';
 import { OnboardingStep2 } from '../../components/onboarding/OnboardingStep2';
 import { Navbar } from '../../components/Navbar';
@@ -10,6 +11,7 @@ import { Footer } from '../../components/Footer';
 function Onboarding() {
     const { user, saveOnboarding, loading } = useAuth();
     const navigate = useNavigate();
+    const [personalInfoData, setPersonalInfoData] = useState<PersonalInfoData | null>(null);
     const [step1Data, setStep1Data] = useState<any>(null);
 
     useEffect(() => {
@@ -33,22 +35,24 @@ function Onboarding() {
         );
     }
 
+    const handlePersonalInfoComplete = (data: PersonalInfoData) => {
+        setPersonalInfoData(data);
+    };
+
     const handleStep1Complete = (data: any) => {
         setStep1Data(data);
     };
 
     const handleStep2Complete = async (data: any) => {
         try {
-            // Combiner les données des deux étapes
             const onboardingData = {
+                ...personalInfoData,
                 ...step1Data,
                 ...data,
                 completedAt: new Date().toISOString(),
             };
 
             await saveOnboarding(onboardingData);
-
-            // Rediriger vers le dashboard
             navigate(routes.StudentDashboard.path);
         } catch (error) {
             console.error('Error completing onboarding:', error);
@@ -58,7 +62,13 @@ function Onboarding() {
     return (
         <>
             <Navbar />
-            {!step1Data ? (
+            {!personalInfoData ? (
+                <OnboardingPersonalInfo
+                    initialFirstName={user.firstName ?? ''}
+                    initialLastName={user.lastName ?? ''}
+                    onComplete={handlePersonalInfoComplete}
+                />
+            ) : !step1Data ? (
                 <OnboardingStep1 onComplete={handleStep1Complete} />
             ) : (
                 <OnboardingStep2

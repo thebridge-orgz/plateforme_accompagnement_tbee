@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { ArrowLeft, Briefcase, Clock, CheckCircle2, Trophy, Star, X, Play } from 'lucide-react';
 import { Button } from './Button';
 import { ProgressBar } from './ui/ProgressBar';
@@ -110,7 +110,7 @@ export function PracticalCasePage({ onNavigate }: PracticalCasePageProps) {
         </div>
       </div>
 
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-6 sm:pt-20 sm:pb-8 lg:pt-8 lg:pb-8 space-y-6 sm:space-y-8">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8 lg:pt-8 lg:pb-8 space-y-6 sm:space-y-8">
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[16px] p-4 sm:p-6 shadow-[0_2px_8px_rgba(30,21,72,0.04)]">

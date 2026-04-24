@@ -109,9 +109,8 @@ export function DashboardSidebar({
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1">
         {navItems.map((item) => (
-          <Link to={item.path}>
+          <Link to={item.path} key={item.path} onClick={() => setIsMobileOpen(false)}>
             <button
-              /*setIsMobileOpen(false);*/
               className={`
               w-full flex items-center gap-3 px-4 py-3 rounded-xl
               transition-all duration-200 text-left
@@ -131,7 +130,7 @@ export function DashboardSidebar({
       {/* Footer */}
       <div className="p-6 border-t border-border">
         <button
-          onClick={() => signOut()}
+          onClick={() => { setIsMobileOpen(false); signOut(); }}
           className="w-full text-left text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           Se déconnecter
@@ -142,19 +141,27 @@ export function DashboardSidebar({
 
   return (
     <>
-      {/* Mobile Toggle Button */}
-      <button
-        onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="fixed top-4 left-4 z-50 lg:hidden w-12 h-12 rounded-full bg-foreground text-background flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
-        aria-label="Toggle menu"
-      >
-        {isMobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-      </button>
+      {/* Mobile Top Bar */}
+      <div className="fixed top-0 left-0 right-0 h-14 bg-background border-b border-border z-50 lg:hidden flex items-center justify-between px-4 shadow-sm">
+        <div className="flex items-center gap-2">
+          <div className="size-7 bg-[#1e1548] rounded-[10px] flex items-center justify-center">
+            <span className="text-white font-bold text-xs" style={{ fontFamily: 'Poppins' }}>T</span>
+          </div>
+          <span className="font-semibold text-sm text-[#1E1548]">TBEE</span>
+        </div>
+        <button
+          onClick={() => setIsMobileOpen(!isMobileOpen)}
+          className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
+          aria-label="Toggle menu"
+        >
+          {isMobileOpen ? <X className="w-5 h-5 text-[#1E1548]" /> : <Menu className="w-5 h-5 text-[#1E1548]" />}
+        </button>
+      </div>
 
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-foreground/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-foreground/50 z-[55] lg:hidden"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
@@ -163,7 +170,7 @@ export function DashboardSidebar({
       <aside
         className={`
           fixed top-0 left-0 h-full w-72 bg-background border-r border-border
-          flex flex-col z-40
+          flex flex-col z-[60]
           transition-transform duration-300 ease-in-out
           lg:translate-x-0
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}

@@ -1,4 +1,4 @@
-import { ArrowLeft, FileText, Download, CheckCircle2, AlertCircle, Star, Send } from 'lucide-react';
+﻿import { ArrowLeft, FileText, Download, CheckCircle2, AlertCircle, Star, Send } from 'lucide-react';
 import { useState } from 'react';
 import { useAdminData } from '../../context/AdminDataContext';
 import { Link } from 'react-router-dom';
@@ -49,7 +49,7 @@ export function AdminCVReviewPage({ onNavigate }: AdminCVReviewPageProps) {
   return (
     <div className="min-h-screen bg-[#F8F9FD] pb-16">
       <div className="bg-white border-b border-[rgba(30,21,72,0.08)]">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-6 sm:pt-20 sm:pb-8 lg:pt-8 lg:pb-8">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8 lg:pt-8 lg:pb-8">
           <Link to={routes.AdminDashboard.path}>
             <button
               className="flex items-center gap-2 text-[#1E1548] hover:text-[#FFD600] transition-colors mb-4"

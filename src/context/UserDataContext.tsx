@@ -67,6 +67,7 @@ function mapProfile(raw: any): Partial<UserProfile> {
     phone: raw.phone,
     birthDate: raw.birth_date,
     hasRQTH: raw.has_rqth ?? false,
+    address: raw.address ?? null,
     currentLevel: raw.current_level,
     targetLevel: raw.target_level,
     fieldOfInterest: raw.field_of_interest,
@@ -111,7 +112,10 @@ function mapTrackedOffer(raw: any): UserTrackedOffer {
   return {
     id: raw.id,
     userId: raw.user_id,
-    offerId: raw.offer_id,
+    offerId: raw.offer_id ?? null,
+    companyName: raw.company_name ?? null,
+    positionTitle: raw.position_title ?? null,
+    offerUrl: raw.offer_url ?? null,
     applicationStatus: raw.application_status,
     userNotes: raw.user_notes,
     applicationDate: raw.application_date,
@@ -189,10 +193,12 @@ export function UserDataProvider({ children, initialData }: UserDataProviderProp
       ]);
 
       // Fetch progression modules de l'utilisateur
-      const { data: moduleProgressRaw } = await supabase
+      const { data: moduleProgressRaw, error: progressError } = await supabase
         .from('user_module_progress')
         .select('*')
         .eq('user_id', userId);
+
+      if (progressError) console.error('Erreur lecture user_module_progress:', progressError);
 
       // Construire la map des progressions
       const progressMap: Record<string, any> = {};
@@ -257,6 +263,7 @@ export function UserDataProvider({ children, initialData }: UserDataProviderProp
     if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
     if (updates.birthDate !== undefined) dbUpdates.birth_date = updates.birthDate;
     if (updates.hasRQTH !== undefined) dbUpdates.has_rqth = updates.hasRQTH;
+    if (updates.address !== undefined) dbUpdates.address = updates.address;
     if (updates.currentLevel !== undefined) dbUpdates.current_level = updates.currentLevel;
     if (updates.targetLevel !== undefined) dbUpdates.target_level = updates.targetLevel;
     if (updates.fieldOfInterest !== undefined) dbUpdates.field_of_interest = updates.fieldOfInterest;
@@ -296,7 +303,7 @@ export function UserDataProvider({ children, initialData }: UserDataProviderProp
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id,module_id' });
 
-    if (error) console.error('Erreur updateModuleProgress:', error);
+    if (error) throw error;
 
     setData(prev => ({
       ...prev,
@@ -318,7 +325,7 @@ export function UserDataProvider({ children, initialData }: UserDataProviderProp
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id,module_id' });
 
-    if (error) console.error('Erreur saveModuleStepProgress:', error);
+    if (error) throw error;
 
     setData(prev => ({
       ...prev,
@@ -342,7 +349,7 @@ export function UserDataProvider({ children, initialData }: UserDataProviderProp
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id,module_id' });
 
-    if (error) console.error('Erreur startModule:', error);
+    if (error) throw error;
 
     // Mettre à jour last_activity_date dans user_statistics
     await supabase
@@ -452,7 +459,10 @@ export function UserDataProvider({ children, initialData }: UserDataProviderProp
       .from('user_tracked_offers')
       .insert({
         user_id: user.id,
-        offer_id: offer.offerId,
+        offer_id: offer.offerId ?? null,
+        company_name: offer.companyName ?? null,
+        position_title: offer.positionTitle ?? null,
+        offer_url: offer.offerUrl ?? null,
         application_status: offer.applicationStatus,
         user_notes: offer.userNotes,
         application_date: offer.applicationDate,
@@ -484,6 +494,9 @@ export function UserDataProvider({ children, initialData }: UserDataProviderProp
     if (updates.applicationDate !== undefined) dbUpdates.application_date = updates.applicationDate;
     if (updates.interviewDate !== undefined) dbUpdates.interview_date = updates.interviewDate;
     if (updates.reminderDate !== undefined) dbUpdates.reminder_date = updates.reminderDate;
+    if (updates.companyName !== undefined) dbUpdates.company_name = updates.companyName;
+    if (updates.positionTitle !== undefined) dbUpdates.position_title = updates.positionTitle;
+    if (updates.offerUrl !== undefined) dbUpdates.offer_url = updates.offerUrl;
 
     const { error } = await supabase
       .from('user_tracked_offers')

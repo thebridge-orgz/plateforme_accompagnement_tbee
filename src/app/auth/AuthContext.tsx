@@ -290,13 +290,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!user) throw new Error('No user logged in');
 
         try {
+            const profileUpdates: Record<string, any> = {
+                onboarding_completed: true,
+                onboarding_data: onboardingData,
+                updated_at: new Date().toISOString(),
+            };
+
+            // Persist personal info fields to dedicated columns
+            if (onboardingData.firstName) profileUpdates.first_name = onboardingData.firstName;
+            if (onboardingData.lastName) profileUpdates.last_name = onboardingData.lastName;
+            if (onboardingData.phone) profileUpdates.phone = onboardingData.phone;
+            if (onboardingData.birthDate) profileUpdates.birth_date = onboardingData.birthDate;
+            if (onboardingData.address) profileUpdates.address = onboardingData.address;
+            if (onboardingData.city) profileUpdates.city = onboardingData.city;
+            if (onboardingData.postalCode) profileUpdates.postal_code = onboardingData.postalCode;
+            if (onboardingData.level) profileUpdates.current_level = onboardingData.level;
+
             const { error } = await supabase
                 .from('profiles')
-                .update({
-                    onboarding_completed: true,
-                    onboarding_data: onboardingData,
-                    updated_at: new Date().toISOString(),
-                })
+                .update(profileUpdates)
                 .eq('id', user.id);
 
             if (error) throw error;

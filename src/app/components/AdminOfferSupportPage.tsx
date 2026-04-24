@@ -1,4 +1,4 @@
-import { ArrowLeft, Briefcase, Send, CheckCircle2, Clock, AlertTriangle, MessageSquare, ExternalLink, User } from 'lucide-react';
+﻿import { ArrowLeft, Briefcase, Send, CheckCircle2, Clock, AlertTriangle, MessageSquare, ExternalLink, User } from 'lucide-react';
 import { useState } from 'react';
 import { useAdminData } from '../../context/AdminDataContext';
 import { Link } from 'react-router-dom';
@@ -112,7 +112,7 @@ export function AdminOfferSupportPage({ onNavigate }: AdminOfferSupportPageProps
         </div>
       </div>
 
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-6 sm:pt-20 sm:pb-8 lg:pt-8 lg:pb-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8 lg:pt-8 lg:pb-8">
         {/* Filters */}
         <div className="mb-6">
           <div className="flex items-center gap-2 flex-wrap">

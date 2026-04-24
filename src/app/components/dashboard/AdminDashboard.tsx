@@ -1,4 +1,4 @@
-import { Award, BookOpen, TrendingUp, Users, AlertTriangle, Clock } from 'lucide-react';
+﻿import { Award, BookOpen, TrendingUp, Users, AlertTriangle, Clock } from 'lucide-react';
 import { StatCard } from '../../components/StatCard';
 import { useAuth } from '../../auth/AuthContext';
 import { routes } from '../../router/routes';
@@ -17,7 +17,7 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
         <div className="min-h-screen bg-[#F8F9FD] pb-16">
             {/* Header */}
             <div className="bg-white border-b border-[rgba(30,21,72,0.08)]">
-                <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-6 sm:pt-20 sm:pb-8 lg:pt-8 lg:pb-8">
+                <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8 lg:pt-8 lg:pb-8">
                     <div>
                         <h1 className="text-[28px] sm:text-[32px] lg:text-[36px] font-bold leading-tight text-[#1E1548] mb-2">
                             {adminName ? `Bonjour, ${adminName} 👋` : 'Tableau de bord administrateur'}

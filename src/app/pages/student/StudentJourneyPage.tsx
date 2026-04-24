@@ -1,4 +1,4 @@
-import { ArrowLeft, Lock, CheckCircle, Trophy, Star, Zap, Target, Award } from 'lucide-react';
+﻿import { ArrowLeft, Lock, CheckCircle, Trophy, Star, Zap, Target, Award } from 'lucide-react';
 import { useUserData } from '../../../context/UserDataContext';
 
 // Astuces par niveau (0 = nouveau, 1-4 = modules complétés)
@@ -144,7 +144,7 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
         </div>
       </div>
 
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-6 sm:pt-20 sm:pb-8 lg:pt-8 lg:pb-8">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8 lg:pt-8 lg:pb-8">
         {/* Stats Overview */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-8 sm:mb-12">
           {/* Total XP */}
@@ -358,7 +358,7 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
 
         {/* Tips & Motivation Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-          {/* Daily Tip */}
+          {/* Daily Tip */} 
           <div className="bg-[#E8ECFF] border border-[rgba(30,21,72,0.08)] rounded-[16px] p-6">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-full bg-[#1E1548] flex items-center justify-center flex-shrink-0">

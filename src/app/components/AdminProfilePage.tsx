@@ -1,4 +1,4 @@
-import { ArrowLeft, User, Mail, Building, Shield, Edit2, Save, X } from 'lucide-react';
+﻿import { ArrowLeft, User, Mail, Building, Shield, Edit2, Save, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
@@ -68,7 +68,7 @@ export function AdminProfilePage({ onNavigate, userName, authEmail, authFirstNam
         </div>
       </div>
 
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-6 sm:pt-20 sm:pb-8 lg:pt-8 lg:pb-8">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8 lg:pt-8 lg:pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Left Column - Profile Info */}
           <div className="lg:col-span-2 space-y-6">

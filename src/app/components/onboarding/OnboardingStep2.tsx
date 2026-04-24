@@ -90,7 +90,7 @@ export function OnboardingStep2({ formationData, onComplete, onBack }: Onboardin
           <div className="mb-8">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[14px] font-medium text-[#6B7280]">
-                Étape 2/2 : Évaluation initiale
+                Étape 3/3 : Évaluation initiale
               </span>
               <span className="text-[14px] font-medium text-[#1E1548]">50%</span>
             </div>
@@ -160,7 +160,7 @@ export function OnboardingStep2({ formationData, onComplete, onBack }: Onboardin
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[14px] font-medium text-[#6B7280]">
-              Étape 2/2 : Évaluation initiale
+              Étape 3/3 : Évaluation initiale
             </span>
             <span className="text-[14px] font-medium text-[#1E1548]">100%</span>
           </div>

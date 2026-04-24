@@ -1,4 +1,4 @@
-import { CheckCircle2, Lock, Play, Trophy, Target, TrendingUp, Clock } from 'lucide-react';
+﻿import { CheckCircle2, Lock, Play, Trophy, Target, TrendingUp, Clock } from 'lucide-react';
 import { useUserData } from '@/context/UserDataContext';
 import { formatStudyTime } from '@/utils/initialState';
 
@@ -44,7 +44,7 @@ export function studentDashboardModules({ onNavigate, authFirstName }: studentDa
 
   return (
     <div className="min-h-screen bg-[#ffffff]">
-      <div className="max-w-[1152px] mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-6 sm:pt-20 sm:pb-8 lg:pt-8 lg:pb-8">
+      <div className="max-w-[1152px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8 lg:pt-8 lg:pb-8">
         {/* Welcome Section */}
         <div 
           className="rounded-[16px] p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8"

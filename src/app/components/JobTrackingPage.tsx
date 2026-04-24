@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Building2, Calendar, ChevronLeft, ChevronRight, ExternalLink, Plus, Search, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Building2, Calendar, ChevronLeft, ChevronRight, ExternalLink, Pencil, Plus, Search, AlertCircle } from 'lucide-react';
 import { useUserData } from '@/context/UserDataContext';
 import { MAX_TRACKED_OFFERS } from '@/utils/initialState';
 import type { UserTrackedOffer } from '@/types';
@@ -52,9 +52,11 @@ export function JobTrackingPage({ onNavigate }: JobTrackingPageProps) {
 
   // Filter offers
   const filteredOffers = trackedOffers.filter(offer => {
-    const matchesSearch = 
-      searchQuery === '' || 
-      offer.userNotes?.toLowerCase().includes(searchQuery.toLowerCase());
+    const q = searchQuery.toLowerCase();
+    const matchesSearch =
+      q === '' ||
+      offer.companyName?.toLowerCase().includes(q) ||
+      offer.positionTitle?.toLowerCase().includes(q);
     const matchesStatus = filterStatus === 'all' || offer.applicationStatus === filterStatus;
     return matchesSearch && matchesStatus;
   });
@@ -71,44 +73,64 @@ export function JobTrackingPage({ onNavigate }: JobTrackingPageProps) {
     setCurrentPage(1);
   }, [searchQuery, filterStatus]);
 
+  const [formError, setFormError] = useState<string | null>(null);
+
+  // Edit modal state
+  const [editingOffer, setEditingOffer] = useState<UserTrackedOffer | null>(null);
+  const [editForm, setEditForm] = useState({
+    companyName: '',
+    positionTitle: '',
+    offerUrl: '',
+    userNotes: '',
+    applicationStatus: 'interested' as UserTrackedOffer['applicationStatus'],
+  });
+  const [editError, setEditError] = useState<string | null>(null);
+
+  const isValidUrl = (url: string) => {
+    try { new URL(url); return true; } catch { return false; }
+  };
+
   const handleAddOffer = async () => {
+    setFormError(null);
+
     if (!canTrackMoreOffers) {
-      alert(`Tu as atteint la limite de ${MAX_TRACKED_OFFERS} offres. Supprime une offre existante pour en ajouter une nouvelle.`);
+      setFormError(`Tu as atteint la limite de ${MAX_TRACKED_OFFERS} offres.`);
       return;
     }
 
-    // TODO: Valider que tempCompany, tempPosition et tempUrl sont remplis
-    // TODO: Créer l'offre dans job_offers d'abord, puis la tracker
-    if (newOffer.tempCompany && newOffer.tempPosition && newOffer.tempUrl) {
-      try {
-        await addTrackedOffer({
-          offerId: `temp-offer-${Date.now()}`, // TODO: remplacer par vrai ID de job_offers
-          applicationStatus: newOffer.applicationStatus,
-          userNotes: newOffer.userNotes || null,
-          applicationDate: newOffer.applicationDate,
-          interviewDate: newOffer.interviewDate,
-          reminderDate: newOffer.reminderDate,
-        });
-        
-        // Reset form
-        setNewOffer({
-          offerId: '',
-          applicationStatus: 'interested',
-          userNotes: '',
-          applicationDate: null,
-          interviewDate: null,
-          reminderDate: null,
-          tempCompany: '',
-          tempPosition: '',
-          tempUrl: ''
-        });
-        setShowAddModal(false);
-      } catch (error) {
-        alert('Erreur lors de l\'ajout de l\'offre');
-        console.error(error);
-      }
-    } else {
-      alert('Veuillez remplir tous les champs obligatoires');
+    if (!newOffer.tempCompany.trim()) { setFormError('Le nom de l\'entreprise est obligatoire.'); return; }
+    if (!newOffer.tempPosition.trim()) { setFormError('L\'intitulé du poste est obligatoire.'); return; }
+    if (!newOffer.tempUrl.trim()) { setFormError('L\'URL de l\'offre est obligatoire.'); return; }
+    if (!isValidUrl(newOffer.tempUrl)) { setFormError('L\'URL saisie n\'est pas valide (ex: https://...).'); return; }
+
+    try {
+      await addTrackedOffer({
+        offerId: null,
+        companyName: newOffer.tempCompany.trim(),
+        positionTitle: newOffer.tempPosition.trim(),
+        offerUrl: newOffer.tempUrl.trim(),
+        applicationStatus: newOffer.applicationStatus,
+        userNotes: newOffer.userNotes || null,
+        applicationDate: newOffer.applicationDate,
+        interviewDate: newOffer.interviewDate,
+        reminderDate: newOffer.reminderDate,
+      });
+
+      setNewOffer({
+        offerId: '',
+        applicationStatus: 'interested',
+        userNotes: '',
+        applicationDate: null,
+        interviewDate: null,
+        reminderDate: null,
+        tempCompany: '',
+        tempPosition: '',
+        tempUrl: ''
+      });
+      setShowAddModal(false);
+    } catch (error) {
+      setFormError('Erreur lors de l\'ajout de l\'offre. Réessaie.');
+      console.error(error);
     }
   };
 
@@ -141,6 +163,42 @@ export function JobTrackingPage({ onNavigate }: JobTrackingPageProps) {
     }
   };
 
+  const handleOpenEdit = (offer: UserTrackedOffer) => {
+    setEditingOffer(offer);
+    setEditForm({
+      companyName: offer.companyName || '',
+      positionTitle: offer.positionTitle || '',
+      offerUrl: offer.offerUrl || '',
+      userNotes: offer.userNotes || '',
+      applicationStatus: offer.applicationStatus,
+    });
+    setEditError(null);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingOffer) return;
+    setEditError(null);
+
+    if (!editForm.companyName.trim()) { setEditError('Le nom de l\'entreprise est obligatoire.'); return; }
+    if (!editForm.positionTitle.trim()) { setEditError('L\'intitulé du poste est obligatoire.'); return; }
+    if (!editForm.offerUrl.trim()) { setEditError('L\'URL de l\'offre est obligatoire.'); return; }
+    if (!isValidUrl(editForm.offerUrl)) { setEditError('L\'URL saisie n\'est pas valide (ex: https://...).'); return; }
+
+    try {
+      await updateTrackedOffer(editingOffer.id, {
+        companyName: editForm.companyName.trim(),
+        positionTitle: editForm.positionTitle.trim(),
+        offerUrl: editForm.offerUrl.trim(),
+        userNotes: editForm.userNotes.trim() || null,
+        applicationStatus: editForm.applicationStatus,
+      } as Partial<UserTrackedOffer>);
+      setEditingOffer(null);
+    } catch (error) {
+      setEditError('Erreur lors de la modification. Réessaie.');
+      console.error(error);
+    }
+  };
+
   const handleRequestSupport = (offerId: string) => {
     // TODO: Créer une notification/message pour l'admin
     alert('✅ Demande de support envoyée à l\'équipe Admission ! Ils reviendront vers toi rapidement.');
@@ -159,7 +217,7 @@ export function JobTrackingPage({ onNavigate }: JobTrackingPageProps) {
               className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
               aria-label="Retour"
             >
-              <ChevronRight className="w-5 h-5 text-[#1E1548] rotate-180" />
+              <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
             </button>
             
             <div className="flex-1 min-w-0">
@@ -237,7 +295,7 @@ export function JobTrackingPage({ onNavigate }: JobTrackingPageProps) {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6B7280]" />
                 <input
                   type="text"
-                  placeholder="Rechercher dans tes notes..."
+                  placeholder="Rechercher par entreprise ou poste..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full h-12 pl-12 pr-4 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:ring-2 focus:ring-[#FFD600]"
@@ -312,9 +370,23 @@ export function JobTrackingPage({ onNavigate }: JobTrackingPageProps) {
                       <tr key={offer.id} className="hover:bg-[#F8F9FD]/50 transition-colors">
                         <td className="px-6 py-4">
                           <div>
-                            <p className="text-[14px] font-semibold text-[#1E1548] mb-1">
-                              Offre #{offer.id.slice(-6)}
+                            <p className="text-[14px] font-semibold text-[#1E1548] mb-0.5">
+                              {offer.companyName || 'Entreprise inconnue'}
                             </p>
+                            <p className="text-[13px] text-[#6B7280]">
+                              {offer.positionTitle || '—'}
+                            </p>
+                            {offer.offerUrl && (
+                              <a
+                                href={offer.offerUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-[12px] text-[#1E1548] underline mt-1 hover:opacity-70"
+                              >
+                                <ExternalLink className="w-3 h-3" />
+                                Voir l'offre
+                              </a>
+                            )}
                             {offer.userNotes && (
                               <p className="text-[12px] text-[#6B7280] mt-1 italic">
                                 {offer.userNotes}
@@ -341,6 +413,13 @@ export function JobTrackingPage({ onNavigate }: JobTrackingPageProps) {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleOpenEdit(offer)}
+                              className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[#E8ECFF] transition-colors"
+                              title="Modifier"
+                            >
+                              <Pencil className="w-4 h-4 text-[#1E1548]" />
+                            </button>
                             <button
                               onClick={() => handleDeleteOffer(offer.id)}
                               className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[#FEE2E2] transition-colors text-[#EF4444]"
@@ -391,6 +470,92 @@ export function JobTrackingPage({ onNavigate }: JobTrackingPageProps) {
           )}
         </div>
 
+        {/* Edit Offer Modal */}
+        {editingOffer && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-[16px] p-8 max-w-[600px] w-full max-h-[90vh] overflow-y-auto">
+              <h3 className="text-[24px] font-bold text-[#1E1548] mb-6">
+                Modifier l'offre
+              </h3>
+
+              {editError && (
+                <div className="bg-[#FEE2E2] border border-[#EF4444] rounded-[12px] px-4 py-3 mb-4 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-[#EF4444] flex-shrink-0" />
+                  <p className="text-[13px] text-[#EF4444]">{editError}</p>
+                </div>
+              )}
+
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-[14px] font-medium text-[#1E1548] mb-2">URL de l'offre *</label>
+                  <input
+                    type="url"
+                    value={editForm.offerUrl}
+                    onChange={(e) => setEditForm({ ...editForm, offerUrl: e.target.value })}
+                    placeholder="https://..."
+                    className="w-full h-12 px-4 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:ring-2 focus:ring-[#FFD600]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[14px] font-medium text-[#1E1548] mb-2">Entreprise *</label>
+                  <input
+                    type="text"
+                    value={editForm.companyName}
+                    onChange={(e) => setEditForm({ ...editForm, companyName: e.target.value })}
+                    placeholder="Nom de l'entreprise"
+                    className="w-full h-12 px-4 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:ring-2 focus:ring-[#FFD600]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[14px] font-medium text-[#1E1548] mb-2">Intitulé du poste *</label>
+                  <input
+                    type="text"
+                    value={editForm.positionTitle}
+                    onChange={(e) => setEditForm({ ...editForm, positionTitle: e.target.value })}
+                    placeholder="Ex: Développeur Full Stack"
+                    className="w-full h-12 px-4 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:ring-2 focus:ring-[#FFD600]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[14px] font-medium text-[#1E1548] mb-2">Statut</label>
+                  <select
+                    value={editForm.applicationStatus}
+                    onChange={(e) => setEditForm({ ...editForm, applicationStatus: e.target.value as UserTrackedOffer['applicationStatus'] })}
+                    className="w-full h-12 px-4 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:ring-2 focus:ring-[#FFD600]"
+                  >
+                    {Object.entries(statusConfig).map(([key, config]) => (
+                      <option key={key} value={key}>{config.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[14px] font-medium text-[#1E1548] mb-2">Notes (optionnel)</label>
+                  <textarea
+                    value={editForm.userNotes}
+                    onChange={(e) => setEditForm({ ...editForm, userNotes: e.target.value })}
+                    placeholder="Ajoute des détails utiles..."
+                    className="w-full h-24 p-4 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[12px] text-[14px] text-[#1E1548] resize-none focus:outline-none focus:ring-2 focus:ring-[#FFD600]"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setEditingOffer(null)}
+                  className="flex-1 h-12 bg-white border border-[rgba(30,21,72,0.1)] text-[#1E1548] rounded-[12px] text-[16px] font-semibold hover:bg-[#F8F9FD] transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  className="flex-1 h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[16px] font-semibold hover:bg-[#FDC700] transition-colors"
+                >
+                  Enregistrer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Add Offer Modal */}
         {showAddModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -398,6 +563,14 @@ export function JobTrackingPage({ onNavigate }: JobTrackingPageProps) {
               <h3 className="text-[24px] font-bold text-[#1E1548] mb-6">
                 Ajouter une offre
               </h3>
+
+              {formError && (
+                <div className="bg-[#FEE2E2] border border-[#EF4444] rounded-[12px] px-4 py-3 mb-4 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-[#EF4444] flex-shrink-0" />
+                  <p className="text-[13px] text-[#EF4444]">{formError}</p>
+                </div>
+              )}
+
               <div className="space-y-4 mb-6">
                 <div>
                   <label className="block text-[14px] font-medium text-[#1E1548] mb-2">

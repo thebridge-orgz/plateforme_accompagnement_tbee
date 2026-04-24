@@ -287,34 +287,38 @@ export function ModuleLinearPage({ moduleId, onNavigate }: ModuleLinearPageProps
       const newCompleted = [...completedStepsLocal, stepId];
       setCompletedStepsLocal(newCompleted);
 
-      // Persister les steps complétés en DB
-      await saveModuleStepProgress(userModule.id, newCompleted);
+      try {
+        // Persister les steps complétés en DB
+        await saveModuleStepProgress(userModule.id, newCompleted);
 
-      // Incrémenter le temps d'étude
-      const minutes = parseDuration(step.duration);
-      await incrementStudyTime(minutes);
+        // Incrémenter le temps d'étude
+        const minutes = parseDuration(step.duration);
+        await incrementStudyTime(minutes);
 
-      // Calculer la nouvelle progression
-      const totalSteps = staticModule.steps.length;
-      const completedCount = newCompleted.length;
-      const newProgress = Math.round((completedCount / totalSteps) * 100);
+        // Calculer la nouvelle progression
+        const totalSteps = staticModule.steps.length;
+        const completedCount = newCompleted.length;
+        const newProgress = Math.round((completedCount / totalSteps) * 100);
 
-      // Mettre à jour la progression du module
-      await updateModuleProgress(userModule.id, newProgress);
+        // Mettre à jour la progression du module
+        await updateModuleProgress(userModule.id, newProgress);
 
-      // Si toutes les étapes sont complétées, marquer le module comme terminé
-      if (completedCount === totalSteps) {
-        await completeModule(userModule.id);
-        // Si c'est le dernier module du parcours → popup félicitation
-        if (isLastModule) {
-          setTimeout(() => setShowCelebration(true), 600);
+        // Si toutes les étapes sont complétées, marquer le module comme terminé
+        if (completedCount === totalSteps) {
+          await completeModule(userModule.id);
+          if (isLastModule) {
+            setTimeout(() => setShowCelebration(true), 600);
+          }
         }
-      }
 
-      // Passer à l'étape suivante
-      const currentIndex = staticModule.steps.findIndex((s: any) => s.id === stepId);
-      if (currentIndex < staticModule.steps.length - 1) {
-        setActiveStepId(staticModule.steps[currentIndex + 1].id);
+        // Passer à l'étape suivante
+        const currentIndex = staticModule.steps.findIndex((s: any) => s.id === stepId);
+        if (currentIndex < staticModule.steps.length - 1) {
+          setActiveStepId(staticModule.steps[currentIndex + 1].id);
+        }
+      } catch (error: any) {
+        alert(`Erreur sauvegarde progression: ${error?.message || JSON.stringify(error)}`);
+        console.error('handleCompleteStep error:', error);
       }
     }
   };

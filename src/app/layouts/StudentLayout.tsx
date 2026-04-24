@@ -69,7 +69,7 @@ export default function StudentLayout({ currentPage, children }: Props) {
       />
 
       {/* Zone contenu (décalée à droite quand sidebar visible en desktop) */}
-      <main className="lg:ml-72 min-h-screen">
+      <main className="lg:ml-72 min-h-screen pt-14 lg:pt-0">
         {children}
       </main>
     </div>
