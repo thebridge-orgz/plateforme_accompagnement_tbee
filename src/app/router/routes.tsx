@@ -49,6 +49,12 @@ export const routes = {
         isProtected: true,
         allowedRoles: ['student']
     },
+    StudentModulesDetails: {
+        path: '/student/modules/:id',
+        label: 'Module Week',
+        isProtected: true,
+        allowedRoles: ['student']
+    },
     StudentJobTracking: {
         path: '/student/offres',
         label: 'Suivi des offres',
@@ -103,9 +109,15 @@ export const routes = {
         isProtected: true,
         allowedRoles: ['admin']
     },
-    AdminTracking: {
-        path: '/admin/etudiants',
+    AdminStudentList: {
+        path: '/admin/etudiants-liste',
         label: 'Suivi étudiants',
+        isProtected: true,
+        allowedRoles: ['admin']
+    },
+    AdminStudentTracking: {
+        path: '/admin/etudiants-liste/:id',
+        label: 'Statistique étudiant',
         isProtected: true,
         allowedRoles: ['admin']
     },

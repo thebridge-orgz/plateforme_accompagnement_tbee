@@ -23,7 +23,6 @@ import { Link } from 'react-router-dom';
 
 interface DashboardSidebarProps {
   currentPage: string;
-  onNavigate: (page: string) => void;
   role: 'student' | 'admin';
   userName?: string;
   className?: string;
@@ -37,7 +36,6 @@ interface NavItem {
 
 export function DashboardSidebar({
   currentPage,
-  onNavigate,
   role,
   userName = 'Utilisateur',
   className = ''
@@ -62,7 +60,7 @@ export function DashboardSidebar({
       { label: 'Correction exercices', icon: <ClipboardCheck className="w-5 h-5" />, path: routes.AdminExerciceReview.path },
       { label: 'Gestion modules', icon: <FileText className="w-5 h-5" />, path: routes.AdminModules.path },
       { label: 'Support offres', icon: <MessageSquare className="w-5 h-5" />, path: routes.AdminOfferSupport.path },
-      { label: 'Suivi étudiants', icon: <Users className="w-5 h-5" />, path: routes.AdminTracking.path },
+      { label: 'Suivi étudiants', icon: <Users className="w-5 h-5" />, path: routes.AdminStudentList.path },
       { label: 'Mon profil', icon: <UserCog className="w-5 h-5" />, path: routes.AdminProfile.path },
       { label: 'Paramètres', icon: <Settings className="w-5 h-5" />, path: routes.AdminSettings.path },
     ];
@@ -71,12 +69,16 @@ export function DashboardSidebar({
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   // Check if current page is a module page
-  const isModulePage = currentPage.startsWith('module-');
+  const isModulePage = currentPage.includes(routes.StudentModules.path);
+  const isStatisticPage = currentPage.includes(routes.AdminStudentList.path);
 
   // Determine if a nav item should be active
   const isNavItemActive = (itemPath: string) => {
     // Quand on est dans un module, "Mon parcours" doit être actif
     if (isModulePage && itemPath === routes.StudentModules.path) {
+      return true;
+    }
+    else if (isStatisticPage && itemPath === routes.AdminStudentList.path) {
       return true;
     }
     return currentPage === itemPath;
@@ -109,7 +111,7 @@ export function DashboardSidebar({
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1">
         {navItems.map((item) => (
-          <Link to={item.path} key={item.path} onClick={() => setIsMobileOpen(false)}>
+          <Link to={item.path}>
             <button
               className={`
               w-full flex items-center gap-3 px-4 py-3 rounded-xl

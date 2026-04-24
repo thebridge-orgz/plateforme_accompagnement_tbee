@@ -4,14 +4,13 @@ import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
 
 interface AdminProfilePageProps {
-  onNavigate: (page: string) => void;
   userName?: string;
   authEmail?: string;
   authFirstName?: string;
   authLastName?: string;
 }
 
-export function AdminProfilePage({ onNavigate, userName, authEmail, authFirstName, authLastName }: AdminProfilePageProps) {
+export function AdminProfilePage({ userName, authEmail, authFirstName, authLastName }: AdminProfilePageProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [adminData, setAdminData] = useState({
     name: userName || 'Admin TBEE',

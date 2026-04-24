@@ -4,12 +4,8 @@ import { useAuth } from '../../auth/AuthContext';
 import { routes } from '../../router/routes';
 import { Link } from 'react-router-dom';
 
-interface AdminDashboardProps {
-    onNavigate: (page: string) => void;
-}
 
-
-export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
+export function AdminDashboard() {
     const user = useAuth().user;
     const adminName = user ? user.firstName : 'adminName';
 
@@ -118,7 +114,7 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                                         </p>
                                     </button>
                                 </Link>
-                                <Link to={routes.AdminTracking.path} className="block w-full">
+                                <Link to={routes.AdminStudentList.path} className="block w-full">
                                     <button
                                         className="w-full bg-[#F8F9FD] hover:bg-[#E8ECFF] border-2 border-[rgba(30,21,72,0.08)] hover:border-[#FFD600] rounded-[12px] p-4 text-left transition-all group"
                                     >
@@ -184,7 +180,7 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                             </div>*/}
 
 
-                            <Link to={routes.AdminTracking.path}>
+                            <Link to={routes.AdminStudentList.path}>
                                 <button
                                     className="w-full mt-4 h-12 bg-white border-2 border-[#1E1548] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#1E1548] hover:text-white transition-all"
                                 >
@@ -235,7 +231,7 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                                     </button>
                                 </Link>
 
-                                <Link to={routes.AdminTracking.path} className="block w-full">
+                                <Link to={routes.AdminStudentList.path} className="block w-full">
                                     <button
                                         className="w-full h-12 bg-white border-2 border-[#E8ECFF] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#E8ECFF] transition-all flex items-center justify-center px-4"
                                     >
@@ -314,7 +310,7 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                                     </p>
                                 </div>
                             </div>
-                            <Link to={routes.AdminTracking.path}>
+                            <Link to={routes.AdminStudentList.path}>
                                 <button
                                     className="w-full h-10 bg-white border-2 border-[#EF4444] text-[#EF4444] rounded-[10px] text-[14px] font-semibold hover:bg-[#EF4444] hover:text-white transition-all"
                                 >

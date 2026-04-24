@@ -1,36 +1,19 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import StudentLayout from '../../layouts/studentLayout';
 import { ModuleLinearPage } from '../../components/ModuleLinearPage';
+import { routes } from '../../../app/router/routes';
 
 export default function ModulePageWrapper() {
-  const navigate = useNavigate();
-  const { moduleId } = useParams<{ moduleId: string }>();
+  const location = useLocation();
 
-  const handleNavigate = (page: string) => {
-    const routeMap: Record<string, string> = {
-      'student-dashboard': '/student/dashboard',
-      'student-journey': '/student/modules',
-      'student-modules': '/student/parcours',
-      'student-cv': '/student/cv',
-      'student-tracking': '/student/offres',
-      'student-profile': '/student/profil',
-    };
+  const { hash, pathname, search } = location;
+  const match = pathname.match(/module-(\w+)/);
+  const moduleId = match ? match[1] : '';
 
-    if (page.startsWith('module-')) {
-      navigate(`/student/modules/${page}`);
-      return;
-    }
-
-    navigate(routeMap[page] || '/student/dashboard');
-  };
-
-  // moduleId from params includes the full string (e.g. "module-week1");
-  // strip prefix when passing to ModuleLinearPage
-  const cleanId = moduleId ? moduleId.replace(/^module-/, '') : '';
 
   return (
-    <StudentLayout currentPage={moduleId || ''}>
-      <ModuleLinearPage moduleId={cleanId} onNavigate={handleNavigate} />
+    <StudentLayout currentPage={routes.StudentModulesDetails.path.replace(":id", moduleId) || ''}>
+      <ModuleLinearPage moduleId={moduleId} />
     </StudentLayout>
   );
 }

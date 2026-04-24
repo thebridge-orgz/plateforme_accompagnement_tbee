@@ -1,5 +1,7 @@
-﻿import { ArrowLeft, Lock, CheckCircle, Trophy, Star, Zap, Target, Award } from 'lucide-react';
-import { useUserData } from '../../../context/UserDataContext';
+import { ArrowLeft, Lock, CheckCircle, Trophy, Star, Zap, Target, Award } from 'lucide-react';
+import { useUserData } from '../../context/UserDataContext';
+import { routes } from '../router/routes';
+import { Link } from 'react-router-dom';
 
 // Astuces par niveau (0 = nouveau, 1-4 = modules complétés)
 const TIPS_BY_LEVEL: Record<number, string[]> = {
@@ -44,19 +46,14 @@ function getSessionTip(completedCount: number): string {
     try {
       const { text, storedLevel } = JSON.parse(stored);
       if (storedLevel === level) return text;
-    } catch {}
+    } catch { }
   }
   const text = tips[Math.floor(Math.random() * tips.length)];
   sessionStorage.setItem(storageKey, JSON.stringify({ text, storedLevel: level }));
   return text;
 }
 
-interface StudentJourneyPageProps {
-  onNavigate: (page: string) => void;
-  userData?: any;
-}
-
-export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
+export function StudentJourneyPage() {
   // TODO: fetch from Supabase - using context for now
   const {
     isLoading,
@@ -66,6 +63,8 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
     totalModulesCount,
     isNewUser,
   } = useUserData();
+
+  console.log(JSON.stringify(modules, null, 2));
 
   // Calculer XP total (chaque module complété donne 250 XP)
   const totalXP = modules.reduce((sum, m) => sum + (m.xp || 0), 0);
@@ -122,20 +121,21 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
       <div className="bg-white border-b border-[rgba(30,21,72,0.08)] sticky top-0 z-30">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex items-start gap-3 sm:gap-6">
-            <button
-              onClick={() => onNavigate('student-dashboard')}
-              className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
-              aria-label="Retour"
-            >
-              <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
-            </button>
-            
+            <Link to={routes.StudentDashboard.path}>
+              <button
+                className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
+                aria-label="Retour"
+              >
+                <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
+              </button>
+            </Link>
+
             <div className="flex-1 min-w-0">
               <h1 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold leading-tight text-[#1E1548] mb-1 sm:mb-2">
                 Mon Parcours
               </h1>
               <p className="text-[14px] sm:text-[16px] leading-[20px] sm:leading-[24px] text-[#6B7280]">
-                {isNewUser 
+                {isNewUser
                   ? 'Commence ton parcours vers l\'alternance étape par étape'
                   : 'Progresse étape par étape vers ton alternance de rêve'}
               </p>
@@ -187,8 +187,8 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
               {nextModule ? `Semaine ${nextModule.weekNumber}` : 'Parcours terminé !'}
             </p>
             <p className="text-[14px] text-[#E8ECFF] mt-1">
-              {nextModule 
-                ? `${100 - nextModule.progress}% restants` 
+              {nextModule
+                ? `${100 - nextModule.progress}% restants`
                 : 'Félicitations ! 🎉'}
             </p>
           </div>
@@ -214,10 +214,10 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
               <div key={module.id} className="relative">
                 {/* Connection Line */}
                 {index < modules.length - 1 && (
-                  <div 
+                  <div
                     className="absolute left-[31px] top-[80px] w-[2px] h-[120px] bg-gradient-to-b from-[#E5E7EB] to-transparent"
                     style={{
-                      background: module.status === 'completed' 
+                      background: module.status === 'completed'
                         ? 'linear-gradient(to bottom, #10B981, #E5E7EB)'
                         : 'linear-gradient(to bottom, #E5E7EB, #E5E7EB)'
                     }}
@@ -228,7 +228,7 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
                 <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 mb-8 relative z-10">
                   {/* Status Indicator Circle */}
                   <div className="relative flex-shrink-0">
-                    <div 
+                    <div
                       className={`w-16 h-16 rounded-full ${getStatusColor(module.status)} flex items-center justify-center shadow-lg border-4 border-white transition-all hover:scale-110 cursor-pointer`}
                       style={{
                         boxShadow: module.status === 'in_progress' || module.status === 'available'
@@ -238,7 +238,7 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
                     >
                       {getStatusIcon(module.status)}
                     </div>
-                    
+
                     {/* Week Number Badge */}
                     <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-[#1E1548] text-white text-[12px] font-bold flex items-center justify-center border-2 border-white">
                       {module.weekNumber}
@@ -246,19 +246,13 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
                   </div>
 
                   {/* Module Content Card */}
-                  <div 
-                    className={`flex-1 w-full bg-white border-2 rounded-[16px] p-4 sm:p-6 transition-all cursor-pointer ${
-                      module.status === 'in_progress' || module.status === 'available'
-                        ? 'border-[#FFD600] shadow-[0_4px_16px_rgba(255,214,0,0.15)]'
-                        : module.status === 'completed'
+                  <div
+                    className={`flex-1 w-full bg-white border-2 rounded-[16px] p-4 sm:p-6 transition-all cursor-pointer ${module.status === 'in_progress' || module.status === 'available'
+                      ? 'border-[#FFD600] shadow-[0_4px_16px_rgba(255,214,0,0.15)]'
+                      : module.status === 'completed'
                         ? 'border-[#10B981] shadow-[0_2px_8px_rgba(16,185,129,0.1)]'
                         : 'border-[#E5E7EB] opacity-60'
-                    } hover:shadow-[0_6px_20px_rgba(30,21,72,0.1)]`}
-                    onClick={() => {
-                      if (module.status !== 'locked') {
-                        onNavigate(module.id);
-                      }
-                    }}
+                      } hover:shadow-[0_6px_20px_rgba(30,21,72,0.1)]`}
                   >
                     <div className="flex flex-col sm:flex-row items-start justify-between mb-3 gap-3">
                       <div className="flex-1 min-w-0 w-full">
@@ -293,9 +287,8 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
                         </div>
                         <div className="h-2 bg-[#F3F4F6] rounded-full overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all duration-500 ${
-                              module.status === 'completed' ? 'bg-[#10B981]' : 'bg-[#FFD600]'
-                            }`}
+                            className={`h-full rounded-full transition-all duration-500 ${module.status === 'completed' ? 'bg-[#10B981]' : 'bg-[#FFD600]'
+                              }`}
                             style={{ width: `${module.progress}%` }}
                           />
                         </div>
@@ -312,27 +305,23 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
 
                     {/* Call to Action */}
                     {(module.status === 'in_progress' || module.status === 'available') && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onNavigate(module.id);
-                        }}
-                        className="w-full mt-4 h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[16px] font-semibold hover:bg-[#FDC700] transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-[#FFD600] focus:ring-offset-2 shadow-sm flex items-center justify-center gap-2"
-                      >
-                        {module.progress === 0 ? 'Commencer le module' : 'Continuer le module'} →
-                      </button>
+                      <Link to={routes.StudentModulesDetails.path.replace(":id", module.id)} className="block w-full">
+                        <button
+                          className="w-full mt-4 h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[16px] font-semibold hover:bg-[#FDC700] transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-[#FFD600] focus:ring-offset-2 shadow-sm flex items-center justify-center gap-2"
+                        >
+                          {module.progress === 0 ? 'Commencer le module' : 'Continuer le module'} →
+                        </button>
+                      </Link>
                     )}
 
                     {module.status === 'completed' && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onNavigate(module.id);
-                        }}
-                        className="w-full mt-4 h-12 bg-white border-2 border-[#10B981] text-[#10B981] rounded-[12px] text-[16px] font-semibold hover:bg-[#F0FDF4] transition-all focus:outline-none focus:ring-2 focus:ring-[#10B981] focus:ring-offset-2 flex items-center justify-center gap-2"
-                      >
-                        Revoir le module
-                      </button>
+                      <Link to={routes.StudentModulesDetails.path.replace(":id", module.id)} className="block w-full">
+                        <button
+                          className="w-full mt-4 h-12 bg-white border-2 border-[#10B981] text-[#10B981] rounded-[12px] text-[16px] font-semibold hover:bg-[#F0FDF4] transition-all focus:outline-none focus:ring-2 focus:ring-[#10B981] focus:ring-offset-2 flex items-center justify-center gap-2"
+                        >
+                          Revoir le module
+                        </button>
+                      </Link>
                     )}
                   </div>
                 </div>
@@ -386,7 +375,7 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
                   {isNewUser ? '🚀 Lance-toi !' : '🚀 Continue comme ça !'}
                 </h3>
                 <p className="text-[14px] text-[#E8ECFF] leading-[22px]">
-                  {isNewUser 
+                  {isNewUser
                     ? `Tu es prêt à commencer ! ${totalModulesCount} modules t'attendent pour t'aider à décrocher ton alternance.`
                     : `Tu es sur la bonne voie ! ${completedModulesCount} module${completedModulesCount > 1 ? 's' : ''} complété${completedModulesCount > 1 ? 's' : ''}, encore ${totalModulesCount - completedModulesCount} à découvrir.`}
                 </p>

@@ -1,14 +1,10 @@
 import { useState } from 'react';
 import { ArrowLeft, TrendingUp, Clock, Award, MessageSquare, Calendar, FileText } from 'lucide-react';
 import { Button } from './Button';
-import { ProgressBar } from '../components/ui/ProgressBar';
+import { ProgressBar } from './ui/ProgressBar';
 import { StatCard } from './StatCard';
 import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
-
-interface studentTrackingPageProps {
-  onNavigate: (page: string) => void;
-}
 
 // Mock data for selected student
 const studentData = {
@@ -39,7 +35,7 @@ const studentData = {
   notes: []
 };
 
-export function StudentTrackingPage({ onNavigate }: studentTrackingPageProps) {
+export function StudentTrackingPage() {
   const [newNote, setNewNote] = useState('');
   const student = studentData;
 
@@ -78,7 +74,7 @@ export function StudentTrackingPage({ onNavigate }: studentTrackingPageProps) {
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <Link to={routes.AdminDashboard.path}>
+          <Link to={routes.AdminStudentList.path}>
             <button
               className="w-10 h-10 rounded-full hover:bg-secondary flex items-center justify-center transition-colors self-start"
               aria-label="Retour"

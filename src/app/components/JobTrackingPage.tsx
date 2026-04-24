@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Building2, Calendar, ChevronLeft, ChevronRight, ExternalLink, Pencil, Plus, Search, AlertCircle } from 'lucide-react';
+import { Building2, Calendar, ChevronLeft, ChevronRight, ExternalLink, Plus, Search, AlertCircle } from 'lucide-react';
 import { useUserData } from '@/context/UserDataContext';
 import { MAX_TRACKED_OFFERS } from '@/utils/initialState';
 import type { UserTrackedOffer } from '@/types';
@@ -19,21 +19,21 @@ const statusConfig = {
   withdrawn: { label: 'Retiré', color: 'bg-[#F3F4F6] text-[#6B7280]' }
 } as const;
 
-export function JobTrackingPage({ onNavigate }: JobTrackingPageProps) {
+export function JobTrackingPage() {
   // TODO: fetch from Supabase - using context for now
-  const { 
-    trackedOffers, 
-    addTrackedOffer, 
-    updateTrackedOffer, 
+  const {
+    trackedOffers,
+    addTrackedOffer,
+    updateTrackedOffer,
     removeTrackedOffer,
-    canTrackMoreOffers 
+    canTrackMoreOffers
   } = useUserData();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   const itemsPerPage = 5;
 
   // New offer form state
@@ -52,11 +52,9 @@ export function JobTrackingPage({ onNavigate }: JobTrackingPageProps) {
 
   // Filter offers
   const filteredOffers = trackedOffers.filter(offer => {
-    const q = searchQuery.toLowerCase();
-    const matchesSearch =
-      q === '' ||
-      offer.companyName?.toLowerCase().includes(q) ||
-      offer.positionTitle?.toLowerCase().includes(q);
+    const matchesSearch = 
+      searchQuery === '' || 
+      offer.userNotes?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = filterStatus === 'all' || offer.applicationStatus === filterStatus;
     return matchesSearch && matchesStatus;
   });
@@ -98,39 +96,38 @@ export function JobTrackingPage({ onNavigate }: JobTrackingPageProps) {
       return;
     }
 
-    if (!newOffer.tempCompany.trim()) { setFormError('Le nom de l\'entreprise est obligatoire.'); return; }
-    if (!newOffer.tempPosition.trim()) { setFormError('L\'intitulé du poste est obligatoire.'); return; }
-    if (!newOffer.tempUrl.trim()) { setFormError('L\'URL de l\'offre est obligatoire.'); return; }
-    if (!isValidUrl(newOffer.tempUrl)) { setFormError('L\'URL saisie n\'est pas valide (ex: https://...).'); return; }
-
-    try {
-      await addTrackedOffer({
-        offerId: null,
-        companyName: newOffer.tempCompany.trim(),
-        positionTitle: newOffer.tempPosition.trim(),
-        offerUrl: newOffer.tempUrl.trim(),
-        applicationStatus: newOffer.applicationStatus,
-        userNotes: newOffer.userNotes || null,
-        applicationDate: newOffer.applicationDate,
-        interviewDate: newOffer.interviewDate,
-        reminderDate: newOffer.reminderDate,
-      });
-
-      setNewOffer({
-        offerId: '',
-        applicationStatus: 'interested',
-        userNotes: '',
-        applicationDate: null,
-        interviewDate: null,
-        reminderDate: null,
-        tempCompany: '',
-        tempPosition: '',
-        tempUrl: ''
-      });
-      setShowAddModal(false);
-    } catch (error) {
-      setFormError('Erreur lors de l\'ajout de l\'offre. Réessaie.');
-      console.error(error);
+    // TODO: Valider que tempCompany, tempPosition et tempUrl sont remplis
+    // TODO: Créer l'offre dans job_offers d'abord, puis la tracker
+    if (newOffer.tempCompany && newOffer.tempPosition && newOffer.tempUrl) {
+      try {
+        await addTrackedOffer({
+          offerId: `temp-offer-${Date.now()}`, // TODO: remplacer par vrai ID de job_offers
+          applicationStatus: newOffer.applicationStatus,
+          userNotes: newOffer.userNotes || null,
+          applicationDate: newOffer.applicationDate,
+          interviewDate: newOffer.interviewDate,
+          reminderDate: newOffer.reminderDate,
+        });
+        
+        // Reset form
+        setNewOffer({
+          offerId: '',
+          applicationStatus: 'interested',
+          userNotes: '',
+          applicationDate: null,
+          interviewDate: null,
+          reminderDate: null,
+          tempCompany: '',
+          tempPosition: '',
+          tempUrl: ''
+        });
+        setShowAddModal(false);
+      } catch (error) {
+        alert('Erreur lors de l\'ajout de l\'offre');
+        console.error(error);
+      }
+    } else {
+      alert('Veuillez remplir tous les champs obligatoires');
     }
   };
 
@@ -147,15 +144,15 @@ export function JobTrackingPage({ onNavigate }: JobTrackingPageProps) {
 
   const handleUpdateStatus = async (offerId: string, newStatus: UserTrackedOffer['applicationStatus']) => {
     try {
-      const updates: Partial<UserTrackedOffer> = { 
-        applicationStatus: newStatus 
+      const updates: Partial<UserTrackedOffer> = {
+        applicationStatus: newStatus
       };
-      
+
       // Si passage à "applied", mettre la date de candidature
       if (newStatus === 'applied' && !trackedOffers.find(o => o.id === offerId)?.applicationDate) {
         updates.applicationDate = new Date().toISOString().split('T')[0];
       }
-      
+
       await updateTrackedOffer(offerId, updates);
     } catch (error) {
       alert('Erreur lors de la mise à jour');
@@ -217,7 +214,7 @@ export function JobTrackingPage({ onNavigate }: JobTrackingPageProps) {
               className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
               aria-label="Retour"
             >
-              <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
+              <ChevronRight className="w-5 h-5 text-[#1E1548] rotate-180" />
             </button>
             
             <div className="flex-1 min-w-0">
@@ -276,7 +273,7 @@ export function JobTrackingPage({ onNavigate }: JobTrackingPageProps) {
                 Pourquoi seulement {MAX_TRACKED_OFFERS} offres ?
               </h4>
               <p className="text-sm sm:text-[14px] font-normal leading-[20px] text-[#1E1548]/80 mb-2">
-                Concentrer tes efforts sur un nombre restreint d'offres vraiment pertinentes maximise tes chances de succès. 
+                Concentrer tes efforts sur un nombre restreint d'offres vraiment pertinentes maximise tes chances de succès.
                 L'équipe Admission pourra aussi mieux t'accompagner sur ces candidatures ciblées.
               </p>
               <div className="flex items-center gap-2 text-sm sm:text-[14px] font-medium text-[#1E1548]">

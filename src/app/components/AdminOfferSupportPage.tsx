@@ -4,11 +4,7 @@ import { useAdminData } from '../../context/AdminDataContext';
 import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
 
-interface AdminOfferSupportPageProps {
-  onNavigate: (page: string) => void;
-}
-
-export function AdminOfferSupportPage({ onNavigate }: AdminOfferSupportPageProps) {
+export function AdminOfferSupportPage() {
   const { offerTrackings, updateOfferTracking } = useAdminData();
 
   const [selectedSupport, setSelectedSupport] = useState<string | null>(null);

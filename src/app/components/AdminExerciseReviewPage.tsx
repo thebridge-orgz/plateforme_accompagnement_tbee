@@ -4,11 +4,7 @@ import { useAdminData } from '../../context/AdminDataContext';
 import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
 
-interface AdminExerciseReviewPageProps {
-  onNavigate: (page: string) => void;
-}
-
-export function AdminExerciseReviewPage({ onNavigate }: AdminExerciseReviewPageProps) {
+export function AdminExerciseReviewPage() {
   const { exerciseSubmissions, gradeExercise } = useAdminData();
 
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle2, ChevronLeft, ChevronRight, Clock, FileText, Lock, Play, Trophy, Upload, Video, X } from 'lucide-react';
 import { useUserData } from '../../context/UserDataContext';
+import { routes } from '../../app/router/routes';
+import { Link } from 'react-router-dom';
 
 interface ModuleLinearPageProps {
   moduleId: string;
-  onNavigate: (page: string) => void;
 }
 
 // Helper: Convertir durée en minutes (ex: "8min" -> 8)
@@ -219,7 +220,7 @@ const moduleStaticContent: Record<string, any> = {
   }
 };
 
-export function ModuleLinearPage({ moduleId, onNavigate }: ModuleLinearPageProps) {
+export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
   // -------------------- HOOKS --------------------
   const {
     modules,
@@ -350,12 +351,13 @@ export function ModuleLinearPage({ moduleId, onNavigate }: ModuleLinearPageProps
       <div className="min-h-screen bg-[#ffffff] flex items-center justify-center">
         <div className="text-center">
           <p className="text-[16px] text-[#6B7280]">Module non trouvé</p>
-          <button
-            onClick={() => onNavigate('student-dashboard')}
-            className="mt-4 text-[#FFD600] hover:underline"
-          >
-            Retour au dashboard
-          </button>
+          <Link to={routes.StudentDashboard.path}>
+            <button
+              className="mt-4 text-[#FFD600] hover:underline"
+            >
+              Retour au dashboardv
+            </button>
+          </Link>
         </div>
       </div>
     );
@@ -366,12 +368,13 @@ export function ModuleLinearPage({ moduleId, onNavigate }: ModuleLinearPageProps
       <div className="min-h-screen bg-[#ffffff] flex items-center justify-center">
         <div className="text-center">
           <p className="text-[16px] text-[#6B7280]">Ce module n'est pas encore disponible</p>
-          <button
-            onClick={() => onNavigate('student-dashboard')}
-            className="mt-4 text-[#FFD600] hover:underline"
-          >
-            Retour au dashboard
-          </button>
+          <Link to={routes.StudentDashboard.path}>
+            <button
+              className="mt-4 text-[#FFD600] hover:underline"
+            >
+              Retour au dashboard
+            </button>
+          </Link>
         </div>
       </div>
     );
@@ -393,13 +396,14 @@ export function ModuleLinearPage({ moduleId, onNavigate }: ModuleLinearPageProps
       <div className="bg-white border-b border-[rgba(30,21,72,0.08)] sticky top-0 z-30">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex items-start gap-3 sm:gap-6">
-            <button
-              onClick={() => onNavigate('student-journey')}
+          <Link to={routes.StudentModules.path}>
+              <button
               className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
               aria-label="Retour"
             >
               <ChevronLeft className="w-5 h-5 text-[#1E1548]" />
             </button>
+          </Link>
             
             <div className="flex-1 min-w-0">
               <h1 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold leading-tight text-[#1E1548] mb-1 sm:mb-2">
@@ -831,13 +835,14 @@ export function ModuleLinearPage({ moduleId, onNavigate }: ModuleLinearPageProps
                 </div>
               ))}
             </div>
-
-            <button
-              onClick={() => { setShowCelebration(false); onNavigate('student-journey'); }}
-              className="w-full h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[16px] font-semibold hover:bg-[#FDC700] transition-all hover:scale-[1.02]"
-            >
-              Voir mon parcours complet 🏆
-            </button>
+            
+            <Link to={routes.StudentModules.path}>
+              <button
+                className="w-full h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[16px] font-semibold hover:bg-[#FDC700] transition-all hover:scale-[1.02]"
+              >
+                Voir mon parcours complet 🏆
+              </button>
+            </Link>
           </div>
         </div>
       </>

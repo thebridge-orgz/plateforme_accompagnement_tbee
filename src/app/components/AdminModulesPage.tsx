@@ -3,10 +3,7 @@ import { useState } from 'react';
 import { Button } from './Button';
 import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
-
-interface AdminModulesPageProps {
-  onNavigate: (page: string) => void;
-}
+import { useAdminData } from '../../context/AdminDataContext';
 
 interface Module {
   id: string;
@@ -20,8 +17,8 @@ interface Module {
   order: number;
 }
 
-export function AdminModulesPage({ onNavigate }: AdminModulesPageProps) {
-  const [modules, setModules] = useState<Module[]>([
+export function AdminModulesPage() {
+  const [modulesStatic, setModules] = useState<Module[]>([
     {
       id: '1',
       name: 'Rédiger son CV',
@@ -79,6 +76,10 @@ export function AdminModulesPage({ onNavigate }: AdminModulesPageProps) {
     }
   ]);
 
+  const {
+    modules
+  } = useAdminData();
+
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newModule, setNewModule] = useState({
     name: '',
@@ -128,7 +129,7 @@ export function AdminModulesPage({ onNavigate }: AdminModulesPageProps) {
       order: newModule.order
     };
 
-    setModules([...modules, module]);
+    setModules([...modulesStatic, module]);
     setShowCreateModal(false);
     setNewModule({
       name: '',
@@ -141,7 +142,7 @@ export function AdminModulesPage({ onNavigate }: AdminModulesPageProps) {
   };
 
   const handlePublishModule = (moduleId: string) => {
-    setModules(modules.map(m =>
+    setModules(modulesStatic.map(m =>
       m.id === moduleId ? { ...m, status: 'Publié' as const } : m
     ));
   };
@@ -162,10 +163,10 @@ export function AdminModulesPage({ onNavigate }: AdminModulesPageProps) {
             </Link>
             <div className="flex-1 min-w-0">
               <h1 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold leading-tight text-[#1E1548] mb-1 sm:mb-2">
-                Gestion des modules
+                Gestion des modulesStatic
               </h1>
               <p className="text-[14px] sm:text-[16px] leading-[20px] sm:leading-[24px] text-[#6B7280]">
-                Créez et gérez les modules de formation TBEE
+                Créez et gérez les modulesStatic de formation TBEE
               </p>
             </div>
           </div>
@@ -183,9 +184,9 @@ export function AdminModulesPage({ onNavigate }: AdminModulesPageProps) {
 
         {/* Modules List */}
         <div className="space-y-4">
-          {modules.map((module, index) => (
+          {modules.map((module) => (
             <div
-              key={index}
+              key={module.id}
               className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[16px] p-4 sm:p-6 shadow-[0_2px_8px_rgba(30,21,72,0.04)] hover:shadow-[0_4px_12px_rgba(30,21,72,0.08)] transition-shadow"
             >
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -193,13 +194,13 @@ export function AdminModulesPage({ onNavigate }: AdminModulesPageProps) {
                   <div className="flex flex-wrap items-center gap-3 mb-2">
                     <FileText className="w-5 h-5 text-[#FFD600] flex-shrink-0" />
                     <h3 className="text-[18px] sm:text-[20px] font-bold text-[#1E1548]">
-                      {module.name}
+                      {module.title}
                     </h3>
-                    <span className={`px-3 py-1 rounded-full text-[12px] font-semibold flex-shrink-0 ${module.status === 'Publié'
+                    <span className={`px-3 py-1 rounded-full text-[12px] font-semibold flex-shrink-0 ${module.is_published
                       ? 'bg-[#F0FDF4] text-[#10B981]'
                       : 'bg-[#FFF4CC] text-[#B45309]'
                       }`}>
-                      {module.status}
+                      {module.is_published}
                     </span>
                   </div>
                   <p className="text-[14px] text-[#6B7280] mb-3">
@@ -210,25 +211,25 @@ export function AdminModulesPage({ onNavigate }: AdminModulesPageProps) {
                   <div className="flex flex-wrap gap-4 mb-4 pb-3 border-b border-[rgba(30,21,72,0.06)]">
                     <div className="flex items-center gap-2 text-[13px]">
                       <BookOpen className="w-4 h-4 text-[#6B7280]" />
-                      <span className="text-[#1E1548] font-medium">{module.thematic}</span>
+                      <span className="text-[#1E1548] font-medium">module.thematic</span>
                     </div>
                     <div className="flex items-center gap-2 text-[13px]">
                       <Calendar className="w-4 h-4 text-[#6B7280]" />
-                      <span className="text-[#1E1548] font-medium">{module.week}</span>
+                      <span className="text-[#1E1548] font-medium">{module.week_number}</span>
                     </div>
                     <div className="flex items-center gap-2 text-[13px]">
                       <Target className="w-4 h-4 text-[#6B7280]" />
-                      <span className="text-[#1E1548] font-medium">Position {module.order}</span>
+                      <span className="text-[#1E1548] font-medium">Position {module.order_index}</span>
                     </div>
                   </div>
 
                   <div className="flex flex-wrap gap-6 text-[14px] text-[#6B7280]">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-[#1E1548]">{module.users}</span>
+                      <span className="font-semibold text-[#1E1548]">module.users</span>
                       <span>utilisateurs inscrits</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-[#1E1548]">{module.completion}%</span>
+                      <span className="font-semibold text-[#1E1548]">module.completion%</span>
                       <span>taux de complétion</span>
                     </div>
                   </div>
@@ -248,8 +249,8 @@ export function AdminModulesPage({ onNavigate }: AdminModulesPageProps) {
           ))}
         </div>
 
-        {/* Empty State for when no modules exist */}
-        {modules.length === 0 && (
+        {/* Empty State for when no modulesStatic exist */}
+        {modulesStatic.length === 0 && (
           <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[16px] p-12 text-center">
             <FileText className="w-16 h-16 text-[#E8ECFF] mx-auto mb-4" />
             <h3 className="text-[20px] font-bold text-[#1E1548] mb-2">
@@ -410,7 +411,7 @@ export function AdminModulesPage({ onNavigate }: AdminModulesPageProps) {
                 {/* Info Box */}
                 <div className="bg-[#E8ECFF] border-2 border-[#1E1548]/10 rounded-[12px] p-4">
                   <p className="text-[13px] text-[#1E1548] leading-relaxed">
-                    💡 <strong>Astuce :</strong> Organisez vos modules de manière cohérente en respectant la progression pédagogique du parcours TBEE. Chaque module doit s'inscrire dans une thématique claire et une semaine précise.
+                    💡 <strong>Astuce :</strong> Organisez vos modulesStatic de manière cohérente en respectant la progression pédagogique du parcours TBEE. Chaque module doit s'inscrire dans une thématique claire et une semaine précise.
                   </p>
                 </div>
               </div>

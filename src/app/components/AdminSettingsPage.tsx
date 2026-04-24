@@ -18,11 +18,7 @@ import { StatCard } from './StatCard';
 import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
 
-interface AdminSettingsPageProps {
-  onNavigate: (page: string) => void;
-}
-
-export function AdminSettingsPage({ onNavigate }: AdminSettingsPageProps) {
+export function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState<'general' | 'users' | 'system'>('general');
   const [maintenanceMode, setMaintenanceMode] = useState(false);
 
