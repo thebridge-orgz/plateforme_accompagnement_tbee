@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Eye, EyeOff, Lock } from "lucide-react";
-import { useAuth } from "../../auth/AuthContext";
+import { useAuth } from "../../../hooks/useAuth";
 import { UserRole } from '../../../types/user';
 import { Navbar } from "../../components/Navbar";
 import { Footer } from "../../components/Footer";

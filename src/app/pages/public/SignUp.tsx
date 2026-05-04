@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Eye, EyeOff, Info } from "lucide-react";
-import { useAuth } from "../../auth/AuthContext";
+import { useAuth } from "../../../hooks/useAuth";
 import { Navbar } from "../../components/Navbar";
 import { Footer } from "../../components/Footer";
 import { Link, useNavigate } from 'react-router-dom';
@@ -72,7 +72,7 @@ function SignUp() {
                 formData.password,
                 formData.firstName,
                 formData.lastName,
-                hasRQTH
+                //hasRQTH
             );
             setSuccess(true);
             // Optionnel : rediriger vers la page de connexion après quelques secondes

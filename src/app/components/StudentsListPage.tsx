@@ -22,7 +22,7 @@ import { Input } from '../components/ui/input';
 import { Card } from '../components/ui/card';
 import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
-import { useAdminData, studentProfile } from '../../context/AdminDataContext';
+import { useAdminData } from '../../hooks/useAdminData';
 import { formatDateTime } from '../../utils/date';
 import { calculateGlobalProgress } from '../../utils/initialState';
 
@@ -35,9 +35,9 @@ export function StudentsListPage() {
 
   const {
     students,
-    getstudentStats,
+    //getstudentStats,
     modules,
-    studentModulesProgress
+    //studentModulesProgress
   } = useAdminData();
 
   // Filter students
@@ -70,7 +70,7 @@ export function StudentsListPage() {
     return 'bg-gray-500';
   };
 
-  const StudentCard = ({ student }: { student: studentProfile }) => (
+  const StudentCard = ({ student }: { student: any/* studentProfile*/ }) => (
     <Link to={`${routes.AdminStudentTracking.path.replace(":id", student.id)}`}>
       <div className="bg-card border border-border rounded-2xl p-6 hover:shadow-lg transition-all cursor-pointer group gap-15">
         <div className="flex items-start justify-between mb-4">
@@ -96,13 +96,13 @@ export function StudentsListPage() {
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Progression</span>
             <span className="font-medium">
-              {calculateGlobalProgress(studentModulesProgress.filter(progress => progress.user_id === student.id))}%
+              calculateGlobalProgress(studentModulesProgress.filter(progress ={'>'} progress.user_id === student.id))%
             </span>
           </div>
           <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
             <div
-              className={`h-full transition-all ${getProgressColor(calculateGlobalProgress(studentModulesProgress.filter(progress => progress.user_id === student.id)))}`}
-              style={{ width: `${calculateGlobalProgress(studentModulesProgress.filter(progress => progress.user_id === student.id))}%` }}
+              className={`h-full transition-all`}//${getProgressColor(calculateGlobalProgress(studentModulesProgress.filter(progress => progress.user_id === student.id)))}
+              style={{ width: '10%' }}//`${calculateGlobalProgress(studentModulesProgress.filter(progress => progress.user_id === student.id))}%`
             />
           </div>
         </div>
@@ -114,9 +114,9 @@ export function StudentsListPage() {
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Award className="w-4 h-4 text-muted-foreground" />
-            <span>{getstudentStats(student.id)
+            <span>{/*getstudentStats(student.id)
               ? Object.values(getstudentStats(student.id).moduleProgress).filter(module => module.completed === true).length
-              : 0}/{modules.length}</span>
+              : 0*/}/{modules.length}</span>
           </div>
         </div>
 
@@ -128,7 +128,7 @@ export function StudentsListPage() {
     </Link>
   );
 
-  const StudentListItem = ({ student }: { student: studentProfile }) => (
+  const StudentListItem = ({ student }: { student: any /*studentProfile*/ }) => (
     <Link to={`${routes.AdminStudentTracking.path.replace(":id", student.id)}`}>
       <div className="bg-card border border-border rounded-2xl p-4 hover:shadow-lg transition-all cursor-pointer group">
         <div className="flex items-center justify-between flex-wrap gap-4">
@@ -153,12 +153,12 @@ export function StudentsListPage() {
           <div className="flex-1 min-w-[150px]">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-sm text-muted-foreground">Progression:</span>
-              <span className="text-sm font-medium">{calculateGlobalProgress(studentModulesProgress.filter(progress => progress.user_id === student.id))}%</span>
+              <span className="text-sm font-medium">calculateGlobalProgress(studentModulesProgress.filter(progress ={'>'} progress.user_id === student.id))%</span>
             </div>
             <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
               <div
-                className={`h-full transition-all ${getProgressColor(calculateGlobalProgress(studentModulesProgress.filter(progress => progress.user_id === student.id)))}`}
-                style={{ width: `${calculateGlobalProgress(studentModulesProgress.filter(progress => progress.user_id === student.id))}%` }}
+                className={`h-full transition-all`}//${getProgressColor(calculateGlobalProgress(studentModulesProgress.filter(progress => progress.user_id === student.id)))}
+                style={{ width: `10%` }}//${calculateGlobalProgress(studentModulesProgress.filter(progress => progress.user_id === student.id))}%
               />
             </div>
           </div>

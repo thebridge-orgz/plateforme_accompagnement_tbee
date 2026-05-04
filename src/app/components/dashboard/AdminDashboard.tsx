@@ -1,13 +1,15 @@
 ﻿import { Award, BookOpen, TrendingUp, Users, AlertTriangle, Clock } from 'lucide-react';
 import { StatCard } from '../../components/StatCard';
-import { useAuth } from '../../auth/AuthContext';
 import { routes } from '../../router/routes';
 import { Link } from 'react-router-dom';
+import { UserProfile } from '../../../types/user';
+
+interface AdminDashboardProps {
+    user: UserProfile;
+}
 
 
-export function AdminDashboard() {
-    const user = useAuth().user;
-    const adminName = user ? user.firstName : 'adminName';
+export function AdminDashboard({ user }: AdminDashboardProps) {
 
     return (
         <div className="min-h-screen bg-[#F8F9FD] pb-16">
@@ -16,7 +18,7 @@ export function AdminDashboard() {
                 <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8 lg:pt-8 lg:pb-8">
                     <div>
                         <h1 className="text-[28px] sm:text-[32px] lg:text-[36px] font-bold leading-tight text-[#1E1548] mb-2">
-                            {adminName ? `Bonjour, ${adminName} 👋` : 'Tableau de bord administrateur'}
+                            {user ? `Bonjour, ${user.firstName} 👋` : 'Tableau de bord administrateur'}
                         </h1>
                         <p className="text-[14px] sm:text-[16px] leading-[20px] sm:leading-[24px] text-[#6B7280]">
                             Suivi et gestion de la plateforme TBEE

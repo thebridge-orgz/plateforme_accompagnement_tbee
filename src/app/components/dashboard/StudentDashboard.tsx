@@ -2,37 +2,33 @@ import { Award, BookOpen, Clock, Target, TrendingUp } from 'lucide-react';
 import { StatCard } from '../../components/StatCard';
 import { ProgressBar } from '../ui/ProgressBar';
 import { Button } from '../ui/button';
-import { useUserData } from '../../../context/UserDataContext';
+import { useModules } from '../../../hooks/useModules';
+import { useStatistics } from '../../../hooks/userStatistics';
 import { formatStudyTime } from '../../../utils/initialState';
 import { routes } from '../../router/routes';
 import { Link } from 'react-router-dom';
+import { UserProfile } from '../../../types/user';
 
-export function StudentDashboard() {
-  // TODO: fetch from Supabase - using context for now
-  const {
-    isLoading,
-    userProfile,
-    statistics,
-    modules,
-    globalProgress,
-    completedModulesCount,
-    totalModulesCount,
-    currentModule,
-    isNewUser,
-  } = useUserData();
+interface StudentDashboardProps {
+  user: UserProfile;
+}
 
-  // Récupérer le prénom de l'utilisateur ou utiliser un placeholder
-  const firstName = userProfile?.firstName || 'Candidat';
+
+export function StudentDashboard({ user }: StudentDashboardProps) {
+  const { loading, modules, totalCount, globalProgress, currentModule, completedCount } = useModules();
+  //console.log(`currentModule : ${currentModule}`);
+
+  const { statistics } = useStatistics();
 
   // Parcours entièrement complété ?
-  const allModulesCompleted = totalModulesCount > 0 && completedModulesCount === totalModulesCount;
+  const allModulesCompleted = totalCount > 0 && completedCount === totalCount;
 
   // Formater le temps d'étude
-  const studyTimeFormatted = formatStudyTime(statistics.totalTimeSpentMinutes);
+  //const studyTimeFormatted = formatStudyTime(statistics.totalTimeSpentMinutes);
 
   // Modules à afficher (limiter à 3 pour l'affichage)
   const displayModules = modules
-    .filter(m => m.status === 'in_progress' || m.status === 'available')
+    .filter(module => module.status === 'in_progress' || module.status === 'available')
     .slice(0, 3);
 
   // Si aucun module en cours/disponible, afficher les premiers modules
@@ -40,7 +36,7 @@ export function StudentDashboard() {
     ? displayModules
     : modules.slice(0, 3);
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -58,20 +54,20 @@ export function StudentDashboard() {
         <div className="bg-gradient-to-br from-primary/10 to-secondary rounded-2xl p-6 lg:p-8">
           <h2 className="mb-2">
             {allModulesCompleted
-              ? `Bravo, ${firstName} ! 🎉`
-              : `Bienvenue, ${firstName} ! 👋`}
+              ? `Bravo, ${user.firstName} ! 🎉`
+              : `Bienvenue, ${user.firstName} ! 👋`}
           </h2>
           <p className="text-muted-foreground mb-6">
             {allModulesCompleted
               ? 'Tu as terminé ton parcours ! Tu es maintenant prêt(e) à décrocher ton alternance. 🚀'
-              : isNewUser
+              : completedCount === 0
                 ? 'Commence ton parcours pour trouver ton alternance'
                 : 'Continue ton parcours vers l\'alternance. Tu es sur la bonne voie !'}
           </p>
           <div className="w-full max-w-none">
             <ProgressBar progress={globalProgress} showLabel size="lg" className="w-full" />
           </div>
-          {isNewUser && (
+          {completedCount === 0 && (
             <p className="text-sm text-muted-foreground mt-3">
               💡 Commence pour débloquer tes statistiques et suivre ta progression
             </p>
@@ -82,27 +78,27 @@ export function StudentDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
           <StatCard
             title="Modules terminés"
-            value={`${completedModulesCount}/${totalModulesCount}`}
+            value={`${completedCount}/${totalCount}`}
             icon={<BookOpen className="w-6 h-6 text-primary" />}
-            subtitle={isNewUser ? 'Commence pour débloquer' : undefined}
+            subtitle={'Commence pour débloquer'}
           />
           <StatCard
             title="Temps d'étude"
-            value={studyTimeFormatted}
+            value={'studyTimeFormatted'}/*studyTimeFormatted*/
             icon={<Clock className="w-6 h-6 text-primary" />}
-            subtitle={isNewUser ? 'Commence pour débloquer' : undefined}
+            subtitle={'Commence pour débloquer'}
           />
           <StatCard
             title="Série en cours"
-            value={statistics.currentStreakDays === 0 ? '0 jour' : `${statistics.currentStreakDays} jour${statistics.currentStreakDays > 1 ? 's' : ''}`}
+            value={'streak'}/*statistics.currentStreakDays === 0 ? '0 jour' : `${statistics.currentStreakDays} jour${statistics.currentStreakDays > 1 ? 's' : ''}` */
             icon={<TrendingUp className="w-6 h-6 text-primary" />}
-            subtitle={isNewUser ? 'Commence pour débloquer' : undefined}
+            subtitle={'Commence pour débloquer'}
           />
           <StatCard
             title="Objectif mensuel"
             value={globalProgress === 0 ? '0%' : `${globalProgress}%`}
             icon={<Target className="w-6 h-6 text-primary" />}
-            subtitle={isNewUser ? 'Définis ton objectif' : undefined}
+            subtitle={'Définis ton objectif'}
           />
         </div>
 
@@ -114,7 +110,7 @@ export function StudentDashboard() {
               <h3>
                 {allModulesCompleted
                   ? 'Parcours terminé 🏆'
-                  : isNewUser
+                  : completedCount === 0
                     ? 'Commence ton parcours'
                     : 'Mes modules en cours'}
               </h3>
@@ -139,7 +135,7 @@ export function StudentDashboard() {
                   Tu as tout terminé !
                 </h3>
                 <p className="text-sm text-white/90 text-center mb-6 leading-relaxed">
-                  Félicitations ! Tu as complété les {totalModulesCount} modules de ton parcours TBEE. Tu es maintenant armé(e) pour décrocher ton alternance.
+                  Félicitations ! Tu as complété les {totalCount} modules de ton parcours TBEE. Tu es maintenant armé(e) pour décrocher ton alternance.
                 </p>
                 <Link to={routes.StudentModules.path} className="block w-full">
                   <Button
@@ -193,14 +189,14 @@ export function StudentDashboard() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Recent Achievements - Hide if new user */}
-            {!isNewUser && completedModulesCount > 0 && (
+            {completedCount > 0 && (
               <div className="bg-card border border-border rounded-2xl p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Award className="w-5 h-5 text-primary" />
                   <h4>Récentes réussites</h4>
                 </div>
                 <div className="space-y-3">
-                  {completedModulesCount >= 1 && (
+                  {completedCount >= 1 && (
                     <div className="flex items-start gap-3 p-3 bg-secondary/50 rounded-xl">
                       <span className="text-2xl">🎯</span>
                       <div>
@@ -209,15 +205,15 @@ export function StudentDashboard() {
                       </div>
                     </div>
                   )}
-                  {statistics.currentStreakDays >= 3 && (
+                  {/*statistics.currentStreakDays >= 3 && (
                     <div className="flex items-start gap-3 p-3 bg-secondary/50 rounded-xl">
                       <span className="text-2xl">🔥</span>
                       <div>
-                        <p className="text-sm font-medium">{statistics.currentStreakDays} jours consécutifs</p>
+                        <p className="text-sm font-medium">statistics.currentStreakDays jours consécutifs</p>
                         <p className="text-xs text-muted-foreground">Continue comme ça !</p>
                       </div>
                     </div>
-                  )}
+                  )*/}
                 </div>
               </div>
             )}
@@ -231,7 +227,7 @@ export function StudentDashboard() {
                     variant="outline"
                     className="w-full justify-start"
                   >
-                    📄 {isNewUser ? 'Importer' : 'Télécharger'} mon CV
+                    📄 {'Importer'} mon CV
                   </Button>
                 </Link>
                 <Link to={routes.StudentJobTracking.path} className="block w-full">

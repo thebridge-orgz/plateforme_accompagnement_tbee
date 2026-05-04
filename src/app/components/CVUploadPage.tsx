@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ArrowLeft, CheckCircle2, FileText, Download, Eye, Upload } from 'lucide-react';
 import { Button } from './Button';
 import { FileUploader } from './FileUploader';
-import { useUserData } from '../../context/UserDataContext';
+import { useUserData } from '../../hooks/useUserData';
 import { routes } from '../router/routes';
 import { Link } from 'react-router-dom';
 
@@ -31,31 +31,31 @@ const cvTips = [
 
 export function CVUploadPage() {
   // TODO: fetch from Supabase - using context for now
-  const { cvData, updateCVData } = useUserData();
+  const { cvData, /*updateCVData*/ } = useUserData();
 
   const [isUploading, setIsUploading] = useState(false);
 
-  const handleFileUpload = async (file: File) => {
-    setIsUploading(true);
-    try {
-      // Upload vers Supabase Storage via le contexte (gère l'upload + mise à jour cv_data)
-      await updateCVData(
-        {
-          status: 'uploaded',
-          uploadedAt: new Date().toISOString(),
-        },
-        file
-      );
-    } catch (error: any) {
-      const message = error?.message || error?.error_description || JSON.stringify(error);
-      alert(`Erreur upload CV: ${message}`);
-      console.error('CV upload error:', error);
-    } finally {
-      setIsUploading(false);
-    }
-  };
+  /* const handleFileUpload = async (file: File) => {
+     setIsUploading(true);
+     try {
+       // Upload vers Supabase Storage via le contexte (gère l'upload + mise à jour cv_data)
+       await updateCVData(
+         {
+           status: 'uploaded',
+           uploadedAt: new Date().toISOString(),
+         },
+         file
+       );
+     } catch (error: any) {
+       const message = error?.message || error?.error_description || JSON.stringify(error);
+       alert(`Erreur upload CV: ${message}`);
+       console.error('CV upload error:', error);
+     } finally {
+       setIsUploading(false);
+     }
+   };*/
 
-  const handleFileDelete = async () => {
+  /*const handleFileDelete = async () => {
     if (confirm('Supprimer votre CV ?')) {
       try {
         await updateCVData({
@@ -69,10 +69,10 @@ export function CVUploadPage() {
         console.error(error);
       }
     }
-  };
+  };*/
 
-  const hasCV = cvData.status !== 'not_uploaded' && cvData.fileName;
-  const hasFeedback = cvData.status === 'approved' || cvData.status === 'needs_revision';
+  const hasCV = cvData?.status !== 'not_uploaded' && cvData?.fileName;
+  const hasFeedback = cvData?.status === 'approved' || cvData?.status === 'needs_revision';
 
   return (
     <div className="min-h-screen bg-[#F8F9FD] pb-16">
@@ -123,9 +123,9 @@ export function CVUploadPage() {
                   description="Glissez-déposez votre CV ou cliquez pour parcourir"
                   acceptedFormats=".pdf, .doc, .docx"
                   maxSizeMB={5}
-                  onFileUpload={handleFileUpload}
+                  //onFileUpload={handleFileUpload}
                   existingFiles={[]}
-                  onFileDelete={handleFileDelete}
+                //onFileDelete={handleFileDelete}
                 />
               </div>
             )}
@@ -149,15 +149,15 @@ export function CVUploadPage() {
 
                     {/* Status Badge */}
                     <div className={`px-3 py-1 rounded-full text-xs font-medium ${cvData.status === 'approved'
-                        ? 'bg-green-100 text-green-800'
-                        : cvData.status === 'under_review'
-                          ? 'bg-blue-100 text-blue-800'
-                          : cvData.status === 'needs_revision'
-                            ? 'bg-orange-100 text-orange-800'
-                            : 'bg-gray-100 text-gray-800'
+                      ? 'bg-green-100 text-green-800'
+                      : cvData.status === 'pending'
+                        ? 'bg-blue-100 text-blue-800'
+                        : cvData.status === 'needs_revision'
+                          ? 'bg-orange-100 text-orange-800'
+                          : 'bg-gray-100 text-gray-800'
                       }`}>
                       {cvData.status === 'approved' && '✓ Validé'}
-                      {cvData.status === 'under_review' && '⏳ En cours d\'analyse'}
+                      {cvData.status === 'pending' && '⏳ En cours d\'analyse'}
                       {cvData.status === 'needs_revision' && '⚠ À améliorer'}
                       {cvData.status === 'uploaded' && '📄 Téléchargé'}
                     </div>
@@ -177,7 +177,7 @@ export function CVUploadPage() {
                     <Button
                       variant="secondary"
                       className="flex-1"
-                      onClick={handleFileDelete}
+                    //onClick={handleFileDelete}
                     >
                       Supprimer
                     </Button>
@@ -218,9 +218,9 @@ export function CVUploadPage() {
                           description="Glissez-déposez votre CV mis à jour"
                           acceptedFormats=".pdf, .doc, .docx"
                           maxSizeMB={5}
-                          onFileUpload={handleFileUpload}
+                          //onFileUpload={handleFileUpload}
                           existingFiles={[]}
-                          onFileDelete={handleFileDelete}
+                        //onFileDelete={handleFileDelete}
                         />
                       </div>
                     )}
@@ -228,7 +228,7 @@ export function CVUploadPage() {
                 )}
 
                 {/* No feedback yet */}
-                {!hasFeedback && cvData.status === 'under_review' && (
+                {!hasFeedback && cvData.status === 'pending' && (
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
                     <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
                       <Eye className="w-6 h-6 text-blue-600" />

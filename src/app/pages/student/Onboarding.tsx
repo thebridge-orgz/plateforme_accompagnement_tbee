@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../auth/AuthContext';
+import { useAuth } from '../../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { routes } from '../../router/routes';
 import { OnboardingPersonalInfo, type PersonalInfoData } from '../../components/onboarding/OnboardingPersonalInfo';
@@ -9,7 +9,7 @@ import { Navbar } from '../../components/Navbar';
 import { Footer } from '../../components/Footer';
 
 function Onboarding() {
-    const { user, saveOnboarding, loading } = useAuth();
+    const { user, loading } = useAuth();
     const navigate = useNavigate();
     const [personalInfoData, setPersonalInfoData] = useState<PersonalInfoData | null>(null);
     const [step1Data, setStep1Data] = useState<any>(null);
@@ -52,7 +52,7 @@ function Onboarding() {
                 completedAt: new Date().toISOString(),
             };
 
-            await saveOnboarding(onboardingData);
+            //await saveOnboarding(onboardingData);
             navigate(routes.StudentDashboard.path);
         } catch (error) {
             console.error('Error completing onboarding:', error);

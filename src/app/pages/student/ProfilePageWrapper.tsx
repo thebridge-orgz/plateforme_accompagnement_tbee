@@ -1,32 +1,19 @@
-import { useNavigate } from 'react-router-dom';
 import StudentLayout from '../../layouts/studentLayout';
 import { StudentProfilePage } from '../../components/StudentProfilePage';
 import { routes } from '../../router/routes';
+import { useAuth } from '../../../hooks/useAuth';
 
 export default function ProfilePageWrapper() {
-  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
 
-  const handleNavigate = (page: string) => {
-    const routeMap: Record<string, string> = {
-      'student-dashboard': '/student/dashboard',
-      'student-journey': '/student/parcours',
-      'student-modules': '/student/parcours',
-      'student-cv': '/student/cv',
-      'student-tracking': '/student/offres',
-      'student-profile': '/student/profil',
-    };
-
-    if (page.startsWith('module-')) {
-      navigate(`/student/modules/${page}`);
-      return;
-    }
-
-    navigate(routeMap[page] || '/student/profil');
-  };
+  if (!user) return null;
 
   return (
-    <StudentLayout currentPage={routes.StudentProfile.path}>
-      <StudentProfilePage onNavigate={handleNavigate} />
+    <StudentLayout currentPage={routes.StudentProfile.path}
+      user={user}
+      signOut={signOut}
+    >
+      <StudentProfilePage />
     </StudentLayout>
   );
 }

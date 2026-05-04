@@ -1,11 +1,11 @@
 ﻿import { ArrowLeft, Briefcase, Send, CheckCircle2, Clock, AlertTriangle, MessageSquare, ExternalLink, User } from 'lucide-react';
 import { useState } from 'react';
-import { useAdminData } from '../../context/AdminDataContext';
+import { useAdminData } from '../../hooks/useAdminData';
 import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
 
 export function AdminOfferSupportPage() {
-  const { offerTrackings, updateOfferTracking } = useAdminData();
+  const { offerTrackings/*, updateOfferTracking*/ } = useAdminData();
 
   const [selectedSupport, setSelectedSupport] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'needsHelp' | 'resolved'>('needsHelp');
@@ -79,7 +79,7 @@ export function AdminOfferSupportPage() {
     alert('Réponse envoyée à l\'étudiant !');
     setSelectedSupport(null);
     setResponseMessage('');
-    updateOfferTracking(supportId, { needsHelp: false });
+    //updateOfferTracking(supportId, { needsHelp: false });
   };
 
   return (
@@ -190,10 +190,10 @@ export function AdminOfferSupportPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="text-[15px] sm:text-[16px] font-semibold text-[#1E1548] mb-1">
-                          {support.position}
+                          support.position
                         </h4>
                         <p className="text-[13px] text-[#6B7280]">
-                          {support.company}
+                          support.company
                         </p>
                       </div>
                     </div>
@@ -213,7 +213,7 @@ export function AdminOfferSupportPage() {
                     </div>
                   )}
 
-                  {support.notes && (
+                  {/*support.notes && (
                     <div className="bg-[#E8ECFF] border-2 border-[#1E1548] rounded-[12px] p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <MessageSquare className="w-4 h-4 text-[#1E1548]" />
@@ -225,7 +225,7 @@ export function AdminOfferSupportPage() {
                         {support.notes}
                       </p>
                     </div>
-                  )}
+                  )*/}
 
                   {support.needsHelp && (
                     <button
@@ -268,10 +268,10 @@ export function AdminOfferSupportPage() {
                   </label>
                   <div className="bg-[#F8F9FD] rounded-[12px] p-4">
                     <p className="text-[15px] font-semibold text-[#1E1548] mb-1">
-                      {selectedSupportData.position}
+                      {selectedSupportData.positionTitle}
                     </p>
                     <p className="text-[13px] text-[#6B7280]">
-                      {selectedSupportData.company}
+                      {selectedSupportData.companyName}
                     </p>
                   </div>
                 </div>

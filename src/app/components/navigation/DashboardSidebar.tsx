@@ -17,15 +17,15 @@ import {
   UserCog
 } from 'lucide-react';
 import { useState } from 'react';
-import { useAuth } from '../../auth/AuthContext';
 import { routes } from '../../router/routes';
 import { Link } from 'react-router-dom';
+import { UserProfile } from '../../../types/user';
 
 interface DashboardSidebarProps {
   currentPage: string;
-  role: 'student' | 'admin';
-  userName?: string;
+  user: UserProfile;
   className?: string;
+  signOut: () => Promise<void>;
 }
 
 interface NavItem {
@@ -36,14 +36,14 @@ interface NavItem {
 
 export function DashboardSidebar({
   currentPage,
-  role,
-  userName = 'Utilisateur',
-  className = ''
+  user,
+  className = '',
+  signOut,
 }: DashboardSidebarProps) {
-  const { user, signOut } = useAuth()
+
 
   let navItems: NavItem[] = []
-  if (user?.role === 'student') {
+  if (user.role === 'student') {
     navItems = [
       { label: 'Tableau de bord', icon: <Home className="w-5 h-5" />, path: routes.StudentDashboard.path },
       { label: 'Mon parcours', icon: <GraduationCap className="w-5 h-5" />, path: routes.StudentModules.path },
@@ -53,7 +53,7 @@ export function DashboardSidebar({
       { label: 'Mon profil', icon: <User className="w-5 h-5" />, path: routes.StudentProfile.path },
     ];
   }
-  else if (user?.role === 'admin') {
+  else if (user.role === 'admin') {
     navItems = [
       { label: 'Vue d\'ensemble', icon: <BarChart3 className="w-5 h-5" />, path: routes.AdminDashboard.path },
       { label: 'Validation CVs', icon: <CheckSquare className="w-5 h-5" />, path: routes.AdminCvReview.path },
@@ -96,14 +96,14 @@ export function DashboardSidebar({
           <div>
             <h4 className="text-sm font-semibold">TBEE</h4>
             <p className="text-xs text-muted-foreground">
-              {role === 'student' ? 'Espace Étudiant' : 'Espace Admin'}
+              {user.role === 'student' ? 'Espace Étudiant' : 'Espace Admin'}
             </p>
           </div>
         </div>
         <div className="p-3 bg-secondary rounded-xl">
-          <p className="text-sm font-medium truncate">{userName}</p>
+          <p className="text-sm font-medium truncate">{user.firstName} {user.lastName}</p>
           <p className="text-xs text-muted-foreground">
-            {role === 'student' ? 'Étudiant' : 'Administrateur'}
+            {user.role === 'student' ? 'Étudiant' : 'Administrateur'}
           </p>
         </div>
       </div>
@@ -111,7 +111,7 @@ export function DashboardSidebar({
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1">
         {navItems.map((item) => (
-          <Link to={item.path}>
+          <Link key={item.path} to={item.path}>
             <button
               className={`
               w-full flex items-center gap-3 px-4 py-3 rounded-xl
