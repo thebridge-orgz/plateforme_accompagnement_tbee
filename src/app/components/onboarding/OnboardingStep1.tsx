@@ -283,7 +283,7 @@ export function OnboardingStep1({ onComplete }: OnboardingStep1Props) {
             </span>
           </button>
 
-          {/* Progress */}
+          {/* Progress 
           <div className="mb-12">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[14px] font-medium text-[#6B7280]">
@@ -299,7 +299,7 @@ export function OnboardingStep1({ onComplete }: OnboardingStep1Props) {
                 style={{ width: `${progress}%` }}
               />
             </div>
-          </div>
+          </div>*/}
 
           <div className="text-center mb-8">
             <h2 className="text-[32px] font-bold leading-[40px] text-[#1E1548] mb-4">

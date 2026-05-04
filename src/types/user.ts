@@ -8,6 +8,13 @@ export interface UserProfile {
     firstName: string;
     lastName: string;
     role: UserRole;
+    phone: string;
+    birthDate: string;
+    onboardingStep: number;
+    currentLevel: string;
+    postalCode: string;
+    city: string;
+    address: string;
     hasRQTH?: boolean;
     createdAt: string;
     updatedAt: string;

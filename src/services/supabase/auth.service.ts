@@ -25,7 +25,7 @@ class AuthService {
             email,
             password,
             options: {
-                data: { first_name: firstName, last_name: lastName, role },
+                data: { first_name: firstName.trim().replace(firstName.charAt(0),firstName.charAt(0).toUpperCase()), last_name: lastName.trim().toUpperCase(), role },
             },
         });
         if (error) throw error;
@@ -99,7 +99,7 @@ class AuthService {
             postalCode: data.postal_code,
             mobilityRadius: data.mobility_radius,
             isActive: data.is_active,
-            onboardingStep: data.onboarding_step,
+            onboardingStep: data.onboarding_step
         } as UserProfile;
     }
 
@@ -127,6 +127,21 @@ class AuthService {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
             redirectTo: `${window.location.origin}/reset-password`,
         });
+        if (error) throw error;
+    }
+
+    async saveOnboarding(id: string, data: UserProfile) {
+        const { error } = await supabase.from('profiles').update({
+            phone: data.phone,
+            birth_date: data.birthDate,
+            onboarding_completed: data.onboardingCompleted,
+            onboarding_step: data.onboardingStep,
+            current_level: data.currentLevel,
+            postal_code: data.postalCode,
+            address: data.address,
+            city: data.city
+        }).eq('id', id);
+        
         if (error) throw error;
     }
 

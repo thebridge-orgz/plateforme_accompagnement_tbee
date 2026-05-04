@@ -74,10 +74,9 @@ export function useModules() {
 
     const completedCount = modules.filter(module => module.status === 'completed').length;
     const currentModule = modules.find(module => module.status === 'available' || module.status === 'in_progress');
-    console.log(`currentModule : ${JSON.stringify(currentModule, null, 2)}`);
 
-    const nextModule = modules.filter(module => module.weekNumber === currentModule?.weekNumber + 1)
-    console.log(`nextModule : ${JSON.stringify(nextModule, null, 2)}`);
+    const firstModule = modules.filter(module => module.orderIndex === 1)[0]
+    const nextModule = modules.filter(module => module.orderIndex === currentModule?.orderIndex + 1)[0]
 
     return {
         modules,
@@ -88,6 +87,7 @@ export function useModules() {
         totalCount: modules.length,
         currentModule,
         nextModule,
+        firstModule,
         updateProgress,
         updateCompletedSteps,
         unlockModule,

@@ -9,6 +9,7 @@ interface AuthContextType {
     signUp: (email: string, password: string, firstName: string, lastName: string, role?: UserRole) => Promise<void>;
     signOut: () => Promise<void>;
     resetPassword: (email: string) => Promise<void>;
+    saveOnboarding: (user_id:string, data: any) => Promise<void>;
     refreshUser: () => Promise<void>;
     isAuthenticated: boolean;
     isAdmin: boolean;
@@ -186,6 +187,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         await authService.resetPassword(email);
     };
 
+    const saveOnboarding = async (user_id:string, data:any) => {
+        await authService.saveOnboarding(user_id, data);
+    }
+
     const value: AuthContextType = {
         user,
         loading,
@@ -194,6 +199,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         signOut,
         resetPassword,
         refreshUser,
+        saveOnboarding,
         isAuthenticated: !!user,
         isAdmin: user?.role === 'admin',
         isStudent: user?.role === 'student',

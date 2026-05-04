@@ -225,7 +225,7 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
 
   // Trouver le module dans le contexte UserData
   const userModule = modules.find(module => module.id === moduleId);
-  console.log('userModule', userModule);
+  //console.log('userModule', userModule);
 
   const staticModule = moduleStaticContent[`week${userModule?.weekNumber}`];
 
@@ -270,7 +270,6 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
 
   // -------------------- HANDLERS --------------------
 
-  console.log('isLastModule', isLastModule);
   const handleCompleteStep = async (stepId: string) => {
     if (!userModule || !staticModule) return;
 
@@ -279,7 +278,7 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
 
     if (!completedStepsLocal.includes(stepId)) {
       const newCompleted = [...completedStepsLocal, stepId];
-      console.log(`newCompleted : ${newCompleted}`)
+      //console.log(`newCompleted : ${newCompleted}`)
       setCompletedStepsLocal(newCompleted);
 
       try {
@@ -301,7 +300,7 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
         // Si toutes les étapes sont complétées, marquer le module comme terminé
         if (completedCount === totalSteps) {
           completeModule(userModule.id);
-          if (!isLastModule) unlockModule(nextModule[0].id)
+          if (!isLastModule) unlockModule(nextModule.id)
           if (isLastModule) {
             setTimeout(() => setShowCelebration(true), 600);
           }
@@ -314,7 +313,7 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
         }
       } catch (error: any) {
         alert(`Erreur sauvegarde progression: ${error?.message || JSON.stringify(error)}`);
-        console.error('handleCompleteStep error:', error);
+        //console.error('handleCompleteStep error:', error);
       }
     }
   };
