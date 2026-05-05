@@ -21,7 +21,7 @@ export function JobTrackingPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   const itemsPerPage = 5;
 
   const { offers, canAddMore, addOffer, removeOffer, updateOffer, MAX_TRACKED_OFFERS } = useOffers();
@@ -34,10 +34,9 @@ export function JobTrackingPage() {
     applicationDate: null as string | null,
     interviewDate: null as string | null,
     reminderDate: null as string | null,
-    // Données de l'offre (temporaires, seront récupérées de job_offers)
-    tempCompany: '',
-    tempPosition: '',
-    tempUrl: ''
+    companyName: '',
+    positionTitle: '',
+    offerUrl: ''
   });
 
   // Filter offers
@@ -86,22 +85,21 @@ export function JobTrackingPage() {
       return;
     }
 
-    // TODO: Valider que tempCompany, tempPosition et tempUrl sont remplis
+    // TODO: Valider que companyName, positionTitle et offerUrl sont remplis
     // TODO: Créer l'offre dans job_offers d'abord, puis la tracker
-    if (newOffer.tempCompany && newOffer.tempPosition && newOffer.tempUrl) {
+    if (newOffer.companyName && newOffer.positionTitle && newOffer.offerUrl) {
       try {
         addOffer({
-          offerId: `temp-offer-${Date.now()}`, // TODO: remplacer par vrai ID de job_offers
           applicationStatus: newOffer.applicationStatus,
-          userNotes: newOffer.userNotes || null,
+          userNotes: newOffer.userNotes,
           applicationDate: newOffer.applicationDate,
           interviewDate: newOffer.interviewDate,
           reminderDate: newOffer.reminderDate,
           id: '',
           userId: '',
-          companyName: null,
-          positionTitle: null,
-          offerUrl: null,
+          companyName: newOffer.companyName,
+          positionTitle: newOffer.positionTitle,
+          offerUrl: newOffer.offerUrl,
           trackedAt: '',
           updatedAt: ''
         });
@@ -114,9 +112,9 @@ export function JobTrackingPage() {
           applicationDate: null,
           interviewDate: null,
           reminderDate: null,
-          tempCompany: '',
-          tempPosition: '',
-          tempUrl: ''
+          companyName: '',
+          positionTitle: '',
+          offerUrl: ''
         });
         setShowAddModal(false);
       } catch (error) {
@@ -202,7 +200,7 @@ export function JobTrackingPage() {
 
   return (
     <div className="min-h-screen bg-[#F8F9FD] pb-16">
-      
+
       <div className="bg-white border-b border-[rgba(30,21,72,0.08)] sticky top-0 z-30">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex items-start gap-3 sm:gap-6">
@@ -244,7 +242,7 @@ export function JobTrackingPage() {
       </div>
 
       <div className="max-w-[1152px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8 lg:pt-8 lg:pb-8">
-        
+
         {!canAddMore && (
           <div className="bg-[#FEE2E2] border border-[#EF4444] rounded-[16px] p-4 sm:p-6 mb-6 sm:mb-8">
             <div className="flex items-start gap-3 sm:gap-4">
@@ -261,7 +259,7 @@ export function JobTrackingPage() {
           </div>
         )}
 
-        
+
         <div className="bg-[#E8ECFF] border border-[#1E1548]/10 rounded-[16px] p-4 sm:p-6 mb-6 sm:mb-8">
           <div className="flex items-start gap-3 sm:gap-4">
             <div className="text-xl sm:text-2xl">💡</div>
@@ -283,7 +281,7 @@ export function JobTrackingPage() {
         {offers.length > 0 && (
           <div className="bg-white border border-[rgba(30,21,72,0.1)] rounded-[16px] p-6 mb-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              
+
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6B7280]" />
                 <input
@@ -295,7 +293,7 @@ export function JobTrackingPage() {
                 />
               </div>
 
-              
+
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
@@ -310,7 +308,7 @@ export function JobTrackingPage() {
           </div>
         )}
 
-        
+
         <div className="bg-white border border-[rgba(30,21,72,0.1)] rounded-[16px] overflow-hidden mb-6">
           {paginatedOffers.length === 0 && offers.length === 0 ? (
             // Empty state - no offers at all
@@ -568,8 +566,8 @@ export function JobTrackingPage() {
                   </label>
                   <input
                     type="url"
-                    value={newOffer.tempUrl}
-                    onChange={(e) => setNewOffer({ ...newOffer, tempUrl: e.target.value })}
+                    value={newOffer.offerUrl}
+                    onChange={(e) => setNewOffer({ ...newOffer, offerUrl: e.target.value })}
                     placeholder="https://..."
                     className="w-full h-12 px-4 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:ring-2 focus:ring-[#FFD600]"
                   />
@@ -580,8 +578,8 @@ export function JobTrackingPage() {
                   </label>
                   <input
                     type="text"
-                    value={newOffer.tempCompany}
-                    onChange={(e) => setNewOffer({ ...newOffer, tempCompany: e.target.value })}
+                    value={newOffer.companyName}
+                    onChange={(e) => setNewOffer({ ...newOffer, companyName: e.target.value })}
                     placeholder="Nom de l'entreprise"
                     className="w-full h-12 px-4 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:ring-2 focus:ring-[#FFD600]"
                   />
@@ -592,8 +590,8 @@ export function JobTrackingPage() {
                   </label>
                   <input
                     type="text"
-                    value={newOffer.tempPosition}
-                    onChange={(e) => setNewOffer({ ...newOffer, tempPosition: e.target.value })}
+                    value={newOffer.positionTitle}
+                    onChange={(e) => setNewOffer({ ...newOffer, positionTitle: e.target.value })}
                     placeholder="Ex: Développeur Full Stack"
                     className="w-full h-12 px-4 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:ring-2 focus:ring-[#FFD600]"
                   />

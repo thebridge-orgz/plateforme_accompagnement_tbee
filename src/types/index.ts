@@ -101,7 +101,7 @@ export interface CVData {
 export interface TrackedOffer {
   id: string;
   userId: string;
-  offerId: string | null;
+  offerId?: string;
   companyName: string | null;
   positionTitle: string | null;
   offerUrl: string | null;
