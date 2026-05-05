@@ -5,7 +5,7 @@
 export type UserRole = 'student' | 'admin';
 export type ModuleStatus = 'locked' | 'available' | 'in_progress' | 'completed';
 export type CVStatus = 'not_uploaded' | 'uploaded' | 'pending' | 'approved' | 'needs_revision';
-export type ApplicationStatus = 'saved' | 'applied' | 'interview' | 'offer_received' | 'rejected' | 'accepted';
+export type ApplicationStatus = 'saved' | 'applied' | 'interview' | 'offer_received' | 'rejected' | 'accepted' | 'interested';
 export type LessonContentType = 'video' | 'article' | 'exercise' | 'quiz' | 'checklist';
 export type ValidationStatus = 'none' | 'pending' | 'approved' | 'rejected';
 
@@ -110,8 +110,6 @@ export interface TrackedOffer {
   applicationDate: string | null;
   interviewDate: string | null;
   reminderDate: string | null;
-  needsHelp: boolean;
-  helpRequest: string | null;
   trackedAt: string;
   updatedAt: string;
 }

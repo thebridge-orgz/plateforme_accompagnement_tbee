@@ -1,17 +1,9 @@
-export function JobTrackingPage() {
-  return (
-    <h1>Job Tracking Page</h1>
-  )
-}
-/*import { useState, useEffect } from 'react';
-import { Building2, Calendar, ChevronLeft, ChevronRight, ExternalLink, Plus, Search, AlertCircle } from 'lucide-react';
-import { useUserData } from '../../hooks/useUserData';
-import { MAX_TRACKED_OFFERS } from '../../utils/initialState';
-import type { UserTrackedOffer } from '../../types';
-
-interface JobTrackingPageProps {
-  onNavigate: (page: string) => void;
-}
+import { useState, useEffect } from 'react';
+import { Building2, Calendar, ChevronLeft, ChevronRight, ExternalLink, Plus, Search, AlertCircle, Pencil } from 'lucide-react';
+import type { TrackedOffer } from '../../types'
+import { useOffers } from '../../hooks/useOffers'
+import { Link } from 'react-router-dom';
+import { routes } from '../../app/router/routes';
 
 const statusConfig = {
   interested: { label: 'À contacter', color: 'bg-[#E8ECFF] text-[#1E1548]' },
@@ -25,21 +17,14 @@ const statusConfig = {
 } as const;
 
 export function JobTrackingPage() {
-  // TODO: fetch from Supabase - using context for now
-  const {
-    trackedOffers,
-    addTrackedOffer,
-    updateTrackedOffer,
-    removeTrackedOffer,
-    canTrackMoreOffers
-  } = useUserData();
-
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
-
+  
   const itemsPerPage = 5;
+
+  const { offers, canAddMore, addOffer, removeOffer, updateOffer, MAX_TRACKED_OFFERS } = useOffers();
 
   // New offer form state
   const [newOffer, setNewOffer] = useState({
@@ -56,7 +41,7 @@ export function JobTrackingPage() {
   });
 
   // Filter offers
-  const filteredOffers = trackedOffers.filter(offer => {
+  const filteredOffers = offers.filter(offer => {
     const matchesSearch =
       searchQuery === '' ||
       offer.userNotes?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -79,13 +64,13 @@ export function JobTrackingPage() {
   const [formError, setFormError] = useState<string | null>(null);
 
   // Edit modal state
-  const [editingOffer, setEditingOffer] = useState<UserTrackedOffer | null>(null);
+  const [editingOffer, setEditingOffer] = useState<TrackedOffer | null>(null);
   const [editForm, setEditForm] = useState({
     companyName: '',
     positionTitle: '',
     offerUrl: '',
     userNotes: '',
-    applicationStatus: 'interested' as UserTrackedOffer['applicationStatus'],
+    applicationStatus: 'interested' as TrackedOffer['applicationStatus'],
   });
   const [editError, setEditError] = useState<string | null>(null);
 
@@ -96,7 +81,7 @@ export function JobTrackingPage() {
   const handleAddOffer = async () => {
     setFormError(null);
 
-    if (!canTrackMoreOffers) {
+    if (!canAddMore) {
       setFormError(`Tu as atteint la limite de ${MAX_TRACKED_OFFERS} offres.`);
       return;
     }
@@ -105,13 +90,20 @@ export function JobTrackingPage() {
     // TODO: Créer l'offre dans job_offers d'abord, puis la tracker
     if (newOffer.tempCompany && newOffer.tempPosition && newOffer.tempUrl) {
       try {
-        await addTrackedOffer({
+        addOffer({
           offerId: `temp-offer-${Date.now()}`, // TODO: remplacer par vrai ID de job_offers
           applicationStatus: newOffer.applicationStatus,
           userNotes: newOffer.userNotes || null,
           applicationDate: newOffer.applicationDate,
           interviewDate: newOffer.interviewDate,
           reminderDate: newOffer.reminderDate,
+          id: '',
+          userId: '',
+          companyName: null,
+          positionTitle: null,
+          offerUrl: null,
+          trackedAt: '',
+          updatedAt: ''
         });
 
         // Reset form
@@ -139,7 +131,7 @@ export function JobTrackingPage() {
   const handleDeleteOffer = async (offerId: string) => {
     if (confirm('Supprimer cette offre ?')) {
       try {
-        await removeTrackedOffer(offerId);
+        removeOffer(offerId);
       } catch (error) {
         alert('Erreur lors de la suppression');
         console.error(error);
@@ -147,25 +139,25 @@ export function JobTrackingPage() {
     }
   };
 
-  const handleUpdateStatus = async (offerId: string, newStatus: UserTrackedOffer['applicationStatus']) => {
+  const handleUpdateStatus = async (offerId: string, newStatus: TrackedOffer['applicationStatus']) => {
     try {
-      const updates: Partial<UserTrackedOffer> = {
+      const updates: Partial<TrackedOffer> = {
         applicationStatus: newStatus
       };
 
       // Si passage à "applied", mettre la date de candidature
-      if (newStatus === 'applied' && !trackedOffers.find(o => o.id === offerId)?.applicationDate) {
+      if (newStatus === 'applied' && !offers.find(offer => offer.id === offerId)?.applicationDate) {
         updates.applicationDate = new Date().toISOString().split('T')[0];
       }
 
-      await updateTrackedOffer(offerId, updates);
+      updateOffer(offerId, updates);
     } catch (error) {
       alert('Erreur lors de la mise à jour');
       console.error(error);
     }
   };
 
-  const handleOpenEdit = (offer: UserTrackedOffer) => {
+  const handleOpenEdit = (offer: TrackedOffer) => {
     setEditingOffer(offer);
     setEditForm({
       companyName: offer.companyName || '',
@@ -187,13 +179,13 @@ export function JobTrackingPage() {
     if (!isValidUrl(editForm.offerUrl)) { setEditError('L\'URL saisie n\'est pas valide (ex: https://...).'); return; }
 
     try {
-      await updateTrackedOffer(editingOffer.id, {
+      updateOffer(editingOffer.id, {
         companyName: editForm.companyName.trim(),
         positionTitle: editForm.positionTitle.trim(),
         offerUrl: editForm.offerUrl.trim(),
         userNotes: editForm.userNotes.trim() || null,
         applicationStatus: editForm.applicationStatus,
-      } as Partial<UserTrackedOffer>);
+      } as Partial<TrackedOffer>);
       setEditingOffer(null);
     } catch (error) {
       setEditError('Erreur lors de la modification. Réessaie.');
@@ -206,7 +198,7 @@ export function JobTrackingPage() {
     alert('✅ Demande de support envoyée à l\'équipe Admission ! Ils reviendront vers toi rapidement.');
   };
 
-  const remainingSlots = MAX_TRACKED_OFFERS - trackedOffers.length;
+  const remainingSlots = MAX_TRACKED_OFFERS - offers.length;
 
   return (
     <div className="min-h-screen bg-[#F8F9FD] pb-16">
@@ -214,13 +206,14 @@ export function JobTrackingPage() {
       <div className="bg-white border-b border-[rgba(30,21,72,0.08)] sticky top-0 z-30">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex items-start gap-3 sm:gap-6">
-            <button
-              onClick={() => onNavigate('student-dashboard')}
-              className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
-              aria-label="Retour"
-            >
-              <ChevronRight className="w-5 h-5 text-[#1E1548] rotate-180" />
-            </button>
+            <Link to={routes.StudentDashboard.path}>
+              <button
+                className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
+                aria-label="Retour"
+              >
+                <ChevronRight className="w-5 h-5 text-[#1E1548] rotate-180" />
+              </button>
+            </Link>
 
             <div className="flex-1 min-w-0">
               <h1 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold leading-tight text-[#1E1548] mb-1 sm:mb-2">
@@ -233,11 +226,11 @@ export function JobTrackingPage() {
 
             <button
               onClick={() => setShowAddModal(true)}
-              disabled={!canTrackMoreOffers}
+              disabled={!canAddMore}
               className={`
                 flex-shrink-0 h-10 sm:h-12 px-4 sm:px-6 rounded-[12px] text-[14px] sm:text-[16px] font-semibold transition-all
                 flex items-center gap-2
-                ${canTrackMoreOffers
+                ${canAddMore
                   ? 'bg-[#FFD600] text-[#1E1548] hover:bg-[#FDC700]'
                   : 'bg-[#E5E7EB] text-[#9CA3AF] cursor-not-allowed'
                 }
@@ -252,7 +245,7 @@ export function JobTrackingPage() {
 
       <div className="max-w-[1152px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8 lg:pt-8 lg:pb-8">
         
-        {!canTrackMoreOffers && (
+        {!canAddMore && (
           <div className="bg-[#FEE2E2] border border-[#EF4444] rounded-[16px] p-4 sm:p-6 mb-6 sm:mb-8">
             <div className="flex items-start gap-3 sm:gap-4">
               <div className="text-xl sm:text-2xl">⚠️</div>
@@ -287,7 +280,7 @@ export function JobTrackingPage() {
           </div>
         </div>
 
-        {trackedOffers.length > 0 && (
+        {offers.length > 0 && (
           <div className="bg-white border border-[rgba(30,21,72,0.1)] rounded-[16px] p-6 mb-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               
@@ -319,7 +312,7 @@ export function JobTrackingPage() {
 
         
         <div className="bg-white border border-[rgba(30,21,72,0.1)] rounded-[16px] overflow-hidden mb-6">
-          {paginatedOffers.length === 0 && trackedOffers.length === 0 ? (
+          {paginatedOffers.length === 0 && offers.length === 0 ? (
             // Empty state - no offers at all
             <div className="p-12 text-center">
               <div className="w-16 h-16 bg-[#E8ECFF] rounded-full flex items-center justify-center mx-auto mb-4">
@@ -397,8 +390,8 @@ export function JobTrackingPage() {
                         <td className="px-6 py-4">
                           <select
                             value={offer.applicationStatus}
-                            onChange={(e) => handleUpdateStatus(offer.id, e.target.value as UserTrackedOffer['applicationStatus'])}
-                            className={`px-3 py-1.5 rounded-full text-[12px] font-medium border-0 focus:outline-none focus:ring-2 focus:ring-[#FFD600] ${statusConfig[offer.applicationStatus].color}`}
+                            onChange={(e) => handleUpdateStatus(offer.id, e.target.value as TrackedOffer['applicationStatus'])}
+                            className={`px-3 py-1.5 rounded-full text-[12px] font-medium border-0 focus:outline-none focus:ring-2 focus:ring-[#FFD600] `}//${statusConfig[offer.applicationStatus].color}
                           >
                             {Object.entries(statusConfig).map(([key, config]) => (
                               <option key={key} value={key}>{config.label}</option>
@@ -518,7 +511,7 @@ export function JobTrackingPage() {
                   <label className="block text-[14px] font-medium text-[#1E1548] mb-2">Statut</label>
                   <select
                     value={editForm.applicationStatus}
-                    onChange={(e) => setEditForm({ ...editForm, applicationStatus: e.target.value as UserTrackedOffer['applicationStatus'] })}
+                    onChange={(e) => setEditForm({ ...editForm, applicationStatus: e.target.value as TrackedOffer['applicationStatus'] })}
                     className="w-full h-12 px-4 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:ring-2 focus:ring-[#FFD600]"
                   >
                     {Object.entries(statusConfig).map(([key, config]) => (
@@ -637,4 +630,4 @@ export function JobTrackingPage() {
       </div>
     </div>
   );
-}*/
+}

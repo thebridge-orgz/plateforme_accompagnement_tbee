@@ -29,7 +29,7 @@ export function useOffers() {
         loadOffers();
     }, [loadOffers]);
 
-    const addOffer = useCallback(async (offer: Omit<TrackedOffer, 'id' | 'userId' | 'trackedAt' | 'updatedAt'>) => {
+    const addOffer = useCallback(async (offer: TrackedOffer) => {
         if (!user?.id) throw new Error('Not authenticated');
         if (offers.length >= MAX_TRACKED_OFFERS) {
             throw new Error(`Maximum de ${MAX_TRACKED_OFFERS} offres atteint`);
@@ -60,5 +60,6 @@ export function useOffers() {
         removeOffer,
         refresh: loadOffers,
         canAddMore: offers.length < MAX_TRACKED_OFFERS,
+        MAX_TRACKED_OFFERS
     };
 }

@@ -13,7 +13,7 @@ class OfferService {
         return (data || []).map(this.mapFromDB);
     }
 
-    async addTrackedOffer(userId: string, offer: Omit<TrackedOffer, 'id' | 'userId' | 'trackedAt' | 'updatedAt'>) {
+    async addTrackedOffer(userId: string, offer: TrackedOffer) {
         const now = new Date().toISOString();
         const { data, error } = await supabase
             .from('user_tracked_offers')
@@ -28,8 +28,6 @@ class OfferService {
                 application_date: offer.applicationDate,
                 interview_date: offer.interviewDate,
                 reminder_date: offer.reminderDate,
-                needs_help: offer.needsHelp,
-                help_request: offer.helpRequest,
                 tracked_at: now,
                 updated_at: now,
             })
@@ -50,8 +48,6 @@ class OfferService {
         if (updates.companyName !== undefined) dbUpdates.company_name = updates.companyName;
         if (updates.positionTitle !== undefined) dbUpdates.position_title = updates.positionTitle;
         if (updates.offerUrl !== undefined) dbUpdates.offer_url = updates.offerUrl;
-        if (updates.needsHelp !== undefined) dbUpdates.needs_help = updates.needsHelp;
-        if (updates.helpRequest !== undefined) dbUpdates.help_request = updates.helpRequest;
 
         const { error } = await supabase
             .from('user_tracked_offers')
@@ -93,8 +89,6 @@ class OfferService {
             applicationDate: raw.application_date,
             interviewDate: raw.interview_date,
             reminderDate: raw.reminder_date,
-            needsHelp: raw.needs_help ?? false,
-            helpRequest: raw.help_request,
             trackedAt: raw.tracked_at,
             updatedAt: raw.updated_at,
         };
