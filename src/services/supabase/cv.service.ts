@@ -25,33 +25,39 @@ class CVService {
             .from('cv-uploads')
             .getPublicUrl(filePath);
 
+        // Sauvegarder les infos dans la base de données
+        await this.saveCVData(userId, {
+            fileName: file.name,
+            fileUrl: urlData.publicUrl,
+            status: 'uploaded',
+            uploadedAt: new Date().toISOString(),
+        });
+
         return {
             fileUrl: urlData.publicUrl,
             fileName: file.name,
         };
     }
 
-    async saveCVData(userId: string, cvData: Partial<CVData>, file?: File): Promise<void> {
-        let fileUrl = cvData.fileUrl;
-        let fileName = cvData.fileName;
-
-        if (file) {
-            const uploadResult = await this.uploadCV(userId, file);
-            fileUrl = uploadResult.fileUrl;
-            fileName = uploadResult.fileName;
-        }
-
+    async saveCVData(userId: string, cvData: Partial<CVData>): Promise<void> {
         const dbUpdates: Record<string, any> = {
             updated_at: new Date().toISOString(),
         };
-        if (fileName !== undefined) dbUpdates.file_name = fileName;
-        if (fileUrl !== undefined) dbUpdates.file_url = fileUrl;
+        
+        if (cvData.fileName !== undefined) dbUpdates.file_name = cvData.fileName;
+        if (cvData.fileUrl !== undefined) dbUpdates.file_url = cvData.fileUrl;
         if (cvData.status !== undefined) dbUpdates.status = cvData.status;
         if (cvData.adminFeedback !== undefined) dbUpdates.admin_feedback = cvData.adminFeedback;
+        if (cvData.uploadedAt !== undefined) dbUpdates.uploaded_at = cvData.uploadedAt;
 
         const { error } = await supabase
             .from('cv_data')
-            .upsert({ user_id: userId, ...dbUpdates });
+            .upsert({ 
+                user_id: userId, 
+                ...dbUpdates,
+                // S'assurer que uploaded_at est défini si c'est un nouvel upload
+                uploaded_at: cvData.uploadedAt || (cvData.status === 'uploaded' ? new Date().toISOString() : undefined)
+            });
 
         if (error) throw error;
     }

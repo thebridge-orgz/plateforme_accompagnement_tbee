@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { ArrowLeft, CheckCircle2, FileText, Download, Eye, Upload } from 'lucide-react';
 import { Button } from './Button';
 import { FileUploader } from './FileUploader';
-import { useUserData } from '../../hooks/useUserData';
+//import { useUserData } from '../../hooks/useUserData';
 import { routes } from '../router/routes';
 import { Link } from 'react-router-dom';
+import { useCvs } from '../../hooks/useCvs'
 
 const cvTips = [
   {
@@ -30,22 +31,14 @@ const cvTips = [
 ];
 
 export function CVUploadPage() {
-  // TODO: fetch from Supabase - using context for now
-  const { cvData, /*updateCVData*/ } = useUserData();
+  const { cvs, uploadCV, loading } = useCvs();
 
   const [isUploading, setIsUploading] = useState(false);
 
-  /* const handleFileUpload = async (file: File) => {
+  const handleFileUpload = async (file: File) => {
      setIsUploading(true);
      try {
-       // Upload vers Supabase Storage via le contexte (gère l'upload + mise à jour cv_data)
-       await updateCVData(
-         {
-           status: 'uploaded',
-           uploadedAt: new Date().toISOString(),
-         },
-         file
-       );
+       await uploadCV(file);
      } catch (error: any) {
        const message = error?.message || error?.error_description || JSON.stringify(error);
        alert(`Erreur upload CV: ${message}`);
@@ -53,26 +46,32 @@ export function CVUploadPage() {
      } finally {
        setIsUploading(false);
      }
-   };*/
+   };
 
-  /*const handleFileDelete = async () => {
-    if (confirm('Supprimer votre CV ?')) {
-      try {
-        await updateCVData({
-          fileName: null,
-          fileUrl: null,
-          status: 'not_uploaded',
-          uploadedAt: null,
-        });
-      } catch (error) {
-        alert('Erreur lors de la suppression');
-        console.error(error);
-      }
-    }
-  };*/
+  // Récupérer le premier CV ou un objet par défaut
+  const currentCV = cvs[0] || {
+    status: 'not_uploaded',
+    fileName: null,
+    fileUrl: null,
+    adminFeedback: null,
+    uploadedAt: null,
+    updatedAt: new Date().toISOString()
+  };
+  
+  const hasCV = currentCV.status !== 'not_uploaded' && currentCV.fileName;
+  const hasFeedback = currentCV.status === 'approved' || currentCV.status === 'needs_revision';
 
-  const hasCV = cvData?.status !== 'not_uploaded' && cvData?.fileName;
-  const hasFeedback = cvData?.status === 'approved' || cvData?.status === 'needs_revision';
+  // Afficher un état de chargement
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F8F9FD] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement de votre CV...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8F9FD] pb-16">
@@ -123,9 +122,8 @@ export function CVUploadPage() {
                   description="Glissez-déposez votre CV ou cliquez pour parcourir"
                   acceptedFormats=".pdf, .doc, .docx"
                   maxSizeMB={5}
-                  //onFileUpload={handleFileUpload}
+                  onFileUpload={handleFileUpload}
                   existingFiles={[]}
-                //onFileDelete={handleFileDelete}
                 />
               </div>
             )}
@@ -140,35 +138,35 @@ export function CVUploadPage() {
                       <h3 className="mb-2">CV actuel</h3>
                       <div className="flex items-center gap-3">
                         <FileText className="w-5 h-5 text-primary" />
-                        <span className="text-sm font-medium">{cvData.fileName}</span>
+                        <span className="text-sm font-medium">{currentCV.fileName}</span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-2">
-                        Téléchargé le {cvData.uploadedAt ? new Date(cvData.uploadedAt).toLocaleDateString('fr-FR') : 'N/A'}
+                        Téléchargé le {currentCV.uploadedAt ? new Date(currentCV.uploadedAt).toLocaleDateString('fr-FR') : 'N/A'}
                       </p>
                     </div>
 
                     {/* Status Badge */}
-                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${cvData.status === 'approved'
+                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${currentCV.status === 'approved'
                       ? 'bg-green-100 text-green-800'
-                      : cvData.status === 'pending'
+                      : currentCV.status === 'pending'
                         ? 'bg-blue-100 text-blue-800'
-                        : cvData.status === 'needs_revision'
+                        : currentCV.status === 'needs_revision'
                           ? 'bg-orange-100 text-orange-800'
                           : 'bg-gray-100 text-gray-800'
                       }`}>
-                      {cvData.status === 'approved' && '✓ Validé'}
-                      {cvData.status === 'pending' && '⏳ En cours d\'analyse'}
-                      {cvData.status === 'needs_revision' && '⚠ À améliorer'}
-                      {cvData.status === 'uploaded' && '📄 Téléchargé'}
+                      {currentCV.status === 'approved' && '✓ Validé'}
+                      {currentCV.status === 'pending' && '⏳ En cours d\'analyse'}
+                      {currentCV.status === 'needs_revision' && '⚠ À améliorer'}
+                      {currentCV.status === 'uploaded' && '📄 Téléchargé'}
                     </div>
                   </div>
 
                   <div className="flex gap-3">
-                    {cvData.fileUrl && (
+                    {currentCV.fileUrl && (
                       <Button
                         variant="secondary"
                         className="flex-1"
-                        onClick={() => window.open(cvData.fileUrl!, '_blank')}
+                        onClick={() => window.open(currentCV.fileUrl!, '_blank')}
                       >
                         <Eye className="w-4 h-4 mr-2" />
                         Visualiser
@@ -183,7 +181,7 @@ export function CVUploadPage() {
                     </Button>
                   </div>
 
-                  {cvData.status === 'uploaded' && (
+                  {currentCV.status === 'uploaded' && (
                     <p className="text-xs text-muted-foreground mt-4 text-center">
                       💡 L'équipe Admission analysera ton CV sous 48h
                     </p>
@@ -191,11 +189,11 @@ export function CVUploadPage() {
                 </div>
 
                 {/* CV Feedback - Only if reviewed */}
-                {hasFeedback && cvData.adminFeedback && (
+                {hasFeedback && currentCV.adminFeedback && (
                   <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
                     <div className="flex items-center justify-between">
                       <h3>Retour de l'équipe Admission</h3>
-                      {cvData.status === 'approved' && (
+                      {currentCV.status === 'approved' && (
                         <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
                           <CheckCircle2 className="w-6 h-6 text-green-600" />
                         </div>
@@ -204,11 +202,11 @@ export function CVUploadPage() {
 
                     <div className="bg-secondary/50 rounded-xl p-4">
                       <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                        {cvData.adminFeedback}
+                        {currentCV.adminFeedback}
                       </p>
                     </div>
 
-                    {cvData.status === 'needs_revision' && (
+                    {currentCV.status === 'needs_revision' && (
                       <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
                         <p className="text-sm text-orange-800 mb-3">
                           📝 Améliore ton CV selon ces recommandations et télécharge une nouvelle version
@@ -218,9 +216,8 @@ export function CVUploadPage() {
                           description="Glissez-déposez votre CV mis à jour"
                           acceptedFormats=".pdf, .doc, .docx"
                           maxSizeMB={5}
-                          //onFileUpload={handleFileUpload}
+                          onFileUpload={handleFileUpload}
                           existingFiles={[]}
-                        //onFileDelete={handleFileDelete}
                         />
                       </div>
                     )}
@@ -228,7 +225,7 @@ export function CVUploadPage() {
                 )}
 
                 {/* No feedback yet */}
-                {!hasFeedback && cvData.status === 'pending' && (
+                {!hasFeedback && currentCV.status === 'pending' && (
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
                     <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
                       <Eye className="w-6 h-6 text-blue-600" />
