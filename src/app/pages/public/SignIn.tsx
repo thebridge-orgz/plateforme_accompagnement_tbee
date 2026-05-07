@@ -185,7 +185,7 @@ function SignIn() {
                             {/* Forgot Password Link */}
                             <div className="text-right">
                                 <a
-                                    href="#forgot-password"
+                                    href={routes.ForgotPassword.path}
                                     className="text-[14px] font-normal text-[#1E1548] hover:text-[#FFD600] focus:outline-none underline transition-colors"
                                 >
                                     Mot de passe oublié ?

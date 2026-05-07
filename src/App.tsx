@@ -12,6 +12,8 @@ import PrivacyPolicy from './app/pages/public/PrivacyPolicy';
 import LegalNotice from './app/pages/public/LegalNotice';
 import SignUp from './app/pages/public/SignUp';
 import SignIn from './app/pages/public/SignIn';
+import ForgotPassword from './app/pages/public/ForgotPassword';
+import ResetPassword from './app/pages/public/ResetPassword';
 import NotFound from './app/pages/NotFound';
 
 // Pages protégées étudiant
@@ -73,6 +75,8 @@ function App() {
         <Route path={routes.LegalNotice.path} element={<LegalNotice />} />
         <Route path={routes.SignUp.path} element={<SignUp />} />
         <Route path={routes.SignIn.path} element={<SignIn />} />
+        <Route path={routes.ForgotPassword.path} element={<ForgotPassword />} />
+        <Route path={routes.ResetPassword.path} element={<ResetPassword />} />
 
         {/* Routes étudiant */}
         <Route path={routes.Onboarding.path} element={
