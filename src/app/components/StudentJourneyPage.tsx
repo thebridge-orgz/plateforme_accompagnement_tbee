@@ -1,7 +1,7 @@
 import { ArrowLeft, Lock, CheckCircle, Trophy, Star, Zap, Target, Award } from 'lucide-react';
-import { useUserData } from '../../context/UserDataContext';
 import { routes } from '../router/routes';
 import { Link } from 'react-router-dom';
+import { useModules } from '../../hooks/useModules';
 
 // Astuces par niveau (0 = nouveau, 1-4 = modules complétés)
 const TIPS_BY_LEVEL: Record<number, string[]> = {
@@ -54,27 +54,18 @@ function getSessionTip(completedCount: number): string {
 }
 
 export function StudentJourneyPage() {
-  // TODO: fetch from Supabase - using context for now
-  const {
-    isLoading,
-    modules,
-    statistics,
-    completedModulesCount,
-    totalModulesCount,
-    isNewUser,
-  } = useUserData();
-
-  console.log(JSON.stringify(modules, null, 2));
+  const { loading, modules, totalCount, completedCount } = useModules();
 
   // Calculer XP total (chaque module complété donne 250 XP)
   const totalXP = modules.reduce((sum, m) => sum + (m.xp || 0), 0);
 
+  const isNewUser = modules.filter(module => module.orderIndex === 1 && module.status === 'available').length === 1;
+
   // Trouver le prochain module non complété
   const nextModule = modules.find(m => m.status === 'in_progress' || m.status === 'available');
 
-
   // Astuce du jour dynamique
-  const dailyTip = getSessionTip(completedModulesCount);
+  const dailyTip = getSessionTip(completedCount);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -104,7 +95,7 @@ export function StudentJourneyPage() {
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-[#F8F9FD] flex items-center justify-center">
         <div className="text-center">
@@ -170,9 +161,9 @@ export function StudentJourneyPage() {
               <span className="text-[14px] font-medium text-[#6B7280]">Progression</span>
             </div>
             <p className="text-[32px] font-bold text-[#1E1548]">
-              {totalModulesCount > 0 ? Math.round((completedModulesCount / totalModulesCount) * 100) : 0}%
+              {totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0}%
             </p>
-            <p className="text-[14px] text-[#6B7280] mt-1">{completedModulesCount} / {totalModulesCount} modules complétés</p>
+            <p className="text-[14px] text-[#6B7280] mt-1">{completedCount} / {totalCount} modules complétés</p>
           </div>
 
           {/* Next Milestone */}
@@ -260,9 +251,9 @@ export function StudentJourneyPage() {
                           <h3 className="text-[18px] sm:text-[20px] font-bold text-[#1E1548]">
                             {module.title}
                           </h3>
-                          {module.badge && (
+                          {/*module.badge && (
                             <span className="text-[20px] sm:text-[24px]">{module.badge}</span>
-                          )}
+                          )*/}
                         </div>
                         <p className="text-[13px] sm:text-[14px] text-[#6B7280] leading-[20px] sm:leading-[22px]">
                           {module.description}
@@ -347,7 +338,7 @@ export function StudentJourneyPage() {
 
         {/* Tips & Motivation Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-          {/* Daily Tip */} 
+          {/* Daily Tip */}
           <div className="bg-[#E8ECFF] border border-[rgba(30,21,72,0.08)] rounded-[16px] p-6">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-full bg-[#1E1548] flex items-center justify-center flex-shrink-0">
@@ -376,8 +367,8 @@ export function StudentJourneyPage() {
                 </h3>
                 <p className="text-[14px] text-[#E8ECFF] leading-[22px]">
                   {isNewUser
-                    ? `Tu es prêt à commencer ! ${totalModulesCount} modules t'attendent pour t'aider à décrocher ton alternance.`
-                    : `Tu es sur la bonne voie ! ${completedModulesCount} module${completedModulesCount > 1 ? 's' : ''} complété${completedModulesCount > 1 ? 's' : ''}, encore ${totalModulesCount - completedModulesCount} à découvrir.`}
+                    ? `Tu es prêt à commencer ! ${totalCount} modules t'attendent pour t'aider à décrocher ton alternance.`
+                    : `Tu es sur la bonne voie ! ${completedCount} module${completedCount > 1 ? 's' : ''} complété${completedCount > 1 ? 's' : ''}, encore ${totalCount - completedCount} à découvrir.`}
                 </p>
               </div>
             </div>

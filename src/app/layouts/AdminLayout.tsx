@@ -1,35 +1,22 @@
 import type { ReactNode } from 'react';
-import { useLocation } from 'react-router-dom';
-import { useAuth } from '../auth/AuthContext';
 import { DashboardSidebar } from '../components/navigation/DashboardSidebar';
+import { UserProfile } from '../../types/user';
 
-type Props = {
+interface AdminLayoutProps {
     currentPage: string;
     children: ReactNode;
-};
+    user: UserProfile;
+    signOut: () => Promise<void>;
+}
 
-export default function AdminLayout({ children }: Props) {
-    const auth = useAuth();
-    const location = useLocation();
-
-    // Nom affiché dans la sidebar
-    const user = (auth as any).user;
-    const userName =
-        user?.firstName
-            ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ''}`
-            : user?.email || 'Utilisateur';
-
-    const { hash, pathname, search } = location;
-
+export default function AdminLayout({ children, currentPage, user, signOut }: AdminLayoutProps) {
     return (
         <div className="min-h-screen bg-background">
             <DashboardSidebar
-                currentPage={pathname}
-                role="admin"
-                userName={userName}
+                currentPage={currentPage}
+                user={user}
+                signOut={signOut}
             />
-
-            {/* Zone contenu (décalée à droite quand sidebar visible en desktop) */}
             <main className="lg:ml-72 min-h-screen">
                 {children}
             </main>

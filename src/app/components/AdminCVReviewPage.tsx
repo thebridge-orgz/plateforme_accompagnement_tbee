@@ -1,6 +1,6 @@
 ﻿import { ArrowLeft, FileText, Download, CheckCircle2, AlertCircle, Star, Send } from 'lucide-react';
 import { useState } from 'react';
-import { useAdminData } from '../../context/AdminDataContext';
+import { useAdminData } from '../../hooks/useAdminData';
 import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
 

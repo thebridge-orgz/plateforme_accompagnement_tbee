@@ -1,5 +1,5 @@
 ﻿import { Users, BookOpen, TrendingUp, Award, Clock, AlertTriangle, CheckCircle2, FileText, Briefcase, Target } from 'lucide-react';
-import { useAdminData } from '../../context/AdminDataContext';
+import { useAdminData } from '../../hooks/useAdminData';
 
 interface AdminDashboardProps {
   onNavigate: (page: string) => void;
@@ -15,7 +15,7 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
     globalStats,
     recentActivities,
     cvSubmissions,
-    exerciseSubmissions,
+    //exerciseSubmissions,
     offerTrackings
   } = useAdminData();
 
@@ -30,7 +30,7 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
     {
       id: '2',
       label: 'Exercices à corriger',
-      count: globalStats.pendingExercises,
+      count: '',//globalStats.pendingExercises,
       action: 'admin-exercise-review'
     },
     {
@@ -42,24 +42,24 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
     {
       id: '4',
       label: 'Étudiants inactifs (+7j)',
-      count: globalStats.totalstudents - globalStats.activestudents,
+      count: '',//globalStats.totalstudents - globalStats.activestudents,
       action: 'admin-tracking'
     }
   ];
 
   // Calculer les statistiques admin depuis les vraies données
   const adminStats = {
-    totalstudents: globalStats.totalstudents,
-    activestudents: globalStats.activestudents,
-    pendingReviews: globalStats.pendingCVs + globalStats.pendingExercises,
+    totalstudents: '',//globalStats.totalstudents,
+    activestudents: '',//globalStats.activestudents,
+    pendingReviews: '',//globalStats.pendingCVs + globalStats.pendingExercises,
     completionRate: Math.round(globalStats.completionRate),
     averageProgress: Math.round(globalStats.averageProgress),
     cvToReview: globalStats.pendingCVs,
-    exercisesToGrade: globalStats.pendingExercises,
+    exercisesToGrade: '',//globalStats.pendingExercises,
     offerSupport: globalStats.offersNeedingHelp
   };
 
-  const inactivestudents = globalStats.totalstudents - globalStats.activestudents;
+  const inactivestudents = ''//globalStats.totalstudents - globalStats.activestudents;
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -161,9 +161,9 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
             <p className="text-[32px] sm:text-[36px] font-bold text-white">
               {adminStats.pendingReviews}
             </p>
-            {adminStats.pendingReviews > 0 && (
+            {/*adminStats.pendingReviews > 0 && (
               <p className="text-[13px] text-[#FFD600] mt-1">Action requise</p>
-            )}
+            )*/}
           </div>
         </div>
 
@@ -216,8 +216,8 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
                   <div
                     key={activity.id}
                     className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-[12px] transition-all ${activity.urgent
-                        ? 'bg-[#FFF4CC] border-2 border-[#FFD600]'
-                        : 'bg-[#F8F9FD] border border-[rgba(30,21,72,0.08)]'
+                      ? 'bg-[#FFF4CC] border-2 border-[#FFD600]'
+                      : 'bg-[#F8F9FD] border border-[rgba(30,21,72,0.08)]'
                       }`}
                   >
                     <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm">

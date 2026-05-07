@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { routes } from '..//router/routes';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { useState, useRef, useEffect } from 'react';
 import { User, LogOut, ChevronDown } from 'lucide-react';
 
@@ -8,25 +8,30 @@ export function Navbar() {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSigningOut, setIsSigningOut] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Effet pour réagir à la déconnexion
-  useEffect(() => {
-    console.log('Navbar - useEffect - user:', user?.email, 'loading:', loading, 'isSigningOut:', isSigningOut);
+  console.log(`user : ${JSON.stringify(user)}`);
 
-    if (!user && !loading && isSigningOut) {
-      console.log('User signed out, redirecting to home');
+  const handleSignOut = async () => {
+    try {
+      console.log('Starting sign out...');
+      setIsMenuOpen(false);
+      await signOut();
+      console.log('Sign out completed, redirecting...');
       navigate(routes.Home.path);
-      setIsSigningOut(false);
+    } catch (error) {
+      console.error('Error signing out:', error);
     }
-  }, [user, loading, navigate, isSigningOut]);
+  };
 
-  // Log pour debug
-  useEffect(() => {
-    console.log('Navbar - user:', user?.email);
-    console.log('Navbar - loading:', loading);
-  }, [user, loading]);
+  const handleDashboardNavigation = () => {
+    if (user?.role === 'admin') {
+      navigate(routes.AdminDashboard.path);
+    } else {
+      navigate(routes.StudentDashboard.path);
+    }
+    setIsMenuOpen(false);
+  };
 
   // Fermer le menu quand on clique ailleurs
   useEffect(() => {
@@ -40,32 +45,7 @@ export function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSignOut = async () => {
-    try {
-      console.log('Starting sign out...');
-      setIsMenuOpen(false);
-      setIsSigningOut(true);
-
-      await signOut();
-
-      console.log('Sign out completed');
-      // La redirection se fera via l'effet useEffect
-    } catch (error) {
-      console.error('Error signing out:', error);
-      setIsSigningOut(false);
-    }
-  };
-
-  const handleDashboardNavigation = () => {
-    if (user?.role === 'admin') {
-      navigate(routes.AdminDashboard.path);
-    } else {
-      navigate(routes.StudentDashboard.path);
-    }
-    setIsMenuOpen(false);
-  };
-
-  // Afficher un loader seulement pendant le chargement initial ou la déconnexion
+  // Afficher un loader pendant le chargement initial
   if (loading && !user) {
     return (
       <nav className="w-full bg-white sticky top-0 z-50">

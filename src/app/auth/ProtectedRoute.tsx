@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { routes } from '../router/routes';
-import { useAuth } from './AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { UserRole } from '../../types/user';
 
 interface ProtectedRouteProps {
@@ -28,16 +28,15 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     }
 
     if (!user) {
-        // Rediriger vers la page de connexion
+        console.log('No user found, redirecting to sign in');
         return <Navigate to={routes.SignIn.path} replace />;
     }
 
     if (allowedRoles && !allowedRoles.includes(user.role)) {
-        // Rediriger vers la page d'accueil si le rôle n'est pas autorisé
+        console.log('Role not allowed, redirecting to home');
         return <Navigate to={routes.Home.path} replace />;
     }
 
-    // Vérifier l'onboarding pour les étudiants
     if (requireOnboarding && user.role === 'student' && !user.onboardingCompleted) {
         return <Navigate to={routes.Onboarding.path} replace />;
     }

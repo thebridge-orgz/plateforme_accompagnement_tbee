@@ -10,27 +10,33 @@ export interface PersonalInfoData {
   address: string;
   city: string;
   postalCode: string;
-  level: string;
+  currentLevel: string;
 }
 
 interface OnboardingPersonalInfoProps {
   initialFirstName?: string;
   initialLastName?: string;
+  initialPhone?: string;
+  initialBirthDate?: string;
+  initialAaddress?: string;
+  initialCity?: string;
+  initialpostalCode?: string;
+  initialCurrentLevel?: string;
   onComplete: (data: PersonalInfoData) => void;
 }
 
 const levelOptions = ['Bac', 'Bac+1', 'Bac+2', 'Bac+3', 'Bac+4', 'Bac+5', 'Autre'];
 
-export function OnboardingPersonalInfo({ initialFirstName = '', initialLastName = '', onComplete }: OnboardingPersonalInfoProps) {
+export function OnboardingPersonalInfo({ initialFirstName = '', initialLastName = '', initialPhone = '', initialBirthDate = '', initialAaddress = '', initialCity = '', initialpostalCode = '', initialCurrentLevel = '', onComplete }: OnboardingPersonalInfoProps) {
   const [formData, setFormData] = useState<PersonalInfoData>({
     firstName: initialFirstName,
     lastName: initialLastName,
-    phone: '',
-    birthDate: '',
-    address: '',
-    city: '',
-    postalCode: '',
-    level: '',
+    phone: initialPhone,
+    birthDate: initialBirthDate,
+    address: initialAaddress,
+    city: initialCity,
+    postalCode: initialpostalCode,
+    currentLevel: initialCurrentLevel
   });
   const [errors, setErrors] = useState<Partial<Record<keyof PersonalInfoData, string>>>({});
 
@@ -50,7 +56,7 @@ export function OnboardingPersonalInfo({ initialFirstName = '', initialLastName 
     if (!formData.city.trim()) newErrors.city = 'La ville est requise';
     if (!formData.postalCode.trim()) newErrors.postalCode = 'Le code postal est requis';
     else if (!/^\d{5}$/.test(formData.postalCode)) newErrors.postalCode = 'Code postal invalide (5 chiffres)';
-    if (!formData.level) newErrors.level = "Le niveau d'études est requis";
+    if (!formData.currentLevel) newErrors.currentLevel = "Le niveau d'études est requis";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -165,21 +171,21 @@ export function OnboardingPersonalInfo({ initialFirstName = '', initialLastName 
                 <GraduationCap className="w-4 h-4" />
               </div>
               <select
-                value={formData.level}
-                onChange={(e) => handleChange('level', e.target.value)}
+                value={formData.currentLevel}
+                onChange={(e) => handleChange('currentLevel', e.target.value)}
                 className={`w-full pl-10 pr-4 py-3 bg-input-background border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring transition-all appearance-none ${
-                  errors.level ? 'border-destructive' : 'border-border'
+                  errors.currentLevel ? 'border-destructive' : 'border-border'
                 }`}
               >
-                <option value="">Sélectionner un niveau</option>
+                <option value="" disabled>Sélectionner un niveau</option>
                 {levelOptions.map(l => (
                   <option key={l} value={l}>{l}</option>
                 ))}
               </select>
             </div>
-            {errors.level && (
+            {errors.currentLevel && (
               <p style={{ fontSize: '14px', lineHeight: '22px' }} className="text-destructive">
-                {errors.level}
+                {errors.currentLevel}
               </p>
             )}
           </div>

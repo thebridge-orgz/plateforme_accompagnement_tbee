@@ -2,9 +2,7 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import { routes } from './app/router/routes';
 import { ScrollToAnchor } from './app/components/ScrollToAnchor';
 import { useEffect } from 'react';
-import { AuthProvider } from './app/auth/AuthContext';
-import { UserDataProvider } from './context/UserDataContext';
-import { AdminDataProvider } from './context/AdminDataContext';
+import { AuthProvider } from './hooks/useAuth';
 import { ProtectedRoute } from './app/auth/ProtectedRoute';
 
 // Pages publiques
@@ -42,13 +40,9 @@ function App() {
   const location = useLocation();
 
   useEffect(() => {
-    // Récupérer toutes les routes de l'objet routes
     const allRoutes = Object.values(routes);
-
-    // Trouver la route correspondant au chemin actuel
     const currentRoute = allRoutes.find((route) => {
       if (route.path === '*') return false;
-      // Gestion des routes paramétrées (ex: /student/modules/:moduleId)
       if (route.path.includes(':')) {
         const pattern = route.path.replace(/:[^/]+/g, '[^/]+');
         const regex = new RegExp(`^${pattern}$`);
@@ -60,7 +54,6 @@ function App() {
     if (currentRoute) {
       document.title = `${currentRoute.label} | TBEE`;
     } else {
-      // Vérifier si c'est la route 404
       const notFoundRoute = routes.NotFound;
       if (notFoundRoute && location.pathname !== routes.NotFound.path) {
         document.title = `${notFoundRoute.label} | TBEE`;
@@ -69,7 +62,7 @@ function App() {
   }, [location]);
 
   return (
-    <AuthProvider>
+    <AuthProvider>  {/* Plus besoin de UserDataProvider et AdminDataProvider ici */}
       <ScrollToAnchor />
 
       <Routes>
@@ -81,199 +74,115 @@ function App() {
         <Route path={routes.SignUp.path} element={<SignUp />} />
         <Route path={routes.SignIn.path} element={<SignIn />} />
 
-        {/* Route onboarding */}
-        <Route
-          path={routes.Onboarding.path}
-          element={
-            <ProtectedRoute allowedRoles={['student']} requireOnboarding={false}>
-              <Onboarding />
-            </ProtectedRoute>
-          }
-        />
+        {/* Routes étudiant */}
+        <Route path={routes.Onboarding.path} element={
+          <ProtectedRoute allowedRoles={['student']} requireOnboarding={false}>
+            <Onboarding />
+          </ProtectedRoute>
+        } />
 
-        {/* Route dashboard étudiant */}
-        <Route
-          path={routes.StudentDashboard.path}
-          element={
-            <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
-              <UserDataProvider>
-                <DashboardPage />
-              </UserDataProvider>
-            </ProtectedRoute>
-          }
-        />
+        <Route path={routes.StudentDashboard.path} element={
+          <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
+            <DashboardPage />
+          </ProtectedRoute>
+        } />
 
-        {/* routes secondaires étudiant */}
-        <Route
-          path={routes.StudentModules.path}
-          element={
-            <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
-              <UserDataProvider>
-                <ParcoursPage />
-              </UserDataProvider>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={routes.StudentModulesDetails.path}
-          element={
-            <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
-              <UserDataProvider>
-                <ModuleDetail />
-              </UserDataProvider>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={routes.StudentCv.path}
-          element={
-            <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
-              <UserDataProvider>
-                <CvPage />
-              </UserDataProvider>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={routes.StudentJobTracking.path}
-          element={
-            <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
-              <UserDataProvider>
-                <OffersPage />
-              </UserDataProvider>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={routes.StudentPractical.path}
-          element={
-            <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
-              <UserDataProvider>
-                <PracticalCasePageWrapper />
-              </UserDataProvider>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/student/modules/:moduleId"
-          element={
-            <ProtectedRoute allowedRoles={["student"]} requireOnboarding={true}>
-              <UserDataProvider>
-                <ModulePageWrapper />
-              </UserDataProvider>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={routes.StudentProfile.path}
-          element={
-            <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
-              <UserDataProvider>
-                <ProfilePageWrapper />
-              </UserDataProvider>
-            </ProtectedRoute>
-          }
-        />
+        <Route path={routes.StudentModules.path} element={
+          <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
+            <ParcoursPage />
+          </ProtectedRoute>
+        } />
 
-        {/* Route dashboard admin */}
-        <Route
-          path={routes.AdminDashboard.path}
-          element={
-            <ProtectedRoute allowedRoles={['admin']} requireOnboarding={false}>
-              <AdminDataProvider>
-                <AdminDashboard />
-              </AdminDataProvider>
-            </ProtectedRoute>
-          }
-        />
+        <Route path={routes.StudentModulesDetails.path} element={
+          <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
+            <ModuleDetail />
+          </ProtectedRoute>
+        } />
 
-        <Route
-          path={routes.AdminCvReview.path}
-          element={
-            <ProtectedRoute allowedRoles={['admin']} requireOnboarding={false}>
-              <AdminDataProvider>
-                <AdminCvReview />
-              </AdminDataProvider>
-            </ProtectedRoute>
-          }
-        />
+        <Route path={routes.StudentCv.path} element={
+          <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
+            <CvPage />
+          </ProtectedRoute>
+        } />
 
-        <Route
-          path={routes.AdminExerciceReview.path}
-          element={
-            <ProtectedRoute allowedRoles={['admin']} requireOnboarding={false}>
-              <AdminDataProvider>
-                <AdminExerciceReview />
-              </AdminDataProvider>
-            </ProtectedRoute>
-          }
-        />
+        <Route path={routes.StudentJobTracking.path} element={
+          <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
+            <OffersPage />
+          </ProtectedRoute>
+        } />
 
-        <Route
-          path={routes.AdminModules.path}
-          element={
-            <ProtectedRoute allowedRoles={['admin']} requireOnboarding={false}>
-              <AdminDataProvider>
-                <AdminModules />
-              </AdminDataProvider>
-            </ProtectedRoute>
-          }
-        />
+        <Route path={routes.StudentPractical.path} element={
+          <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
+            <PracticalCasePageWrapper />
+          </ProtectedRoute>
+        } />
 
-        <Route
-          path={routes.AdminOfferSupport.path}
-          element={
-            <ProtectedRoute allowedRoles={['admin']} requireOnboarding={false}>
-              <AdminDataProvider>
-                <AdminOfferSupport />
-              </AdminDataProvider>
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/student/modules/:moduleId" element={
+          <ProtectedRoute allowedRoles={["student"]} requireOnboarding={true}>
+            <ModulePageWrapper />
+          </ProtectedRoute>
+        } />
 
-        <Route
-          path={routes.AdminStudentList.path}
-          element={
-            <ProtectedRoute allowedRoles={['admin']} requireOnboarding={false}>
-              <AdminDataProvider>
-                <AdminStudentList />
-              </AdminDataProvider>
-            </ProtectedRoute>
-          }
-        />
+        <Route path={routes.StudentProfile.path} element={
+          <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
+            <ProfilePageWrapper />
+          </ProtectedRoute>
+        } />
 
-        <Route
-          path={routes.AdminStudentTracking.path}
-          element={
-            <ProtectedRoute allowedRoles={['admin']} requireOnboarding={false}>
-              <AdminDataProvider>
-                <AdminStudentTracking />
-              </AdminDataProvider>
-            </ProtectedRoute>
-          }
-        />
+        {/* Routes admin */}
+        <Route path={routes.AdminDashboard.path} element={
+          <ProtectedRoute allowedRoles={['admin']} requireOnboarding={false}>
+            <AdminDashboard />
+          </ProtectedRoute>
+        } />
 
-        <Route
-          path={routes.AdminProfile.path}
-          element={
-            <ProtectedRoute allowedRoles={['admin']} requireOnboarding={false}>
-              <AdminDataProvider>
-                <AdminProfile />
-              </AdminDataProvider>
-            </ProtectedRoute>
-          }
-        />
+        <Route path={routes.AdminCvReview.path} element={
+          <ProtectedRoute allowedRoles={['admin']} requireOnboarding={false}>
+            <AdminCvReview />
+          </ProtectedRoute>
+        } />
 
-        <Route
-          path={routes.AdminSettings.path}
-          element={
-            <ProtectedRoute allowedRoles={['admin']} requireOnboarding={false}>
-              <AdminDataProvider>
-                <AdmimSettings />
-              </AdminDataProvider>
-            </ProtectedRoute>
-          }
-        />
+        <Route path={routes.AdminExerciceReview.path} element={
+          <ProtectedRoute allowedRoles={['admin']} requireOnboarding={false}>
+            <AdminExerciceReview />
+          </ProtectedRoute>
+        } />
+
+        <Route path={routes.AdminModules.path} element={
+          <ProtectedRoute allowedRoles={['admin']} requireOnboarding={false}>
+            <AdminModules />
+          </ProtectedRoute>
+        } />
+
+        <Route path={routes.AdminOfferSupport.path} element={
+          <ProtectedRoute allowedRoles={['admin']} requireOnboarding={false}>
+            <AdminOfferSupport />
+          </ProtectedRoute>
+        } />
+
+        <Route path={routes.AdminStudentList.path} element={
+          <ProtectedRoute allowedRoles={['admin']} requireOnboarding={false}>
+            <AdminStudentList />
+          </ProtectedRoute>
+        } />
+
+        <Route path={routes.AdminStudentTracking.path} element={
+          <ProtectedRoute allowedRoles={['admin']} requireOnboarding={false}>
+            <AdminStudentTracking />
+          </ProtectedRoute>
+        } />
+
+        <Route path={routes.AdminProfile.path} element={
+          <ProtectedRoute allowedRoles={['admin']} requireOnboarding={false}>
+            <AdminProfile />
+          </ProtectedRoute>
+        } />
+
+        <Route path={routes.AdminSettings.path} element={
+          <ProtectedRoute allowedRoles={['admin']} requireOnboarding={false}>
+            <AdmimSettings />
+          </ProtectedRoute>
+        } />
 
         {/* 404 */}
         <Route path={routes.NotFound.path} element={<NotFound />} />

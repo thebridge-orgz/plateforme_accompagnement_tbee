@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../auth/AuthContext';
+import { useAuth } from '../../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { routes } from '../../router/routes';
 import { OnboardingPersonalInfo, type PersonalInfoData } from '../../components/onboarding/OnboardingPersonalInfo';
 import { OnboardingStep1 } from '../../components/onboarding/OnboardingStep1';
 import { OnboardingStep2 } from '../../components/onboarding/OnboardingStep2';
+import { useModules } from '../../../hooks/useModules'
 import { Navbar } from '../../components/Navbar';
 import { Footer } from '../../components/Footer';
 
 function Onboarding() {
-    const { user, saveOnboarding, loading } = useAuth();
+    const { user, loading, saveOnboarding, refreshUser } = useAuth();
+    const { firstModule, unlockModule } = useModules();
+
     const navigate = useNavigate();
     const [personalInfoData, setPersonalInfoData] = useState<PersonalInfoData | null>(null);
     const [step1Data, setStep1Data] = useState<any>(null);
@@ -35,40 +38,48 @@ function Onboarding() {
         );
     }
 
-    const handlePersonalInfoComplete = (data: PersonalInfoData) => {
-        setPersonalInfoData(data);
+    const handlePersonalInfoComplete = async (data: PersonalInfoData) => {
+        const onboardingDataStep1 = { ...personalInfoData, ...data, onboardingStep: 2 };
+        setPersonalInfoData(onboardingDataStep1);
+        saveOnboarding(user.id, onboardingDataStep1);
+        await refreshUser();
     };
 
-    const handleStep1Complete = (data: any) => {
-        setStep1Data(data);
+    const handleStep1Complete = async (data: any) => {
+        const onboardingDataStep2 = { ...step1Data, ...data, onboardingStep: 3 };
+        setStep1Data(onboardingDataStep2);
+        saveOnboarding(user.id, onboardingDataStep2);
+        await refreshUser();
     };
 
     const handleStep2Complete = async (data: any) => {
         try {
-            const onboardingData = {
-                ...personalInfoData,
-                ...step1Data,
-                ...data,
-                completedAt: new Date().toISOString(),
-            };
-
-            await saveOnboarding(onboardingData);
+            const onboardingData = { ...data, completedAt: new Date().toISOString(), onboardingCompleted: true };
+            await saveOnboarding(user.id, onboardingData);
+            await refreshUser();
+            await unlockModule(firstModule.id);
             navigate(routes.StudentDashboard.path);
         } catch (error) {
             console.error('Error completing onboarding:', error);
         }
     };
-
+    
     return (
         <>
             <Navbar />
-            {!personalInfoData ? (
+            {!user.onboardingStep || user.onboardingStep === 1 ? (
                 <OnboardingPersonalInfo
-                    initialFirstName={user.firstName ?? ''}
-                    initialLastName={user.lastName ?? ''}
+                    initialFirstName={user.firstName}
+                    initialLastName={user.lastName}
+                    initialAaddress={user.address}
+                    initialBirthDate={user.birthDate}   
+                    initialCity={user.city}
+                    initialCurrentLevel={user.currentLevel}
+                    initialPhone={user.phone}
+                    initialpostalCode={user.postalCode}
                     onComplete={handlePersonalInfoComplete}
                 />
-            ) : !step1Data ? (
+            ) : user.onboardingStep === 2 ? (
                 <OnboardingStep1 onComplete={handleStep1Complete} />
             ) : (
                 <OnboardingStep2

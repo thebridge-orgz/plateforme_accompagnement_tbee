@@ -1,271 +1,130 @@
 // ============================================
-// TYPES POUR LA PLATEFORME TBEE
+// TYPES UNIFIÉS POUR LA PLATEFORME TBEE
 // ============================================
-// Ces types correspondent à la structure de la base de données Supabase
-// et sont utilisés dans toute l'application pour assurer la cohérence des données
-
-// -------------------- USER --------------------
 
 export type UserRole = 'student' | 'admin';
+export type ModuleStatus = 'locked' | 'available' | 'in_progress' | 'completed';
+export type CVStatus = 'not_uploaded' | 'uploaded' | 'pending' | 'approved' | 'needs_revision';
+export type ApplicationStatus = 'saved' | 'applied' | 'interview' | 'offer_received' | 'rejected' | 'accepted';
+export type LessonContentType = 'video' | 'article' | 'exercise' | 'quiz' | 'checklist';
+export type ValidationStatus = 'none' | 'pending' | 'approved' | 'rejected';
 
+// User Profile
 export interface UserProfile {
   id: string;
   email: string;
   role: UserRole;
-  
-  // Onboarding Step 1
   firstName: string | null;
   lastName: string | null;
   phone: string | null;
-  birthDate: string | null; // ISO date string
+  birthDate: string | null;
   hasRQTH: boolean;
-  
-  // Onboarding Step 2
   address: string | null;
-  currentLevel: string | null; // 'bac', 'bac+2', 'bac+3', etc.
+  currentLevel: string | null;
   targetLevel: string | null;
   fieldOfInterest: string | null;
   city: string | null;
   postalCode: string | null;
-  mobilityRadius: number | null; // en km
-  
-  // Status
+  mobilityRadius: number | null;
   onboardingCompleted: boolean;
-  onboardingStep: number; // 1 or 2
+  onboardingStep: number;
+  onboardingData: any | null;
   isActive: boolean;
-  
-  // Timestamps
-  createdAt: string; // ISO timestamp
-  updatedAt: string; // ISO timestamp
+  createdAt: string;
+  updatedAt: string;
 }
 
-// -------------------- MODULES --------------------
-
-export type ModuleStatus = 'locked' | 'available' | 'in_progress' | 'completed';
-
+// Module
 export interface Module {
   id: string;
-  weekNumber: number; // 1 à 4
-  title: string;
-  description: string;
-  iconName?: string; // nom de l'icône lucide-react
-  colorAccent?: string; // couleur hex
-  
-  // Ordre et accès
-  orderIndex: number;
-  isPublished: boolean;
-  unlockCondition?: 'previous_completed' | 'none' | 'date';
-  unlockDate?: string; // ISO date string
-  
-  // Timestamps
-  createdAt: string;
-  updatedAt: string;
-}
-
-// -------------------- LESSONS --------------------
-
-export type LessonContentType = 'video' | 'article' | 'exercise' | 'quiz' | 'checklist';
-export type LessonStatus = 'not_started' | 'in_progress' | 'completed' | 'pending_validation' | 'validated';
-export type ValidationStatus = 'none' | 'pending' | 'approved' | 'rejected';
-
-export interface Lesson {
-  id: string;
-  moduleId: string;
-  
+  weekNumber: number;
   title: string;
   description: string | null;
-  content: any; // JSONB - structure flexible
-  contentType: LessonContentType;
-  
-  // Ordre
+  iconName: string | null;
+  colorAccent: string | null;
   orderIndex: number;
-  estimatedDuration: number | null; // en minutes
-  
-  // Validation
-  requiresAdminValidation: boolean;
-  
-  // Timestamps
+  isPublished: boolean;
+  unlockCondition: string;
+  unlockDate: string | null;
+  objectives: string[] | null;
+  keyConcepts: string[] | null;
+  resources: Record<string, any> | null;
+  estimatedHours: number | null;
+  difficultyLevel: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface UserLessonProgress {
-  id: string;
-  userId: string;
-  lessonId: string;
-  
-  // Progression
-  status: LessonStatus;
-  completionPercentage: number; // 0-100
-  
-  // Validation admin
-  validationStatus: ValidationStatus;
-  adminFeedback: string | null;
-  validatedBy: string | null; // userId de l'admin
-  validatedAt: string | null; // ISO timestamp
-  
-  // User submission
-  userSubmission: any | null; // JSONB
-  submittedAt: string | null; // ISO timestamp
-  
-  // Timestamps
-  startedAt: string | null;
-  completedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
+export interface ModuleWithProgress extends Module {
+  status: ModuleStatus;
+  progress: number;
+  xp: number;
+  completedSteps: string[];
+  startedAt?: string | null;
+  completedAt?: string | null;
+  moduleId: string;
 }
 
-// -------------------- JOB OFFERS --------------------
-
-export type ContractType = 'apprentissage' | 'professionnalisation' | 'stage';
-export type ApplicationStatus = 
-  | 'interested' 
-  | 'applied' 
-  | 'interview_scheduled' 
-  | 'interview_done'
-  | 'offer_received' 
-  | 'accepted' 
-  | 'rejected' 
-  | 'withdrawn';
-
-export interface JobOffer {
-  id: string;
-  
-  // Informations entreprise
-  companyName: string;
-  companyLogoUrl: string | null;
-  
-  // Détails de l'offre
-  title: string;
-  description: string;
-  contractType: ContractType;
-  levelRequired: string | null;
-  field: string | null;
-  
-  // Localisation
-  city: string;
-  postalCode: string | null;
-  address: string | null;
-  remotePossible: boolean;
-  
-  // Détails additionnels
-  salaryRange: string | null;
-  startDate: string | null; // ISO date
-  durationMonths: number | null;
-  
-  // Accessibilité
-  rqthFriendly: boolean;
-  accessibilityFeatures: string[] | null; // ['adapted_workspace', 'flexible_hours', etc.]
-  
-  // URLs
-  applicationUrl: string | null;
-  externalUrl: string | null;
-  
-  // Status
-  isActive: boolean;
-  isFeatured: boolean;
-  
-  // Source
-  source: 'manual' | 'api_france_travail' | 'api_indeed';
-  externalId: string | null;
-  
-  // Timestamps
-  createdAt: string;
-  updatedAt: string;
-  expiresAt: string | null;
-}
-
-export interface UserTrackedOffer {
-  id: string;
-  userId: string;
-  offerId: string | null;
-
-  // Données pour offres ajoutées manuellement
-  companyName: string | null;
-  positionTitle: string | null;
-  offerUrl: string | null;
-
-  // Status de candidature
-  applicationStatus: ApplicationStatus;
-  
-  // Notes personnelles
-  userNotes: string | null;
-  
-  // Dates importantes
-  applicationDate: string | null; // ISO date
-  interviewDate: string | null; // ISO timestamp
-  
-  // Rappels
-  reminderDate: string | null; // ISO timestamp
-  
-  // Timestamps
-  trackedAt: string;
-  updatedAt: string;
-}
-
-// -------------------- STATISTICS --------------------
-
+// Statistics
 export interface UserStatistics {
-  id: string;
-  userId: string;
-  
-  // Progression globale
-  totalLessonsCompleted: number;
+  /*totalLessonsCompleted: number;
   totalLessonsValidated: number;
-  currentWeek: number; // semaine en cours (1-4)
   currentStreakDays: number;
   longestStreakDays: number;
-  
-  // Activité
-  lastActivityDate: string | null; // ISO date
   totalTimeSpentMinutes: number;
-  
-  // Offres
   totalApplications: number;
   totalInterviews: number;
-  
-  updatedAt: string;
-}
-
-// -------------------- ADMIN MESSAGES --------------------
-
-export type MessageType = 'feedback' | 'encouragement' | 'question' | 'validation';
-
-export interface AdminMessage {
-  id: string;
+  lastActivityDate: string | null;*/
+  currentWeek: number;
   userId: string;
-  adminId: string | null;
-  lessonId: string | null;
-  
-  message: string;
-  messageType: MessageType;
-  isRead: boolean;
-  
-  createdAt: string;
+  id: string;
+  totalHoursSpent: number;
+  offersViewed: number;
+  offersApplied: number;
+  modulesCompleted: number;
 }
 
-// -------------------- CV STATUS --------------------
-
-export type CVStatus = 'not_uploaded' | 'uploaded' | 'under_review' | 'approved' | 'needs_revision';
-
+// CV
 export interface CVData {
-  id: string;
-  userId: string;
   fileName: string | null;
   fileUrl: string | null;
   status: CVStatus;
   adminFeedback: string | null;
+  score?: number | null;
   uploadedAt: string | null;
+  reviewedAt?: string | null;
+  reviewedBy?: string | null;
   updatedAt: string;
 }
 
-// -------------------- MODULE WITH PROGRESS --------------------
-// Combinaison d'un module et de sa progression pour l'affichage
+// Offer Tracking
+export interface TrackedOffer {
+  id: string;
+  userId: string;
+  offerId: string | null;
+  companyName: string | null;
+  positionTitle: string | null;
+  offerUrl: string | null;
+  applicationStatus: ApplicationStatus;
+  userNotes: string | null;
+  applicationDate: string | null;
+  interviewDate: string | null;
+  reminderDate: string | null;
+  needsHelp: boolean;
+  helpRequest: string | null;
+  trackedAt: string;
+  updatedAt: string;
+}
 
-export interface ModuleWithProgress extends Module {
-  status: ModuleStatus;
-  progress: number; // 0-100
-  xp: number; // Points d'expérience gagnés
-  badge?: string; // Emoji ou icône de badge
-  completedSteps: string[]; // IDs des étapes complétées (ex: ['step1', 'step2'])
+// Onboarding
+export interface OnboardingData {
+  hasFormation: boolean;
+  formationChoice?: string;
+  skills: string[];
+  cvStatus: number;
+  linkedinStatus: number;
+  searchStatus: number;
+  weeklyHours: number;
+  planWeeks?: number;
+  completedAt?: string;
 }

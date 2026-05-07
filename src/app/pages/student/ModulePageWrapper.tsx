@@ -2,17 +2,24 @@ import { useLocation } from 'react-router-dom';
 import StudentLayout from '../../layouts/studentLayout';
 import { ModuleLinearPage } from '../../components/ModuleLinearPage';
 import { routes } from '../../../app/router/routes';
+import { useAuth } from '../../../hooks/useAuth';
 
 export default function ModulePageWrapper() {
+  const { user, signOut } = useAuth();
+
+  if (!user) return null;
+
   const location = useLocation();
 
   const { hash, pathname, search } = location;
-  const match = pathname.match(/module-(\w+)/);
-  const moduleId = match ? match[1] : '';
+  const moduleId = pathname.split('/')[3];
+  console.log('moduleId', moduleId)
 
 
   return (
-    <StudentLayout currentPage={routes.StudentModulesDetails.path.replace(":id", moduleId) || ''}>
+    <StudentLayout currentPage={routes.StudentModulesDetails.path.replace(":id", moduleId) || ''}
+      user={user}
+      signOut={signOut}>
       <ModuleLinearPage moduleId={moduleId} />
     </StudentLayout>
   );

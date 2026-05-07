@@ -23,8 +23,8 @@ import {
 } from 'lucide-react';
 import { Button } from './Button';
 import { FormInput } from './FormInput';
-import { useUserData } from '../../context/UserDataContext';
-import { supabase } from '../../app/auth/supabaseClient';
+import { useUserData } from '../../hooks/useUserData';
+import { supabase } from '../../config/supabaseClient';
 import { routes } from '../router/routes';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -45,7 +45,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
   const [showPasswordFields, setShowPasswordFields] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { userProfile, statistics, modules, updateUserProfile } = useUserData();
+  const { statistics, modules } = useUserData();
 
   // État local pour le mot de passe
   const [passwordData, setPasswordData] = useState({
@@ -62,7 +62,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
   const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   // TODO: Remplacer par les données Supabase + données d'onboarding
-  const [profileData, setProfileData] = useState({
+  const [profileData, setProfileData] = useState(/*{
     firstName: authFirstName || userProfile?.firstName || 'Candidat',
     lastName: authLastName || userProfile?.lastName || '',
     email: authEmail || userProfile?.email || '',
@@ -78,7 +78,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
     mobilityRadius: userProfile?.mobilityRadius || null,
     rqth: userProfile?.hasRQTH || false,
     rqthDetails: ''
-  });
+  }*/);
 
   const [notificationSettings, setNotificationSettings] = useState({
     emailNotifications: true,
@@ -127,23 +127,23 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
         .from('profile-pictures')
         .getPublicUrl(filePath);
 
-      await updateUserProfile({ profilePictureUrl: urlData.publicUrl } as any);
+      //await updateUserProfile({ profilePictureUrl: urlData.publicUrl } as any);
     } catch (error) {
       console.error('Erreur upload photo:', error);
     }
   };
 
   // Charger la photo depuis le profil au montage
-  useEffect(() => {
+  /*useEffect(() => {
     if (userProfile && (userProfile as any).profilePictureUrl) {
       setProfileImage((userProfile as any).profilePictureUrl);
     }
-  }, [userProfile]);
+  }, [userProfile]);*/
 
   // ============================================
   // GESTION DE LA SAUVEGARDE DU PROFIL
   // ============================================
-  const handleSave = async () => {
+  /*const handleSave = async () => {
     try {
       await updateUserProfile({
         firstName: profileData.firstName,
@@ -165,14 +165,14 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
       console.error('Erreur sauvegarde profil:', error);
       alert('Erreur lors de la sauvegarde du profil');
     }
-  };
+  };*/
 
-  const handleInputChange = (field: string, value: string | boolean | number) => {
+  /*const handleInputChange = (field: string, value: string | boolean | number) => {
     setProfileData(prev => ({
       ...prev,
       [field]: value
     }));
-  };
+  };*/
 
   const handleNotificationChange = (field: string, value: boolean) => {
     setNotificationSettings(prev => ({
@@ -275,7 +275,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `tbee-donnees-${profileData.firstName}-${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `tbee-donnees-${/*profileData.firstName*/''}-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -287,7 +287,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
   // ============================================
   // SUPPRESSION DU COMPTE
   // ============================================
-  const handleDeleteAccount = async () => {
+  /*const handleDeleteAccount = async () => {
     setIsDeleting(true);
     try {
       // Supprime l'utilisateur dans auth.users (cascade sur toutes les tables liées)
@@ -303,7 +303,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
       setIsDeleting(false);
       setShowDeleteModal(false);
     }
-  };
+  };*/
 
   return (
     <div className="min-h-screen bg-[#F8F9FD] pb-16">
@@ -318,7 +318,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
             >
               <User className="w-5 h-5 text-[#1E1548]" />
             </button>
-            
+
             <div className="flex-1 min-w-0">
               <h1 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold leading-tight text-[#1E1548] mb-1 sm:mb-2">
                 Mon profil
@@ -355,7 +355,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
               ) : (
                 <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-full bg-foreground flex items-center justify-center text-background border-4 border-white shadow-lg">
                   <span className="text-3xl lg:text-4xl font-bold">
-                    {profileData.firstName[0]}{profileData.lastName[0] || ''}
+                    {/*profileData.firstName[0]}{profileData.lastName[0] || ''*/}
                   </span>
                 </div>
               )}
@@ -370,21 +370,21 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
               </button>
             </div>
             <div className="flex-1 text-center sm:text-left">
-              <h3>{profileData.firstName} {profileData.lastName}</h3>
-              <p className="text-muted-foreground mb-2">{profileData.email}</p>
+              <h3>profileData.firstName profileData.lastName</h3>
+              <p className="text-muted-foreground mb-2">profileData.email</p>
               <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                 <span className="px-3 py-1 bg-primary/20 rounded-full text-sm font-medium">
-                  {profileData.level}
+                  profileData.level
                 </span>
                 <span className="px-3 py-1 bg-secondary rounded-full text-sm font-medium">
                   Étudiant actif
                 </span>
-                {profileData.rqth && (
+                {/*profileData.rqth && (
                   <span className="px-3 py-1 bg-accent rounded-full text-sm font-medium flex items-center gap-1">
                     <Shield className="w-4 h-4" />
                     RQTH
                   </span>
-                )}
+                )*/}
               </div>
             </div>
             {!isEditing ? (
@@ -405,7 +405,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                   Annuler
                 </button>
                 <button
-                  onClick={handleSave}
+                  //onClick={handleSave}
                   className="h-10 px-4 bg-[#10B981] text-white rounded-[10px] text-[14px] font-semibold hover:bg-[#059669] transition-all flex items-center justify-center gap-2"
                 >
                   <Save className="w-4 h-4" />
@@ -465,25 +465,25 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                 <FormInput
                   label="Prénom"
                   type="text"
-                  value={profileData.firstName}
-                  onChange={(e) => handleInputChange('firstName', e.target.value)}
+                  value={/*profileData.firstName*/''}
+                  //onChange={(e) => handleInputChange('firstName', e.target.value)}
                   disabled={!isEditing}
                   icon={<User className="w-4 h-4" />}
                 />
                 <FormInput
                   label="Nom"
                   type="text"
-                  value={profileData.lastName}
-                  onChange={(e) => handleInputChange('lastName', e.target.value)}
+                  value={/*profileData.lastName*/''}
+                  //onChange={(e) => handleInputChange('lastName', e.target.value)}
                   disabled={!isEditing}
                   icon={<User className="w-4 h-4" />}
                 />
                 <FormInput
                   label="Email"
                   type="email"
-                  value={profileData.email}
+                  value={/*profileData.email*/''}
                   placeholder="Email"
-                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  //onChange={(e) => handleInputChange('email', e.target.value)}
                   disabled={!isEditing}
                   icon={<Mail className="w-4 h-4" />}
                 />
@@ -491,17 +491,17 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                   label="Téléphone"
                   type="tel"
                   inputMode="numeric"
-                  value={profileData.phone}
+                  value={/*profileData.phone*/''}
                   placeholder="0612345678"
-                  onChange={(e) => handleInputChange('phone', e.target.value.replace(/\D/g, ''))}
+                  //onChange={(e) => handleInputChange('phone', e.target.value.replace(/\D/g, ''))}
                   disabled={!isEditing}
                   icon={<Phone className="w-4 h-4" />}
                 />
                 <FormInput
                   label="Date de naissance"
                   type="date"
-                  value={profileData.birthDate}
-                  onChange={(e) => handleInputChange('birthDate', e.target.value)}
+                  value={/*profileData.birthDate*/''}
+                  //onChange={(e) => handleInputChange('birthDate', e.target.value)}
                   disabled={!isEditing}
                   icon={<Calendar className="w-4 h-4" />}
                 />
@@ -519,8 +519,8 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                   <FormInput
                     label="Adresse"
                     type="text"
-                    value={profileData.address}
-                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    value={/*profileData.address*/''}
+                    //onChange={(e) => handleInputChange('address', e.target.value)}
                     disabled={!isEditing}
                     icon={<MapPin className="w-4 h-4" />}
                   />
@@ -528,15 +528,15 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                 <FormInput
                   label="Ville"
                   type="text"
-                  value={profileData.city}
-                  onChange={(e) => handleInputChange('city', e.target.value)}
+                  value={/*profileData.city*/''}
+                  //onChange={(e) => handleInputChange('city', e.target.value)}
                   disabled={!isEditing}
                 />
                 <FormInput
                   label="Code postal"
                   type="text"
-                  value={profileData.postalCode}
-                  onChange={(e) => handleInputChange('postalCode', e.target.value)}
+                  value={/*profileData.postalCode*/''}
+                  //onChange={(e) => handleInputChange('postalCode', e.target.value)}
                   disabled={!isEditing}
                 />
               </div>
@@ -552,16 +552,16 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                 <FormInput
                   label="Établissement"
                   type="text"
-                  value={profileData.school}
-                  onChange={(e) => handleInputChange('school', e.target.value)}
+                  value={/*profileData.school*/''}
+                  //onChange={(e) => handleInputChange('school', e.target.value)}
                   disabled={!isEditing}
                   icon={<Building2 className="w-4 h-4" />}
                 />
                 <FormInput
                   label="Niveau d'études"
                   type="text"
-                  value={profileData.level}
-                  onChange={(e) => handleInputChange('level', e.target.value)}
+                  value={/*profileData.level*/''}
+                  //onChange={(e) => handleInputChange('level', e.target.value)}
                   disabled={!isEditing}
                   icon={<GraduationCap className="w-4 h-4" />}
                 />
@@ -569,8 +569,8 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                   <FormInput
                     label="Programme"
                     type="text"
-                    value={profileData.program}
-                    onChange={(e) => handleInputChange('program', e.target.value)}
+                    value={/*profileData.program*/''}
+                    //onChange={(e) => handleInputChange('program', e.target.value)}
                     disabled={!isEditing}
                   />
                 </div>
@@ -588,8 +588,8 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                   <input
                     type="checkbox"
                     id="rqth"
-                    checked={profileData.rqth}
-                    onChange={(e) => handleInputChange('rqth', e.target.checked)}
+                    checked={/*profileData.rqth*/false}
+                    //onChange={(e) => handleInputChange('rqth', e.target.checked)}
                     disabled={!isEditing}
                     className="w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-ring disabled:opacity-50"
                   />
@@ -597,7 +597,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                     Je bénéficie d'une reconnaissance RQTH
                   </label>
                 </div>
-                {profileData.rqth && (
+                {/*profileData.rqth && (
                   <div>
                     <label className="block mb-2 text-sm font-medium">
                       Détails (optionnel)
@@ -611,7 +611,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                       placeholder="Informations complémentaires..."
                     />
                   </div>
-                )}
+                )*/}
                 <p className="text-sm text-muted-foreground">
                   Ces informations sont confidentielles et utilisées uniquement pour personnaliser votre accompagnement.
                 </p>
@@ -628,7 +628,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                   Annuler
                 </Button>
                 <Button
-                  onClick={handleSave}
+                  //onClick={handleSave}
                   className="gap-2"
                 >
                   <Save className="w-4 h-4" />
@@ -878,7 +878,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                 Annuler
               </button>
               <button
-                onClick={handleDeleteAccount}
+                //onClick={handleDeleteAccount}
                 disabled={isDeleting}
                 className="flex-1 h-12 bg-red-500 text-white rounded-[12px] text-[15px] font-semibold hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >

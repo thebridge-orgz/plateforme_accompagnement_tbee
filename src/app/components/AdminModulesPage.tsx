@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Button } from './Button';
 import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
-import { useAdminData } from '../../context/AdminDataContext';
+import { useAdminData } from '../../hooks/useAdminData';
 
 interface Module {
   id: string;
@@ -196,11 +196,11 @@ export function AdminModulesPage() {
                     <h3 className="text-[18px] sm:text-[20px] font-bold text-[#1E1548]">
                       {module.title}
                     </h3>
-                    <span className={`px-3 py-1 rounded-full text-[12px] font-semibold flex-shrink-0 ${module.is_published
+                    <span className={`px-3 py-1 rounded-full text-[12px] font-semibold flex-shrink-0 ${module.isPublished
                       ? 'bg-[#F0FDF4] text-[#10B981]'
                       : 'bg-[#FFF4CC] text-[#B45309]'
                       }`}>
-                      {module.is_published}
+                      {module.isPublished}
                     </span>
                   </div>
                   <p className="text-[14px] text-[#6B7280] mb-3">
@@ -215,11 +215,11 @@ export function AdminModulesPage() {
                     </div>
                     <div className="flex items-center gap-2 text-[13px]">
                       <Calendar className="w-4 h-4 text-[#6B7280]" />
-                      <span className="text-[#1E1548] font-medium">{module.week_number}</span>
+                      <span className="text-[#1E1548] font-medium">{module.weekNumber}</span>
                     </div>
                     <div className="flex items-center gap-2 text-[13px]">
                       <Target className="w-4 h-4 text-[#6B7280]" />
-                      <span className="text-[#1E1548] font-medium">Position {module.order_index}</span>
+                      <span className="text-[#1E1548] font-medium">Position {module.orderIndex}</span>
                     </div>
                   </div>
 
@@ -235,14 +235,14 @@ export function AdminModulesPage() {
                   </div>
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
-                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Button variant="primary" size="large" className="flex items-center gap-2">
                     Modifier
                   </Button>
-                  {module.status === 'Brouillon' && (
+                  {/*module.status === 'Brouillon' && (
                     <Button size="sm" className="flex items-center gap-2" onClick={() => handlePublishModule(module.id)}>
                       Publier
                     </Button>
-                  )}
+                  )*/}
                 </div>
               </div>
             </div>

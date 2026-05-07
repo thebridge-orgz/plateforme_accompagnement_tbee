@@ -1,8 +1,13 @@
-import { useState, useEffect } from 'react';
+export function JobTrackingPage() {
+  return (
+    <h1>Job Tracking Page</h1>
+  )
+}
+/*import { useState, useEffect } from 'react';
 import { Building2, Calendar, ChevronLeft, ChevronRight, ExternalLink, Plus, Search, AlertCircle } from 'lucide-react';
-import { useUserData } from '@/context/UserDataContext';
-import { MAX_TRACKED_OFFERS } from '@/utils/initialState';
-import type { UserTrackedOffer } from '@/types';
+import { useUserData } from '../../hooks/useUserData';
+import { MAX_TRACKED_OFFERS } from '../../utils/initialState';
+import type { UserTrackedOffer } from '../../types';
 
 interface JobTrackingPageProps {
   onNavigate: (page: string) => void;
@@ -52,8 +57,8 @@ export function JobTrackingPage() {
 
   // Filter offers
   const filteredOffers = trackedOffers.filter(offer => {
-    const matchesSearch = 
-      searchQuery === '' || 
+    const matchesSearch =
+      searchQuery === '' ||
       offer.userNotes?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = filterStatus === 'all' || offer.applicationStatus === filterStatus;
     return matchesSearch && matchesStatus;
@@ -108,7 +113,7 @@ export function JobTrackingPage() {
           interviewDate: newOffer.interviewDate,
           reminderDate: newOffer.reminderDate,
         });
-        
+
         // Reset form
         setNewOffer({
           offerId: '',
@@ -205,7 +210,7 @@ export function JobTrackingPage() {
 
   return (
     <div className="min-h-screen bg-[#F8F9FD] pb-16">
-      {/* Header */}
+      
       <div className="bg-white border-b border-[rgba(30,21,72,0.08)] sticky top-0 z-30">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex items-start gap-3 sm:gap-6">
@@ -216,7 +221,7 @@ export function JobTrackingPage() {
             >
               <ChevronRight className="w-5 h-5 text-[#1E1548] rotate-180" />
             </button>
-            
+
             <div className="flex-1 min-w-0">
               <h1 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold leading-tight text-[#1E1548] mb-1 sm:mb-2">
                 Suivi des offres
@@ -226,7 +231,6 @@ export function JobTrackingPage() {
               </p>
             </div>
 
-            {/* Add Offer Button */}
             <button
               onClick={() => setShowAddModal(true)}
               disabled={!canTrackMoreOffers}
@@ -247,7 +251,7 @@ export function JobTrackingPage() {
       </div>
 
       <div className="max-w-[1152px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8 lg:pt-8 lg:pb-8">
-        {/* Alert - Limite atteinte */}
+        
         {!canTrackMoreOffers && (
           <div className="bg-[#FEE2E2] border border-[#EF4444] rounded-[16px] p-4 sm:p-6 mb-6 sm:mb-8">
             <div className="flex items-start gap-3 sm:gap-4">
@@ -264,7 +268,7 @@ export function JobTrackingPage() {
           </div>
         )}
 
-        {/* Info Banner */}
+        
         <div className="bg-[#E8ECFF] border border-[#1E1548]/10 rounded-[16px] p-4 sm:p-6 mb-6 sm:mb-8">
           <div className="flex items-start gap-3 sm:gap-4">
             <div className="text-xl sm:text-2xl">💡</div>
@@ -283,11 +287,10 @@ export function JobTrackingPage() {
           </div>
         </div>
 
-        {/* Filters & Search - Only show if there are offers */}
         {trackedOffers.length > 0 && (
           <div className="bg-white border border-[rgba(30,21,72,0.1)] rounded-[16px] p-6 mb-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Search */}
+              
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6B7280]" />
                 <input
@@ -299,7 +302,7 @@ export function JobTrackingPage() {
                 />
               </div>
 
-              {/* Status Filter */}
+              
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
@@ -314,7 +317,7 @@ export function JobTrackingPage() {
           </div>
         )}
 
-        {/* Offers Table */}
+        
         <div className="bg-white border border-[rgba(30,21,72,0.1)] rounded-[16px] overflow-hidden mb-6">
           {paginatedOffers.length === 0 && trackedOffers.length === 0 ? (
             // Empty state - no offers at all
@@ -439,7 +442,6 @@ export function JobTrackingPage() {
                 </table>
               </div>
 
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between px-6 py-4 border-t border-[rgba(30,21,72,0.1)]">
                   <p className="text-[14px] text-[#6B7280]">
@@ -467,7 +469,6 @@ export function JobTrackingPage() {
           )}
         </div>
 
-        {/* Edit Offer Modal */}
         {editingOffer && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-[16px] p-8 max-w-[600px] w-full max-h-[90vh] overflow-y-auto">
@@ -553,7 +554,6 @@ export function JobTrackingPage() {
           </div>
         )}
 
-        {/* Add Offer Modal */}
         {showAddModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-[16px] p-8 max-w-[600px] w-full max-h-[90vh] overflow-y-auto">
@@ -637,4 +637,4 @@ export function JobTrackingPage() {
       </div>
     </div>
   );
-}
+}*/
