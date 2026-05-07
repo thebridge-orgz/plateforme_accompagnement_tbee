@@ -86,15 +86,21 @@ export interface UserStatistics {
 
 // CV
 export interface CVData {
+  id?: string;
+  userId?: string;
+  cvContent: Object;
+  filePath?: string;
+  isValidated: boolean;
+  createdAt: string;
+  updatedAt: string;
   fileName: string | null;
   fileUrl: string | null;
-  status: CVStatus;
   adminFeedback: string | null;
-  score?: number | null;
   uploadedAt: string | null;
+  status: CVStatus;
+  /*score?: number | null;
   reviewedAt?: string | null;
-  reviewedBy?: string | null;
-  updatedAt: string;
+  reviewedBy?: string | null;*/
 }
 
 // Offer Tracking

@@ -13,7 +13,7 @@ class CVService {
         return data ? this.mapFromDB(data) : null;
     }
 
-    async uploadCV(userId: string, file: File): Promise<{ fileUrl: string; fileName: string }> {
+    async uploadCV(userId: string, file: File): Promise<CVData> {
         const filePath = `${userId}/${Date.now()}_${file.name}`;
         const { error: uploadError } = await supabase.storage
             .from('cv-uploads')
@@ -26,40 +26,43 @@ class CVService {
             .getPublicUrl(filePath);
 
         // Sauvegarder les infos dans la base de données
-        await this.saveCVData(userId, {
+        const savedCV = await this.saveCVData(userId, {
             fileName: file.name,
             fileUrl: urlData.publicUrl,
+            filePath: filePath,
             status: 'uploaded',
             uploadedAt: new Date().toISOString(),
         });
 
-        return {
-            fileUrl: urlData.publicUrl,
-            fileName: file.name,
-        };
+        return savedCV;
     }
 
-    async saveCVData(userId: string, cvData: Partial<CVData>): Promise<void> {
+    async saveCVData(userId: string, cvData: Partial<CVData>): Promise<CVData> {
         const dbUpdates: Record<string, any> = {
             updated_at: new Date().toISOString(),
         };
-        
+
         if (cvData.fileName !== undefined) dbUpdates.file_name = cvData.fileName;
         if (cvData.fileUrl !== undefined) dbUpdates.file_url = cvData.fileUrl;
         if (cvData.status !== undefined) dbUpdates.status = cvData.status;
         if (cvData.adminFeedback !== undefined) dbUpdates.admin_feedback = cvData.adminFeedback;
         if (cvData.uploadedAt !== undefined) dbUpdates.uploaded_at = cvData.uploadedAt;
+        if (cvData.filePath !== undefined) dbUpdates.file_path = cvData.filePath;
 
-        const { error } = await supabase
+        // Utiliser upsert avec retour
+        const { data, error } = await supabase
             .from('cv_data')
-            .upsert({ 
-                user_id: userId, 
+            .upsert({
+                user_id: userId,
                 ...dbUpdates,
-                // S'assurer que uploaded_at est défini si c'est un nouvel upload
                 uploaded_at: cvData.uploadedAt || (cvData.status === 'uploaded' ? new Date().toISOString() : undefined)
-            });
+            })
+            .select()
+            .single();
 
         if (error) throw error;
+
+        return this.mapFromDB(data);
     }
 
     async getAllCVSubmissions() {
@@ -88,17 +91,35 @@ class CVService {
         if (error) throw error;
     }
 
+    async deleteCv(cvId: string, filePath: string) {
+        const { error: dbError } = await supabase
+            .from('cv_data')
+            .delete()
+            .eq('id', cvId);
+
+        if (dbError) throw dbError;
+
+        const { error: deleteError } = await supabase.storage
+            .from('cv-uploads')
+            .remove([filePath]);
+
+        if (deleteError) throw dbError;
+    }
+
     private mapFromDB(raw: any): CVData {
         return {
+            id: raw.id,
+            userId: raw.user_id,
+            cvContent: raw.cv_content,
+            filePath: raw.file_path,
+            isValidated: raw.is_validated,
+            createdAt: raw.created_at,
+            updatedAt: raw.updated_at,
             fileName: raw.file_name,
             fileUrl: raw.file_url,
-            status: raw.status,
             adminFeedback: raw.admin_feedback,
-            score: raw.score,
             uploadedAt: raw.uploaded_at,
-            reviewedAt: raw.reviewed_at,
-            reviewedBy: raw.reviewed_by,
-            updatedAt: raw.updated_at,
+            status: raw.status
         };
     }
 }
