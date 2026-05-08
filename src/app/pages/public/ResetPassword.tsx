@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Eye, EyeOff, CheckCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { FormInput } from '../../components/FormInput';
@@ -18,20 +18,39 @@ export function ResetPassword() {
     const [isValidSession, setIsValidSession] = useState(false);
     const [isChecking, setIsChecking] = useState(true);
     const navigate = useNavigate();
-    const { updatePassword, hasValidResetSession } = useAuth();
+    const location = useLocation();
+    const { updatePassword, verifyOtp, hasValidSession } = useAuth();
 
     useEffect(() => {
-        // Vérifier si l'utilisateur a une session valide (via le token dans l'URL)
-        const checkSession = async () => {
+        const verifyToken = async () => {
             try {
-                // Attendre un peu que Supabase traite le token
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                // Récupérer le token_hash depuis l'URL (query params)
+                const queryParams = new URLSearchParams(location.search);
+                const tokenHash = queryParams.get('token_hash');
+                const type = queryParams.get('type');
 
-                const hasSession = await hasValidResetSession();
-                setIsValidSession(hasSession);
+                console.log('Token hash trouvé:', tokenHash ? 'Oui' : 'Non');
+                console.log('Type:', type);
 
-                if (!hasSession) {
-                    console.log('Pas de session valide trouvée');
+                if (tokenHash && type === 'recovery') {
+                    try {
+                        // Vérifier le token OTP via le service
+                        const data = await verifyOtp(tokenHash, 'recovery');
+
+                        if (data?.session) {
+                            console.log('Session établie avec succès');
+                            setIsValidSession(true);
+                        } else {
+                            setIsValidSession(false);
+                        }
+                    } catch (verifyError: any) {
+                        console.error('Erreur lors de la vérification du token:', verifyError);
+                        setIsValidSession(false);
+                    }
+                } else {
+                    // Vérifier s'il y a déjà une session active via le service
+                    const hasSession = await hasValidSession();
+                    setIsValidSession(hasSession);
                 }
             } catch (err) {
                 console.error('Erreur lors de la vérification:', err);
@@ -41,14 +60,13 @@ export function ResetPassword() {
             }
         };
 
-        checkSession();
-    }, []);
+        verifyToken();
+    }, [location, verifyOtp, hasValidSession]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
-        // Validations
         if (!newPassword || !confirmPassword) {
             setError('Veuillez remplir tous les champs');
             return;
@@ -67,12 +85,9 @@ export function ResetPassword() {
         setIsLoading(true);
 
         try {
-            // Mettre à jour le mot de passe - Supabase utilise automatiquement le token de l'URL
             await updatePassword(newPassword);
-
             setIsSubmitted(true);
 
-            // Rediriger vers la connexion après 3 secondes
             setTimeout(() => {
                 navigate(routes.SignIn.path);
             }, 3000);
@@ -165,7 +180,6 @@ export function ResetPassword() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 flex items-center justify-center p-4">
             <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-                {/* Header */}
                 <div className="text-center mb-8">
                     <h1 className="text-2xl font-bold text-[#1E1548] mb-2">
                         Nouveau mot de passe
@@ -175,7 +189,6 @@ export function ResetPassword() {
                     </p>
                 </div>
 
-                {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <FormInput
                         label="Nouveau mot de passe"
@@ -215,7 +228,6 @@ export function ResetPassword() {
                         required
                     />
 
-                    {/* Indicateur de force du mot de passe */}
                     {newPassword && (
                         <div className="space-y-2">
                             <div className="flex gap-1">

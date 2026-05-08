@@ -216,11 +216,10 @@ class AuthService {
     }
 
     /**
-     * Vérifier si l'utilisateur a une session valide (pour la réinitialisation)
+     * Vérifier si une session existe et est valide
      */
-    async hasValidResetSession(): Promise<boolean> {
+    async hasValidSession(): Promise<boolean> {
         const { data: { session }, error } = await supabase.auth.getSession();
-        console.log(`data session : ${session}`)
 
         if (error) {
             console.error('Erreur getSession:', error);
@@ -228,6 +227,19 @@ class AuthService {
         }
 
         return !!session;
+    }
+
+    /**
+     * Vérifier le token OTP pour la récupération de mot de passe
+     */
+    async verifyOtp(tokenHash: string, type: 'recovery' | 'signup' | 'email' = 'recovery') {
+        const { data, error } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: type
+        });
+
+        if (error) throw error;
+        return data;
     }
 
     /**

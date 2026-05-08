@@ -10,7 +10,8 @@ interface AuthContextType {
     signOut: () => Promise<void>;
     resetPassword: (email: string) => Promise<void>;
     updatePassword: (newPassword: string) => Promise<void>;
-    hasValidResetSession: () => Promise<boolean>;
+    verifyOtp: (tokenHash: string, type?: 'recovery' | 'signup' | 'email') => Promise<any>;
+    hasValidSession: () => Promise<boolean>;
     saveOnboarding: (user_id: string, data: any) => Promise<void>;
     updateProfil: (user_id: string, data: any) => Promise<void>;
     uploadProfilePicture: (user_id: string, file: File) => Promise<string>;
@@ -197,8 +198,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         await authService.updatePassword(newPassword);
     };
 
-    const hasValidResetSession = async (): Promise<boolean> => {
-        return authService.hasValidResetSession();
+    const verifyOtp = async (tokenHash: string, type: 'recovery' | 'signup' | 'email' = 'recovery') => {
+        return await authService.verifyOtp(tokenHash, type);
+    };
+
+    const hasValidSession = async (): Promise<boolean> => {
+        return await authService.hasValidSession();
     };
 
     const updateProfil = async (user_id: string, data: any) => {
@@ -250,7 +255,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         deleteAccount,
         resetPassword,
         updatePassword,
-        hasValidResetSession,
+        verifyOtp,
+        hasValidSession,
         refreshUser,
         saveOnboarding,
         updateProfil,
