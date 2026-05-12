@@ -21,7 +21,7 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
   const { statistics } = useStatistics();
 
   // Parcours entièrement complété ?
-  const allModulesCompleted = totalModulesCount > 0 && completedModulesCount === totalModulesCount;
+  const allModulesCompleted = totalCount > 0 && completedCount === totalCount;
 
   // Formater le temps d'étude
   //const studyTimeFormatted = formatStudyTime(statistics.totalTimeSpentMinutes);

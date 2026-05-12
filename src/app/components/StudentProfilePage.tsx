@@ -316,7 +316,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
               className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
               aria-label="Retour"
             >
-              <User className="w-5 h-5 text-[#1E1548]" />
+              <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
             </button>
 
             <div className="flex-1 min-w-0">

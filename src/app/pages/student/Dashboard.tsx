@@ -1,5 +1,5 @@
-import { StudentDashboard } from '../../components/dashboard/StudentDashboard';
-import StudentLayout from '../../layouts/StudentLayout';
+import { StudentDashboard } from '../../components/dashboard/studentDashboard';
+import StudentLayout from '../../layouts/studentLayout';
 import { routes } from '../../router/routes';
 import { useAuth } from '../../../hooks/useAuth';
 
