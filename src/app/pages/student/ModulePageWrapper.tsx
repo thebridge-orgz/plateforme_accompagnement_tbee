@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom';
-import StudentLayout from '../../layouts/studentLayout';
+import StudentLayout from '../../layouts/StudentLayout';
 import { ModuleLinearPage } from '../../components/ModuleLinearPage';
 import { routes } from '../../../app/router/routes';
 import { useAuth } from '../../../hooks/useAuth';

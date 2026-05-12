@@ -1,4 +1,4 @@
-import StudentLayout from '../../layouts/studentLayout';
+import StudentLayout from '../../layouts/StudentLayout';
 import { StudentProfilePage } from '../../components/StudentProfilePage';
 import { routes } from '../../router/routes';
 import { useAuth } from '../../../hooks/useAuth';
