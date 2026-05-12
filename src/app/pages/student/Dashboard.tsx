@@ -1,4 +1,4 @@
-import { StudentDashboard } from '../../components/dashboard/studentDashboard';
+import { StudentDashboard } from '../../components/dashboard/StudentDashboard';
 import StudentLayout from '../../layouts/StudentLayout';
 import { routes } from '../../router/routes';
 import { useAuth } from '../../../hooks/useAuth';
