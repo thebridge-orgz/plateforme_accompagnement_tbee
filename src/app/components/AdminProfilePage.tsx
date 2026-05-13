@@ -1,46 +1,59 @@
 ﻿import { ArrowLeft, User, Mail, Building, Shield, Edit2, Save, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
 import { useAuth } from '../../hooks/useAuth'
 import { formatDateTime } from '../../utils/date'
 
-interface AdminProfilePageProps {
-  userName?: string;
-  authEmail?: string;
-  authFirstName?: string;
-  authLastName?: string;
-}
-
 export function AdminProfilePage() {
-  const { user, updateProfil, refreshUser, uploadProfilePicture, deleteProfilePicture, updatePassword, deleteAccount, signOut, isAdmin } = useAuth();
+  const { user, updateProfil, refreshUser, updatePassword, signOut, isAdmin } = useAuth();
 
   const [isEditing, setIsEditing] = useState(false);
+  
+  const [adminData, setAdminData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    role: '',
+    establishment: '',
+    phone: '',
+    joinedDate: '',
+    permissions: ['']
+  });
 
   if (!user?.id) {
     alert('Erreur: utilisateur non connecté');
     return;
   }
 
-  const [adminData, setAdminData] = useState({
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
-    role: isAdmin ? 'Administrateur' : 'Rôle inconnu',
-    establishment: 'TBEE Formation',
-    phone: user.phone,
-    joinedDate: formatDateTime(user.createdAt),
-    permissions: ['Validation CVs', 'Correction exercices', 'Gestion utilisateurs', 'Support offres']
-  });
+  useEffect(() => {
+    if (user) {
+      setAdminData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        role: isAdmin ? 'Administrateur' : 'Rôle inconnu',
+        establishment: 'TBEE Formation',
+        phone: user.phone || '',
+        joinedDate: formatDateTime(user.createdAt) || '',
+        permissions: ['Validation CVs', 'Correction exercices', 'Gestion utilisateurs', 'Support offres']
+      });
+    }
+  }, [user]);
 
-  const [editData, setEditData] = useState({ ...adminData });
+  const handleInputChange = (field: string, value: string | boolean | number) => {
+    setAdminData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
   const handleSave = async () => {
     try {
       const data = {
-        firstName: editData.firstName,
-        lastName: editData.lastName,
-        phone: editData.phone
+        firstName: adminData.firstName,
+        lastName: adminData.lastName,
+        phone: adminData.phone
       }
 
       await updateProfil(user.id, data);
@@ -51,11 +64,6 @@ export function AdminProfilePage() {
       console.error('Erreur sauvegarde profil:', error);
       alert('Erreur lors de la sauvegarde du profil');
     }
-  };
-
-  const handleCancel = () => {
-    setEditData({ ...adminData });
-    setIsEditing(false);
   };
 
   const stats = {
@@ -112,7 +120,7 @@ export function AdminProfilePage() {
                 ) : (
                   <div className="flex gap-2 flex-shrink-0">
                     <button
-                      onClick={handleCancel}
+                    onClick={() => setIsEditing(false)}
                       className="h-10 px-4 bg-white border-2 border-[#E5E7EB] text-[#6B7280] rounded-[10px] text-[14px] font-semibold hover:bg-[#F8F9FD] transition-all flex items-center justify-center gap-2"
                     >
                       <X className="w-4 h-4" />
@@ -140,8 +148,8 @@ export function AdminProfilePage() {
                         </label>
                         <input
                           type="text"
-                          value={editData.firstName}
-                          onChange={(e) => setEditData({ ...editData, firstName: e.target.value })}
+                          value={adminData.firstName}
+                          onChange={(e) => handleInputChange('firstName', e.target.value )}
                           className="w-full h-12 px-4 border-2 border-[rgba(30,21,72,0.08)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:border-[#FFD600]"
                         />
                       </div>
@@ -152,8 +160,8 @@ export function AdminProfilePage() {
                         </label>
                         <input
                           type="text"
-                          value={editData.lastName}
-                          onChange={(e) => setEditData({ ...editData, lastName: e.target.value })}
+                          value={adminData.lastName}
+                          onChange={(e) => handleInputChange('lastName', e.target.value )}
                           className="w-full h-12 px-4 border-2 border-[rgba(30,21,72,0.08)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:border-[#FFD600]"
                         />
                       </div>
@@ -181,8 +189,8 @@ export function AdminProfilePage() {
                   {isEditing ? (
                     <input
                       type="email"
-                      value={editData.email}
-                      onChange={(e) => setEditData({ ...editData, email: e.target.value })}
+                      value={adminData.email}
+                      onChange={(e) => handleInputChange('email', e.target.value )}
                       className="w-full h-12 px-4 border-2 border-[rgba(30,21,72,0.08)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:border-[#FFD600]"
                     />
                   ) : (
@@ -202,8 +210,8 @@ export function AdminProfilePage() {
                   </label>
                   {isEditing ? (
                     <select
-                      value={editData.role}
-                      onChange={(e) => setEditData({ ...editData, role: e.target.value })}
+                      value={adminData.role}
+                      onChange={(e) => handleInputChange('role', e.target.value )}
                       className="w-full h-12 px-4 border-2 border-[rgba(30,21,72,0.08)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:border-[#FFD600]"
                     >
                       <option>Administrateur Principal</option>
@@ -228,8 +236,8 @@ export function AdminProfilePage() {
                   {isEditing ? (
                     <input
                       type="text"
-                      value={editData.establishment}
-                      onChange={(e) => setEditData({ ...editData, establishment: e.target.value })}
+                      value={adminData.establishment}
+                      onChange={(e) => handleInputChange('establishment', e.target.value )}
                       className="w-full h-12 px-4 border-2 border-[rgba(30,21,72,0.08)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:border-[#FFD600]"
                     />
                   ) : (
@@ -250,8 +258,8 @@ export function AdminProfilePage() {
                   {isEditing ? (
                     <input
                       type="tel"
-                      value={editData.phone}
-                      onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
+                      value={adminData.phone}
+                      onChange={(e) => handleInputChange('phone', e.target.value )}
                       className="w-full h-12 px-4 border-2 border-[rgba(30,21,72,0.08)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:border-[#FFD600]"
                     />
                   ) : (
