@@ -33,8 +33,8 @@ export function OnboardingPersonalInfo({ initialFirstName = '', initialLastName 
     lastName: initialLastName,
     phone: initialPhone,
     birthDate: initialBirthDate,
-    address: initialCity,
-    city: initialAaddress,
+    address: initialAaddress,
+    city: initialCity,
     postalCode: initialpostalCode,
     currentLevel: initialCurrentLevel
   });

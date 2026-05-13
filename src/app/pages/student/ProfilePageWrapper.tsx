@@ -9,10 +9,7 @@ export default function ProfilePageWrapper() {
   if (!user) return null;
 
   return (
-    <StudentLayout currentPage={routes.StudentProfile.path}
-      user={user}
-      signOut={signOut}
-    >
+    <StudentLayout currentPage={routes.StudentProfile.path} user={user} signOut={signOut}>
       <StudentProfilePage />
     </StudentLayout>
   );

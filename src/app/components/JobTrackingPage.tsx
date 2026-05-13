@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Building2, Calendar, ChevronLeft, ChevronRight, ExternalLink, Plus, Search, AlertCircle, Pencil } from 'lucide-react';
+import { Building2, Calendar, ChevronLeft, ChevronRight, ExternalLink, Plus, Search, AlertCircle, Pencil, ArrowLeft } from 'lucide-react';
 import type { TrackedOffer } from '../../types'
 import { useOffers } from '../../hooks/useOffers'
 import { Link } from 'react-router-dom';
@@ -209,7 +209,7 @@ export function JobTrackingPage() {
                 className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
                 aria-label="Retour"
               >
-                <ChevronRight className="w-5 h-5 text-[#1E1548] rotate-180" />
+                <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
               </button>
             </Link>
 
