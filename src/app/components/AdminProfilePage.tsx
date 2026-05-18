@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
+import { useAuth } from '../../hooks/useAuth'
+import { formatDateTime } from '../../utils/date'
 
 interface AdminProfilePageProps {
   userName?: string;
@@ -10,23 +12,45 @@ interface AdminProfilePageProps {
   authLastName?: string;
 }
 
-export function AdminProfilePage({ userName, authEmail, authFirstName, authLastName }: AdminProfilePageProps) {
+export function AdminProfilePage() {
+  const { user, updateProfil, refreshUser, uploadProfilePicture, deleteProfilePicture, updatePassword, deleteAccount, signOut, isAdmin } = useAuth();
+
   const [isEditing, setIsEditing] = useState(false);
+
+  if (!user?.id) {
+    alert('Erreur: utilisateur non connecté');
+    return;
+  }
+
   const [adminData, setAdminData] = useState({
-    name: userName || 'Admin TBEE',
-    email: authEmail || 'admin@tbee.fr',
-    role: 'Administrateur Principal',
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    role: isAdmin ? 'Administrateur' : 'Rôle inconnu',
     establishment: 'TBEE Formation',
-    phone: '+33 6 12 34 56 78',
-    joinedDate: '2025-09-01',
+    phone: user.phone,
+    joinedDate: formatDateTime(user.createdAt),
     permissions: ['Validation CVs', 'Correction exercices', 'Gestion utilisateurs', 'Support offres']
   });
 
   const [editData, setEditData] = useState({ ...adminData });
 
-  const handleSave = () => {
-    setAdminData({ ...editData });
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      const data = {
+        firstName: editData.firstName,
+        lastName: editData.lastName,
+        phone: editData.phone
+      }
+
+      await updateProfil(user.id, data);
+      await refreshUser();
+      setIsEditing(false);
+      alert('✅ Profil mis à jour avec succès !');
+    } catch (error) {
+      console.error('Erreur sauvegarde profil:', error);
+      alert('Erreur lors de la sauvegarde du profil');
+    }
   };
 
   const handleCancel = () => {
@@ -108,23 +132,44 @@ export function AdminProfilePage({ userName, authEmail, authFirstName, authLastN
               <div className="space-y-4">
                 {/* Name */}
                 <div>
-                  <label className="block text-[13px] sm:text-[14px] font-semibold text-[#1E1548] mb-2">
-                    Nom complet
-                  </label>
                   {isEditing ? (
-                    <input
-                      type="text"
-                      value={editData.name}
-                      onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                      className="w-full h-12 px-4 border-2 border-[rgba(30,21,72,0.08)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:border-[#FFD600]"
-                    />
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <div className="flex-1">
+                        <label className="block text-[13px] sm:text-[14px] font-semibold text-[#1E1548] mb-2">
+                          Prénom
+                        </label>
+                        <input
+                          type="text"
+                          value={editData.firstName}
+                          onChange={(e) => setEditData({ ...editData, firstName: e.target.value })}
+                          className="w-full h-12 px-4 border-2 border-[rgba(30,21,72,0.08)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:border-[#FFD600]"
+                        />
+                      </div>
+
+                      <div className="flex-1">
+                        <label className="block text-[13px] sm:text-[14px] font-semibold text-[#1E1548] mb-2">
+                          Nom
+                        </label>
+                        <input
+                          type="text"
+                          value={editData.lastName}
+                          onChange={(e) => setEditData({ ...editData, lastName: e.target.value })}
+                          className="w-full h-12 px-4 border-2 border-[rgba(30,21,72,0.08)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:border-[#FFD600]"
+                        />
+                      </div>
+                    </div>
                   ) : (
-                    <div className="flex items-center gap-3 h-12 px-4 bg-[#F8F9FD] rounded-[12px]">
+                    <>
+                      <label className="block text-[13px] sm:text-[14px] font-semibold text-[#1E1548] mb-2">
+                        Nom complet
+                      </label>
+                      <div className="flex items-center gap-3 h-12 px-4 bg-[#F8F9FD] rounded-[12px]">
                       <User className="w-5 h-5 text-[#6B7280]" />
                       <span className="text-[14px] text-[#1E1548] font-medium">
-                        {adminData.name}
-                      </span>
-                    </div>
+                          {adminData.firstName} {adminData.lastName}
+                        </span>
+                      </div>
+                    </>
                   )}
                 </div>
 
@@ -280,11 +325,7 @@ export function AdminProfilePage({ userName, authEmail, authFirstName, authLastN
                 <div className="flex items-center justify-between py-2 border-b border-[rgba(30,21,72,0.08)]">
                   <span className="text-[13px] text-[#6B7280]">Date d'inscription</span>
                   <span className="text-[14px] font-semibold text-[#1E1548]">
-                    {new Date(adminData.joinedDate).toLocaleDateString('fr-FR', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric'
-                    })}
+                    {adminData.joinedDate}
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-[rgba(30,21,72,0.08)]">
@@ -295,7 +336,7 @@ export function AdminProfilePage({ userName, authEmail, authFirstName, authLastN
                 </div>
                 <div className="flex items-center justify-between py-2">
                   <span className="text-[13px] text-[#6B7280]">Type de compte</span>
-                  <span className="text-[14px] font-semibold text-[#1E1548]">Administrateur</span>
+                  <span className="text-[14px] font-semibold text-[#1E1548]">{adminData.role}</span>
                 </div>
               </div>
             </div>

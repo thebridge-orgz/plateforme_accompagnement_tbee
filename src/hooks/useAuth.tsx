@@ -9,7 +9,14 @@ interface AuthContextType {
     signUp: (email: string, password: string, firstName: string, lastName: string, role?: UserRole) => Promise<void>;
     signOut: () => Promise<void>;
     resetPassword: (email: string) => Promise<void>;
-    saveOnboarding: (user_id:string, data: any) => Promise<void>;
+    updatePassword: (newPassword: string) => Promise<void>;
+    verifyOtp: (tokenHash: string, type?: 'recovery' | 'signup' | 'email') => Promise<any>;
+    hasValidSession: () => Promise<boolean>;
+    saveOnboarding: (user_id: string, data: any) => Promise<void>;
+    updateProfil: (user_id: string, data: any) => Promise<void>;
+    uploadProfilePicture: (user_id: string, file: File) => Promise<string>;
+    deleteProfilePicture: (user_id: string) => Promise<void>;
+    deleteAccount: () => Promise<void>;
     refreshUser: () => Promise<void>;
     isAuthenticated: boolean;
     isAdmin: boolean;
@@ -187,9 +194,57 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         await authService.resetPassword(email);
     };
 
-    const saveOnboarding = async (user_id:string, data:any) => {
+    const updatePassword = async (newPassword: string): Promise<void> => {
+        await authService.updatePassword(newPassword);
+    };
+
+    const verifyOtp = async (tokenHash: string, type: 'recovery' | 'signup' | 'email' = 'recovery') => {
+        return await authService.verifyOtp(tokenHash, type);
+    };
+
+    const hasValidSession = async (): Promise<boolean> => {
+        return await authService.hasValidSession();
+    };
+
+    const updateProfil = async (user_id: string, data: any) => {
+        await authService.updateProfil(user_id, data);
+    };
+
+    const deleteAccount = async () => {
+        await authService.deleteAccount();
+    };
+
+    // ✅ Nouvelle méthode pour uploader la photo de profil
+    const uploadProfilePicture = async (user_id: string, file: File): Promise<string> => {
+        const publicUrl = await authService.uploadProfilePicture(user_id, file);
+
+        // Mettre à jour l'utilisateur localement
+        if (mounted.current && user) {
+            setUser({ ...user, profilePictureUrl: publicUrl });
+        }
+
+        return publicUrl;
+    };
+
+    const deleteProfilePicture = async (user_id: string) => {
+        if (!user?.profilePictureUrl) return;
+
+        try {
+            await authService.deleteProfilePicture(user_id, user.profilePictureUrl);
+
+            // Mettre à jour l'état local
+            if (mounted.current) {
+                setUser({ ...user, profilePictureUrl: '' });
+            }
+        } catch (error) {
+            console.error('Error deleting profile picture:', error);
+            throw error;
+        }
+    };
+
+    const saveOnboarding = async (user_id: string, data: any) => {
         await authService.saveOnboarding(user_id, data);
-    }
+    };
 
     const value: AuthContextType = {
         user,
@@ -197,9 +252,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         signIn,
         signUp,
         signOut,
+        deleteAccount,
         resetPassword,
+        updatePassword,
+        verifyOtp,
+        hasValidSession,
         refreshUser,
         saveOnboarding,
+        updateProfil,
+        uploadProfilePicture,
+        deleteProfilePicture,
         isAuthenticated: !!user,
         isAdmin: user?.role === 'admin',
         isStudent: user?.role === 'student',

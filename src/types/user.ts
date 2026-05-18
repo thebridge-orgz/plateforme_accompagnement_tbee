@@ -16,6 +16,7 @@ export interface UserProfile {
     city: string;
     address: string;
     hasRQTH?: boolean;
+    profilePictureUrl?: string;
     createdAt: string;
     updatedAt: string;
     onboardingCompleted?: boolean; // Indique si l'onboarding est fini

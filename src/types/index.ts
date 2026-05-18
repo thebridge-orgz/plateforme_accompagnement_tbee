@@ -34,6 +34,38 @@ export interface UserProfile {
   updatedAt: string;
 }
 
+// Module Resources
+export type ResourceType = 'pdf' | 'image' | 'video' | 'form' | 'quiz' | 'link';
+
+export interface QuizOption {
+  id: string;
+  text: string;
+  isCorrect: boolean;
+}
+
+export interface QuizQuestion {
+  id: string;
+  question: string;
+  options: QuizOption[];
+}
+
+export interface FormField {
+  id: string;
+  label: string;
+  type: 'text' | 'textarea' | 'radio' | 'checkbox';
+  options?: string[];
+  required: boolean;
+}
+
+export interface ModuleResource {
+  id: string;
+  type: ResourceType;
+  title: string;
+  url?: string;
+  formFields?: FormField[];
+  quizQuestions?: QuizQuestion[];
+}
+
 // Module
 export interface Module {
   id: string;
@@ -48,7 +80,7 @@ export interface Module {
   unlockDate: string | null;
   objectives: string[] | null;
   keyConcepts: string[] | null;
-  resources: Record<string, any> | null;
+  resources: ModuleResource[] | null;
   estimatedHours: number | null;
   difficultyLevel: string | null;
   createdAt: string;
@@ -86,15 +118,21 @@ export interface UserStatistics {
 
 // CV
 export interface CVData {
+  id?: string;
+  userId?: string;
+  cvContent: Object;
+  filePath?: string;
+  isValidated: boolean;
+  createdAt: string;
+  updatedAt: string;
   fileName: string | null;
   fileUrl: string | null;
-  status: CVStatus;
   adminFeedback: string | null;
-  score?: number | null;
   uploadedAt: string | null;
+  status: CVStatus;
+  /*score?: number | null;
   reviewedAt?: string | null;
-  reviewedBy?: string | null;
-  updatedAt: string;
+  reviewedBy?: string | null;*/
 }
 
 // Offer Tracking

@@ -7,7 +7,7 @@ import {
     moduleService
 } from '../services/supabase';
 
-import { UserProfile, CVData, TrackedOffer, Module, CVStatus } from '../types/index';
+import { UserProfile, CVData, TrackedOffer, Module, CVStatus, ModuleResource } from '../types/index';
 import { useAuth } from './useAuth';
 
 // Types spécifiques à l'admin
@@ -79,6 +79,10 @@ interface UseAdminDataReturn extends AdminDataState {
     getStudentById: (studentId: string) => StudentWithStats | undefined;
     getStudentStats: (studentId: string) => StudentWithStats['statistics'] | undefined;
     refresh: () => Promise<void>;
+    createModule: (input: { title: string; description: string; weekNumber: number; orderIndex: number; isPublished: boolean; resources?: ModuleResource[] | null }) => Promise<Module>;
+    updateModule: (moduleId: string, input: Partial<{ title: string; description: string; weekNumber: number; orderIndex: number; isPublished: boolean; resources: ModuleResource[] | null }>) => Promise<void>;
+    togglePublish: (moduleId: string, isPublished: boolean) => Promise<void>;
+    deleteModule: (moduleId: string) => Promise<void>;
 }
 
 export function useAdminData(): UseAdminDataReturn {
@@ -161,8 +165,8 @@ export function useAdminData(): UseAdminDataReturn {
                 mapToTrackedOfferWithStudent(offer, nameMap)
             );
 
-            // Charger les modules
-            const modules = await moduleService.getAllModules();
+            // Charger les modules (admin : tous, y compris brouillons)
+            const modules = await moduleService.getAllModulesAdmin();
 
             // Charger les progressions pour calculer les stats
             const studentsWithStats = await Promise.all(
@@ -306,6 +310,65 @@ export function useAdminData(): UseAdminDataReturn {
         return student?.statistics;
     }, [state.students]);
 
+    // Actions CRUD modules
+    const createModule = useCallback(async (input: {
+        title: string;
+        description: string;
+        weekNumber: number;
+        orderIndex: number;
+        isPublished: boolean;
+        resources?: ModuleResource[] | null;
+    }): Promise<Module> => {
+        const created = await moduleService.createModule(input);
+        setState(prev => ({
+            ...prev,
+            modules: [...prev.modules, created].sort(
+                (a, b) => a.weekNumber - b.weekNumber || a.orderIndex - b.orderIndex
+            ),
+        }));
+        return created;
+    }, []);
+
+    const updateModule = useCallback(async (
+        moduleId: string,
+        input: Partial<{
+            title: string;
+            description: string;
+            weekNumber: number;
+            orderIndex: number;
+            isPublished: boolean;
+            resources: ModuleResource[] | null;
+        }>
+    ): Promise<void> => {
+        await moduleService.updateModule(moduleId, input);
+        setState(prev => ({
+            ...prev,
+            modules: prev.modules.map(m =>
+                m.id === moduleId
+                    ? { ...m, ...input, updatedAt: new Date().toISOString() }
+                    : m
+            ),
+        }));
+    }, []);
+
+    const togglePublish = useCallback(async (moduleId: string, isPublished: boolean): Promise<void> => {
+        await moduleService.updateModule(moduleId, { isPublished });
+        setState(prev => ({
+            ...prev,
+            modules: prev.modules.map(m =>
+                m.id === moduleId ? { ...m, isPublished } : m
+            ),
+        }));
+    }, []);
+
+    const deleteModule = useCallback(async (moduleId: string): Promise<void> => {
+        await moduleService.deleteModule(moduleId);
+        setState(prev => ({
+            ...prev,
+            modules: prev.modules.filter(m => m.id !== moduleId),
+        }));
+    }, []);
+
     // Statistiques globales
     const globalStats: GlobalStats = {
         totalStudents: state.students.length,
@@ -347,5 +410,9 @@ export function useAdminData(): UseAdminDataReturn {
         getStudentById,
         getStudentStats,
         refresh: loadAdminData,
+        createModule,
+        updateModule,
+        togglePublish,
+        deleteModule,
     };
 }

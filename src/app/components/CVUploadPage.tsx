@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { ArrowLeft, CheckCircle2, FileText, Download, Eye, Upload } from 'lucide-react';
 import { Button } from './Button';
 import { FileUploader } from './FileUploader';
-//import { useUserData } from '../../hooks/useUserData';
 import { routes } from '../router/routes';
 import { Link } from 'react-router-dom';
 import { useCvs } from '../../hooks/useCvs'
@@ -31,22 +30,46 @@ const cvTips = [
 ];
 
 export function CVUploadPage() {
-  const { cvs, uploadCV, loading } = useCvs();
-
-  const [isUploading, setIsUploading] = useState(false);
+  const { cvs, uploadCV, deleteCV, loading, MAX_SIZE, ALLOWED_TYPES } = useCvs();
 
   const handleFileUpload = async (file: File) => {
-     setIsUploading(true);
-     try {
-       await uploadCV(file);
-     } catch (error: any) {
-       const message = error?.message || error?.error_description || JSON.stringify(error);
-       alert(`Erreur upload CV: ${message}`);
-       console.error('CV upload error:', error);
-     } finally {
-       setIsUploading(false);
-     }
-   };
+    // Validation du type de fichier
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      alert('Format de fichier non supporté. Veuillez uploader un fichier PDF, DOC ou DOCX.');
+      return;
+    }
+
+    // Validation de la taille (5MB max)
+    if (file.size > MAX_SIZE) {
+      alert(`Le fichier est trop volumineux. Taille maximum : 5MB (${(file.size / (1024 * 1024)).toFixed(2)}MB)`);
+      return;
+    }
+
+    // Validation du nom du fichier (optionnel)
+    const fileName = file.name;
+    if (!fileName.match(/\.(pdf|doc|docx)$/i)) {
+      alert('Extension de fichier non valide. Utilisez .pdf, .doc ou .docx');
+      return;
+    }
+
+    try {
+      await uploadCV(file);
+    } catch (error: any) {
+      const message = error?.message || error?.error_description || JSON.stringify(error);
+      alert(`Erreur upload CV: ${message}`);
+      console.error('CV upload error:', error);
+    }
+  };
+
+  const handleFileDelete = async (id: string, path: string) => {
+    try {
+      await deleteCV(id, path);
+    } catch (error: any) {
+      const message = error?.message || error?.error_description || JSON.stringify(error);
+      alert(`Erreur delete CV: ${message}`);
+      console.error('CV delete error:', error);
+    }
+  };
 
   // Récupérer le premier CV ou un objet par défaut
   const currentCV = cvs[0] || {
@@ -57,7 +80,8 @@ export function CVUploadPage() {
     uploadedAt: null,
     updatedAt: new Date().toISOString()
   };
-  
+  //console.log(`currentCV : ${JSON.stringify(currentCV, null, 2)}`)
+
   const hasCV = currentCV.status !== 'not_uploaded' && currentCV.fileName;
   const hasFeedback = currentCV.status === 'approved' || currentCV.status === 'needs_revision';
 
@@ -175,7 +199,7 @@ export function CVUploadPage() {
                     <Button
                       variant="secondary"
                       className="flex-1"
-                    //onClick={handleFileDelete}
+                      onClick={() => handleFileDelete(currentCV.id!, currentCV.filePath!)}
                     >
                       Supprimer
                     </Button>

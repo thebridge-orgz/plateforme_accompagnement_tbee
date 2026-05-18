@@ -19,11 +19,13 @@ import {
   Eye,
   EyeOff,
   Edit2,
-  X
+  X,
+  Trash
 } from 'lucide-react';
 import { Button } from './Button';
 import { FormInput } from './FormInput';
 import { useUserData } from '../../hooks/useUserData';
+import { useAuth } from '../../hooks/useAuth'
 import { supabase } from '../../config/supabaseClient';
 import { routes } from '../router/routes';
 import { Link, useNavigate } from 'react-router-dom';
@@ -36,7 +38,6 @@ interface StudentProfilePageProps {
 }
 
 export function StudentProfilePage({ userName, authEmail, authFirstName, authLastName }: StudentProfilePageProps) {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'profile' | 'privacy' | 'notifications'>('profile');
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -46,6 +47,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { statistics, modules } = useUserData();
+  const { user, updateProfil, refreshUser, uploadProfilePicture, deleteProfilePicture, updatePassword, deleteAccount, signOut } = useAuth();
 
   // État local pour le mot de passe
   const [passwordData, setPasswordData] = useState({
@@ -53,32 +55,38 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
     newPassword: '',
     confirmPassword: ''
   });
+
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
     confirm: false
   });
+
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  const [isDeletingPhoto, setIsDeletingPhoto] = useState(false);
+  const [showDeletePhotoModal, setShowDeletePhotoModal] = useState(false);
 
   // TODO: Remplacer par les données Supabase + données d'onboarding
-  const [profileData, setProfileData] = useState(/*{
-    firstName: authFirstName || userProfile?.firstName || 'Candidat',
-    lastName: authLastName || userProfile?.lastName || '',
-    email: authEmail || userProfile?.email || '',
-    phone: userProfile?.phone || '',
-    birthDate: userProfile?.birthDate || '',
-    address: (userProfile as any)?.address || '',
-    city: userProfile?.city || '',
-    postalCode: userProfile?.postalCode || '',
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    birthDate: '',
+    address: '',
+    city: '',
+    postalCode: '',
     school: '',
-    program: userProfile?.fieldOfInterest || '',
-    level: userProfile?.currentLevel || '',
-    targetLevel: userProfile?.targetLevel || '',
-    mobilityRadius: userProfile?.mobilityRadius || null,
-    rqth: userProfile?.hasRQTH || false,
-    rqthDetails: ''
-  }*/);
+    program: '',
+    level: '',
+    targetLevel: '',
+    mobilityRadius: '',
+    rqth: false,
+    rqthDetails: '',
+  });
 
   const [notificationSettings, setNotificationSettings] = useState({
     emailNotifications: true,
@@ -86,6 +94,33 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
     progressReports: true,
     tips: false
   });
+
+  if (!user?.id) {
+    alert('Erreur: utilisateur non connecté');
+    return;
+  }
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        birthDate: user.birthDate || '',
+        address: user.address || '',
+        city: user.city || '',
+        postalCode: user.postalCode || '',
+        school: '',
+        program: '',
+        level: user.currentLevel || '',
+        targetLevel: '',
+        mobilityRadius: '',
+        rqth: user.hasRQTH || false,
+        rqthDetails: ''
+      });
+    }
+  }, [user]);
 
   // ============================================
   // GESTION DE L'UPLOAD DE PHOTO
@@ -113,66 +148,98 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
     reader.readAsDataURL(file);
 
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
+      if (!user?.id) {
+        alert('Utilisateur non connecté');
+        return;
+      }
 
-      const filePath = `${authUser.id}/avatar_${Date.now()}.${file.name.split('.').pop()}`;
-      const { error: uploadError } = await supabase.storage
-        .from('profile-pictures')
-        .upload(filePath, file, { upsert: true });
+      // Upload de la photo via le service
+      const publicUrl = await uploadProfilePicture(user.id, file);
 
-      if (uploadError) throw uploadError;
+      // Mettre à jour l'affichage
+      setProfileImage(publicUrl);
 
-      const { data: urlData } = supabase.storage
-        .from('profile-pictures')
-        .getPublicUrl(filePath);
+      // Rafraîchir les données utilisateur
+      await refreshUser();
 
-      //await updateUserProfile({ profilePictureUrl: urlData.publicUrl } as any);
+      alert('✅ Photo de profil mise à jour avec succès !');
     } catch (error) {
       console.error('Erreur upload photo:', error);
+      alert('Erreur lors de l\'upload de la photo');
+      // Revenir à l'ancienne photo en cas d'erreur
+      setProfileImage(user?.profilePictureUrl || null);
     }
   };
 
-  // Charger la photo depuis le profil au montage
-  /*useEffect(() => {
-    if (userProfile && (userProfile as any).profilePictureUrl) {
-      setProfileImage((userProfile as any).profilePictureUrl);
+  const handleDeletePhoto = async () => {
+    if (!user?.id) {
+      alert('Utilisateur non connecté');
+      return;
     }
-  }, [userProfile]);*/
+
+    setIsDeletingPhoto(true);
+    try {
+      await deleteProfilePicture(user.id);
+
+      // Mettre à jour l'affichage local
+      setProfileImage(null);
+
+      // Rafraîchir les données utilisateur
+      await refreshUser();
+
+      alert('✅ Photo de profil supprimée avec succès !');
+      setShowDeletePhotoModal(false);
+    } catch (error) {
+      console.error('Erreur suppression photo:', error);
+      alert('Erreur lors de la suppression de la photo');
+    } finally {
+      setIsDeletingPhoto(false);
+    }
+  };
+
+  // Chargez la photo depuis le profil au montage
+  useEffect(() => {
+    if (user?.profilePictureUrl) {
+      setProfileImage(user.profilePictureUrl);
+    }
+  }, [user?.profilePictureUrl]);
 
   // ============================================
   // GESTION DE LA SAUVEGARDE DU PROFIL
   // ============================================
-  /*const handleSave = async () => {
+  const handleSave = async () => {
     try {
-      await updateUserProfile({
-        firstName: profileData.firstName,
-        lastName: profileData.lastName,
-        phone: profileData.phone,
-        birthDate: profileData.birthDate,
-        hasRQTH: profileData.rqth,
-        address: profileData.address,
-        currentLevel: profileData.level,
-        targetLevel: profileData.targetLevel,
-        fieldOfInterest: profileData.program,
-        city: profileData.city,
-        postalCode: profileData.postalCode,
-        mobilityRadius: profileData.mobilityRadius ?? null,
-      } as any);
+      const data = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        birthDate: formData.birthDate,
+        hasRQTH: formData.rqth,
+        address: formData.address,
+        currentLevel: formData.level,
+        targetLevel: formData.targetLevel,
+        fieldOfInterest: formData.program,
+        city: formData.city,
+        postalCode: formData.postalCode,
+        mobilityRadius: formData.mobilityRadius ?? null,
+      }
+
+      await updateProfil(user.id, data);
+      await refreshUser(); // Rafraîchir les données après modification
       setIsEditing(false);
       alert('✅ Profil mis à jour avec succès !');
     } catch (error) {
       console.error('Erreur sauvegarde profil:', error);
       alert('Erreur lors de la sauvegarde du profil');
     }
-  };*/
+  };
 
-  /*const handleInputChange = (field: string, value: string | boolean | number) => {
-    setProfileData(prev => ({
+  const handleInputChange = (field: string, value: string | boolean | number) => {
+    setFormData(prev => ({
       ...prev,
       [field]: value
     }));
-  };*/
+  };
 
   const handleNotificationChange = (field: string, value: boolean) => {
     setNotificationSettings(prev => ({
@@ -184,7 +251,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
   };
 
   // ============================================
-  // GESTION DU MOT DE PASSE
+  // GESTION DU MOT DE PASSE - VERSION CORRIGÉE
   // ============================================
   const handlePasswordChange = async () => {
     setPasswordError('');
@@ -211,44 +278,51 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
       return;
     }
 
-    // Récupérer l'email de l'utilisateur courant
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (!authUser?.email) {
-      setPasswordError('Erreur : utilisateur non connecté');
-      return;
+    setIsChangingPassword(true);
+
+    try {
+      // Récupérer l'email de l'utilisateur courant
+      const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !authUser?.email) {
+        setPasswordError('Erreur : utilisateur non connecté');
+        setIsChangingPassword(false);
+        return;
+      }
+
+      // Vérifier l'ancien mot de passe en tentant une reconnexion
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: authUser.email,
+        password: passwordData.currentPassword,
+      });
+
+      if (signInError) {
+        setPasswordError('Mot de passe actuel incorrect');
+        setIsChangingPassword(false);
+        return;
+      }
+
+      // Utiliser la méthode updatePassword du hook useAuth
+      await updatePassword(passwordData.newPassword);
+
+      setPasswordSuccess(true);
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+
+      // Réinitialiser les champs après 3 secondes
+      setTimeout(() => {
+        setPasswordSuccess(false);
+      }, 3000);
+
+    } catch (error: any) {
+      console.error('Erreur changement mot de passe:', error);
+      setPasswordError(error.message || 'Erreur lors du changement de mot de passe');
+    } finally {
+      setIsChangingPassword(false);
     }
-
-    // Vérifier l'ancien mot de passe en tentant une reconnexion
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: authUser.email,
-      password: passwordData.currentPassword,
-    });
-
-    if (signInError) {
-      setPasswordError('Mot de passe actuel incorrect');
-      return;
-    }
-
-    // Mettre à jour avec le nouveau mot de passe
-    const { error } = await supabase.auth.updateUser({
-      password: passwordData.newPassword,
-    });
-
-    if (error) {
-      setPasswordError(error.message);
-      return;
-    }
-
-    setPasswordSuccess(true);
-    setPasswordData({
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    });
-
-    setTimeout(() => {
-      setPasswordSuccess(false);
-    }, 3000);
   };
 
   // ============================================
@@ -262,7 +336,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
     // const { data: offersData } = await supabase.from('user_tracked_offers').select('*').eq('user_id', userId);
 
     const exportData = {
-      profile: profileData,
+      profile: formData,
       statistics: statistics,
       modules: modules,
       notificationSettings: notificationSettings,
@@ -275,7 +349,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `tbee-donnees-${/*profileData.firstName*/''}-${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `tbee-donnees-${user.firstName}-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -284,10 +358,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
     alert('✅ Vos données ont été téléchargées avec succès !');
   };
 
-  // ============================================
-  // SUPPRESSION DU COMPTE
-  // ============================================
-  /*const handleDeleteAccount = async () => {
+  const handleDeleteAccount = async () => {
     setIsDeleting(true);
     try {
       // Supprime l'utilisateur dans auth.users (cascade sur toutes les tables liées)
@@ -295,7 +366,9 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
       if (error) throw error;
 
       await supabase.auth.signOut();
-      window.location.replace('/sign-in');
+
+      alert('Votre compte a été supprimé.');
+      ('landing');
     } catch (error) {
       console.error('Erreur suppression compte:', error);
       alert('Erreur lors de la suppression du compte. Réessaie.');
@@ -303,7 +376,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
       setIsDeleting(false);
       setShowDeleteModal(false);
     }
-  };*/
+  };
 
   return (
     <div className="min-h-screen bg-[#F8F9FD] pb-16">
@@ -312,7 +385,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex items-start gap-3 sm:gap-6">
             <button
-              onClick={() => navigate(routes.StudentDashboard.path)}
+              //onClick={() => onNavigate('student-dashboard')}
               className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
               aria-label="Retour"
             >
@@ -347,44 +420,53 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
 
               {/* Avatar Display */}
               {profileImage ? (
-                <img
-                  src={profileImage}
-                  alt="Photo de profil"
-                  className="w-24 h-24 lg:w-32 lg:h-32 rounded-full object-cover border-4 border-white shadow-lg"
-                />
+                <>
+                  <img
+                    src={profileImage}
+                    alt="Photo de profil"
+                    className="w-24 h-24 lg:w-32 lg:h-32 rounded-full object-cover border-4 border-white shadow-lg" />
+                  <button
+                    onClick={() => setShowDeletePhotoModal(true)}
+                    className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
+                    aria-label="Supprimer la photo de profil"
+                  >
+                    <Trash className="w-5 h-5" />
+                  </button>
+                </>
               ) : (
-                <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-full bg-foreground flex items-center justify-center text-background border-4 border-white shadow-lg">
-                  <span className="text-3xl lg:text-4xl font-bold">
-                    {/*profileData.firstName[0]}{profileData.lastName[0] || ''*/}
-                  </span>
-                </div>
-              )}
+                <>
+                  <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-full bg-[#1E1548] flex items-center justify-center text-white border-4 border-white shadow-lg">
+                    <span className="text-3xl lg:text-4xl font-bold">
+                      {user.firstName?.[0]}{user.lastName?.[0]}
+                    </span>
+                  </div>
 
-              {/* Camera Button */}
-              <button
-                onClick={handlePhotoClick}
-                className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-primary text-foreground flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
-                aria-label="Changer la photo de profil"
-              >
-                <Camera className="w-5 h-5" />
-              </button>
+                  <button
+                    onClick={handlePhotoClick}
+                    className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-[#FFD600] text-[#1E1548] flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
+                    aria-label="Changer la photo de profil"
+                  >
+                    <Camera className="w-5 h-5" />
+                  </button>
+                </>
+              )}
             </div>
             <div className="flex-1 text-center sm:text-left">
-              <h3>profileData.firstName profileData.lastName</h3>
-              <p className="text-muted-foreground mb-2">profileData.email</p>
+              <h3 className="text-xl font-bold text-[#1E1548]">{user.firstName} {user.lastName}</h3>
+              <p className="text-[#6B7280] mb-2">{user.email}</p>
               <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                <span className="px-3 py-1 bg-primary/20 rounded-full text-sm font-medium">
-                  profileData.level
+                <span className="px-3 py-1 bg-[#FFD600]/20 rounded-full text-sm font-medium text-[#1E1548]">
+                  {user.currentLevel || 'Niveau non défini'}
                 </span>
-                <span className="px-3 py-1 bg-secondary rounded-full text-sm font-medium">
+                <span className="px-3 py-1 bg-[#10B981]/20 rounded-full text-sm font-medium text-[#059669]">
                   Étudiant actif
                 </span>
-                {/*profileData.rqth && (
-                  <span className="px-3 py-1 bg-accent rounded-full text-sm font-medium flex items-center gap-1">
+                {user.hasRQTH && (
+                  <span className="px-3 py-1 bg-[#8B5CF6]/20 rounded-full text-sm font-medium text-[#7C3AED] flex items-center gap-1">
                     <Shield className="w-4 h-4" />
                     RQTH
                   </span>
-                )*/}
+                )}
               </div>
             </div>
             {!isEditing ? (
@@ -405,7 +487,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                   Annuler
                 </button>
                 <button
-                  //onClick={handleSave}
+                  onClick={handleSave}
                   className="h-10 px-4 bg-[#10B981] text-white rounded-[10px] text-[14px] font-semibold hover:bg-[#059669] transition-all flex items-center justify-center gap-2"
                 >
                   <Save className="w-4 h-4" />
@@ -417,13 +499,13 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-border overflow-x-auto">
+        <div className="border-b border-[#E5E7EB] overflow-x-auto">
           <div className="flex gap-2 min-w-max">
             <button
               onClick={() => setActiveTab('profile')}
               className={`px-4 py-3 font-medium transition-all border-b-2 whitespace-nowrap ${activeTab === 'profile'
-                ? 'border-primary text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
+                ? 'border-[#FFD600] text-[#1E1548]'
+                : 'border-transparent text-[#6B7280] hover:text-[#1E1548]'
                 }`}
             >
               <User className="w-4 h-4 inline mr-2" />
@@ -432,8 +514,8 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
             <button
               onClick={() => setActiveTab('privacy')}
               className={`px-4 py-3 font-medium transition-all border-b-2 whitespace-nowrap ${activeTab === 'privacy'
-                ? 'border-primary text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
+                ? 'border-[#FFD600] text-[#1E1548]'
+                : 'border-transparent text-[#6B7280] hover:text-[#1E1548]'
                 }`}
             >
               <Lock className="w-4 h-4 inline mr-2" />
@@ -442,8 +524,8 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
             <button
               onClick={() => setActiveTab('notifications')}
               className={`px-4 py-3 font-medium transition-all border-b-2 whitespace-nowrap ${activeTab === 'notifications'
-                ? 'border-primary text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
+                ? 'border-[#FFD600] text-[#1E1548]'
+                : 'border-transparent text-[#6B7280] hover:text-[#1E1548]'
                 }`}
             >
               <Bell className="w-4 h-4 inline mr-2" />
@@ -456,34 +538,34 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
         {activeTab === 'profile' && (
           <div className="space-y-6 lg:space-y-8">
             {/* Personal Information */}
-            <div className="bg-card border border-border rounded-2xl p-6">
+            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6">
               <div className="flex items-center gap-2 mb-6">
-                <User className="w-5 h-5 text-primary" />
-                <h4>Informations personnelles</h4>
+                <User className="w-5 h-5 text-[#FFD600]" />
+                <h4 className="text-lg font-semibold text-[#1E1548]">Informations personnelles</h4>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormInput
                   label="Prénom"
                   type="text"
-                  value={/*profileData.firstName*/''}
-                  //onChange={(e) => handleInputChange('firstName', e.target.value)}
+                  value={formData.firstName}
+                  onChange={(e) => handleInputChange('firstName', e.target.value)}
                   disabled={!isEditing}
                   icon={<User className="w-4 h-4" />}
                 />
                 <FormInput
                   label="Nom"
                   type="text"
-                  value={/*profileData.lastName*/''}
-                  //onChange={(e) => handleInputChange('lastName', e.target.value)}
+                  value={formData.lastName}
+                  onChange={(e) => handleInputChange('lastName', e.target.value)}
                   disabled={!isEditing}
                   icon={<User className="w-4 h-4" />}
                 />
                 <FormInput
                   label="Email"
                   type="email"
-                  value={/*profileData.email*/''}
+                  value={formData.email}
                   placeholder="Email"
-                  //onChange={(e) => handleInputChange('email', e.target.value)}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
                   disabled={!isEditing}
                   icon={<Mail className="w-4 h-4" />}
                 />
@@ -491,17 +573,17 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                   label="Téléphone"
                   type="tel"
                   inputMode="numeric"
-                  value={/*profileData.phone*/''}
+                  value={formData.phone}
                   placeholder="0612345678"
-                  //onChange={(e) => handleInputChange('phone', e.target.value.replace(/\D/g, ''))}
+                  onChange={(e) => handleInputChange('phone', e.target.value.replace(/\D/g, ''))}
                   disabled={!isEditing}
                   icon={<Phone className="w-4 h-4" />}
                 />
                 <FormInput
                   label="Date de naissance"
                   type="date"
-                  value={/*profileData.birthDate*/''}
-                  //onChange={(e) => handleInputChange('birthDate', e.target.value)}
+                  value={formData.birthDate}
+                  onChange={(e) => handleInputChange('birthDate', e.target.value)}
                   disabled={!isEditing}
                   icon={<Calendar className="w-4 h-4" />}
                 />
@@ -509,18 +591,18 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
             </div>
 
             {/* Address */}
-            <div className="bg-card border border-border rounded-2xl p-6">
+            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6">
               <div className="flex items-center gap-2 mb-6">
-                <MapPin className="w-5 h-5 text-primary" />
-                <h4>Adresse</h4>
+                <MapPin className="w-5 h-5 text-[#FFD600]" />
+                <h4 className="text-lg font-semibold text-[#1E1548]">Adresse</h4>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <FormInput
                     label="Adresse"
                     type="text"
-                    value={/*profileData.address*/''}
-                    //onChange={(e) => handleInputChange('address', e.target.value)}
+                    value={formData.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
                     disabled={!isEditing}
                     icon={<MapPin className="w-4 h-4" />}
                   />
@@ -528,40 +610,40 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                 <FormInput
                   label="Ville"
                   type="text"
-                  value={/*profileData.city*/''}
-                  //onChange={(e) => handleInputChange('city', e.target.value)}
+                  value={formData.city}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
                   disabled={!isEditing}
                 />
                 <FormInput
                   label="Code postal"
                   type="text"
-                  value={/*profileData.postalCode*/''}
-                  //onChange={(e) => handleInputChange('postalCode', e.target.value)}
+                  value={formData.postalCode}
+                  onChange={(e) => handleInputChange('postalCode', e.target.value)}
                   disabled={!isEditing}
                 />
               </div>
             </div>
 
             {/* Education */}
-            <div className="bg-card border border-border rounded-2xl p-6">
+            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6">
               <div className="flex items-center gap-2 mb-6">
-                <GraduationCap className="w-5 h-5 text-primary" />
-                <h4>Formation</h4>
+                <GraduationCap className="w-5 h-5 text-[#FFD600]" />
+                <h4 className="text-lg font-semibold text-[#1E1548]">Formation</h4>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormInput
                   label="Établissement"
                   type="text"
-                  value={/*profileData.school*/''}
-                  //onChange={(e) => handleInputChange('school', e.target.value)}
+                  value={formData.school}
+                  onChange={(e) => handleInputChange('school', e.target.value)}
                   disabled={!isEditing}
                   icon={<Building2 className="w-4 h-4" />}
                 />
                 <FormInput
                   label="Niveau d'études"
                   type="text"
-                  value={/*profileData.level*/''}
-                  //onChange={(e) => handleInputChange('level', e.target.value)}
+                  value={formData.level}
+                  onChange={(e) => handleInputChange('level', e.target.value)}
                   disabled={!isEditing}
                   icon={<GraduationCap className="w-4 h-4" />}
                 />
@@ -569,8 +651,8 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                   <FormInput
                     label="Programme"
                     type="text"
-                    value={/*profileData.program*/''}
-                    //onChange={(e) => handleInputChange('program', e.target.value)}
+                    value={formData.program}
+                    onChange={(e) => handleInputChange('program', e.target.value)}
                     disabled={!isEditing}
                   />
                 </div>
@@ -578,41 +660,41 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
             </div>
 
             {/* RQTH Information */}
-            <div className="bg-gradient-to-br from-accent/50 to-secondary rounded-2xl p-6 border border-border">
+            <div className="bg-gradient-to-br from-[#8B5CF6]/10 to-[#FFD600]/10 rounded-2xl p-6 border border-[#E5E7EB]">
               <div className="flex items-center gap-2 mb-4">
-                <Shield className="w-5 h-5 text-primary" />
-                <h4>Reconnaissance RQTH</h4>
+                <Shield className="w-5 h-5 text-[#7C3AED]" />
+                <h4 className="text-lg font-semibold text-[#1E1548]">Reconnaissance RQTH</h4>
               </div>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <input
                     type="checkbox"
                     id="rqth"
-                    checked={/*profileData.rqth*/false}
-                    //onChange={(e) => handleInputChange('rqth', e.target.checked)}
+                    checked={formData.rqth}
+                    onChange={(e) => handleInputChange('rqth', e.target.checked)}
                     disabled={!isEditing}
-                    className="w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-ring disabled:opacity-50"
+                    className="w-5 h-5 rounded border-[#E5E7EB] text-[#7C3AED] focus:ring-2 focus:ring-[#8B5CF6] disabled:opacity-50"
                   />
-                  <label htmlFor="rqth" className="font-medium">
+                  <label htmlFor="rqth" className="font-medium text-[#1E1548]">
                     Je bénéficie d'une reconnaissance RQTH
                   </label>
                 </div>
-                {/*profileData.rqth && (
+                {formData.rqth && (
                   <div>
-                    <label className="block mb-2 text-sm font-medium">
+                    <label className="block mb-2 text-sm font-medium text-[#1E1548]">
                       Détails (optionnel)
                     </label>
                     <textarea
-                      value={profileData.rqthDetails}
+                      value={formData.rqthDetails}
                       onChange={(e) => handleInputChange('rqthDetails', e.target.value)}
                       disabled={!isEditing}
                       rows={3}
-                      className="w-full px-4 py-3 bg-input-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 resize-none"
+                      className="w-full px-4 py-3 bg-white border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FFD600] disabled:opacity-50 resize-none"
                       placeholder="Informations complémentaires..."
                     />
                   </div>
-                )*/}
-                <p className="text-sm text-muted-foreground">
+                )}
+                <p className="text-sm text-[#6B7280]">
                   Ces informations sont confidentielles et utilisées uniquement pour personnaliser votre accompagnement.
                 </p>
               </div>
@@ -628,7 +710,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                   Annuler
                 </Button>
                 <Button
-                  //onClick={handleSave}
+                  onClick={handleSave}
                   className="gap-2"
                 >
                   <Save className="w-4 h-4" />
@@ -642,10 +724,10 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
         {activeTab === 'privacy' && (
           <div className="space-y-6">
             {/* Password Change */}
-            <div className="bg-card border border-border rounded-2xl p-6">
+            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6">
               <div className="flex items-center gap-2 mb-6">
-                <Lock className="w-5 h-5 text-primary" />
-                <h4>Modifier le mot de passe</h4>
+                <Lock className="w-5 h-5 text-[#FFD600]" />
+                <h4 className="text-lg font-semibold text-[#1E1548]">Modifier le mot de passe</h4>
               </div>
               <div className="space-y-4 max-w-lg">
                 <FormInput
@@ -666,7 +748,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                 <FormInput
                   label="Nouveau mot de passe"
                   type={showPasswords.new ? 'text' : 'password'}
-                  placeholder="••••••••"
+                  placeholder="•••••••• (minimum 8 caractères)"
                   value={passwordData.newPassword}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
                   rightIcon={
@@ -696,8 +778,9 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                 <Button
                   className="w-full sm:w-auto"
                   onClick={handlePasswordChange}
+                  disabled={isChangingPassword}
                 >
-                  Mettre à jour le mot de passe
+                  {isChangingPassword ? 'Changement en cours...' : 'Mettre à jour le mot de passe'}
                 </Button>
                 {passwordError && (
                   <p className="text-sm text-red-500 mt-2">
@@ -706,32 +789,33 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                 )}
                 {passwordSuccess && (
                   <p className="text-sm text-green-500 mt-2">
-                    Mot de passe mis à jour avec succès !
+                    ✅ Mot de passe mis à jour avec succès ! Vous allez être déconnecté.
                   </p>
                 )}
               </div>
             </div>
 
             {/* Data Export */}
-            <div className="bg-card border border-border rounded-2xl p-6">
+            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6">
               <div className="flex items-center gap-2 mb-4">
-                <Settings className="w-5 h-5 text-primary" />
-                <h4>Mes données</h4>
+                <Download className="w-5 h-5 text-[#FFD600]" />
+                <h4 className="text-lg font-semibold text-[#1E1548]">Mes données</h4>
               </div>
-              <p className="text-muted-foreground mb-6">
+              <p className="text-[#6B7280] mb-6">
                 Vous pouvez télécharger une copie de toutes vos données personnelles.
               </p>
               <Button
                 variant="secondary"
                 onClick={handleDownloadData}
               >
+                <Download className="w-4 h-4 mr-2" />
                 Télécharger mes données
               </Button>
             </div>
 
             {/* Delete Account */}
             <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-2xl p-6 border border-red-200">
-              <h4 className="mb-2 text-red-900">⚠️ Zone dangereuse</h4>
+              <h4 className="text-lg font-semibold mb-2 text-red-900">⚠️ Zone dangereuse</h4>
               <p className="text-sm text-red-900 mb-6">
                 La suppression de votre compte est définitive et irréversible. Toutes vos données seront supprimées.
               </p>
@@ -740,6 +824,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                 className="border-red-300 text-red-700 hover:bg-red-100"
                 onClick={() => setShowDeleteModal(true)}
               >
+                <Trash className="w-4 h-4 mr-2" />
                 Supprimer mon compte
               </Button>
             </div>
@@ -749,16 +834,16 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
         {activeTab === 'notifications' && (
           <div className="space-y-6">
             {/* Email Notifications */}
-            <div className="bg-card border border-border rounded-2xl p-6">
+            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6">
               <div className="flex items-center gap-2 mb-6">
-                <Bell className="w-5 h-5 text-primary" />
-                <h4>Préférences de notification</h4>
+                <Bell className="w-5 h-5 text-[#FFD600]" />
+                <h4 className="text-lg font-semibold text-[#1E1548]">Préférences de notification</h4>
               </div>
               <div className="space-y-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <p className="font-medium mb-1">Notifications par email</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="font-medium text-[#1E1548] mb-1">Notifications par email</p>
+                    <p className="text-sm text-[#6B7280]">
                       Recevez des emails pour les mises à jour importantes
                     </p>
                   </div>
@@ -769,16 +854,16 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                       onChange={(e) => handleNotificationChange('emailNotifications', e.target.checked)}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-muted peer-focus:ring-2 peer-focus:ring-ring rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    <div className="w-11 h-6 bg-[#E5E7EB] peer-focus:ring-2 peer-focus:ring-[#FFD600] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#10B981]"></div>
                   </label>
                 </div>
 
-                <div className="h-px bg-border"></div>
+                <div className="h-px bg-[#E5E7EB]"></div>
 
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <p className="font-medium mb-1">Mises à jour des modules</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="font-medium text-[#1E1548] mb-1">Mises à jour des modules</p>
+                    <p className="text-sm text-[#6B7280]">
                       Soyez notifié quand de nouveaux modules sont disponibles
                     </p>
                   </div>
@@ -789,16 +874,16 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                       onChange={(e) => handleNotificationChange('moduleUpdates', e.target.checked)}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-muted peer-focus:ring-2 peer-focus:ring-ring rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    <div className="w-11 h-6 bg-[#E5E7EB] peer-focus:ring-2 peer-focus:ring-[#FFD600] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#10B981]"></div>
                   </label>
                 </div>
 
-                <div className="h-px bg-border"></div>
+                <div className="h-px bg-[#E5E7EB]"></div>
 
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <p className="font-medium mb-1">Rapports de progression</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="font-medium text-[#1E1548] mb-1">Rapports de progression</p>
+                    <p className="text-sm text-[#6B7280]">
                       Recevez un récapitulatif hebdomadaire de votre progression
                     </p>
                   </div>
@@ -809,16 +894,16 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                       onChange={(e) => handleNotificationChange('progressReports', e.target.checked)}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-muted peer-focus:ring-2 peer-focus:ring-ring rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    <div className="w-11 h-6 bg-[#E5E7EB] peer-focus:ring-2 peer-focus:ring-[#FFD600] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#10B981]"></div>
                   </label>
                 </div>
 
-                <div className="h-px bg-border"></div>
+                <div className="h-px bg-[#E5E7EB]"></div>
 
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <p className="font-medium mb-1">Conseils et astuces</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="font-medium text-[#1E1548] mb-1">Conseils et astuces</p>
+                    <p className="text-sm text-[#6B7280]">
                       Conseils personnalisés pour améliorer votre parcours
                     </p>
                   </div>
@@ -829,7 +914,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                       onChange={(e) => handleNotificationChange('tips', e.target.checked)}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-muted peer-focus:ring-2 peer-focus:ring-ring rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    <div className="w-11 h-6 bg-[#E5E7EB] peer-focus:ring-2 peer-focus:ring-[#FFD600] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#10B981]"></div>
                   </label>
                 </div>
               </div>
@@ -844,6 +929,44 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
           </div>
         )}
       </div>
+
+      {/* Delete Photo Modal */}
+      {showDeletePhotoModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[24px] p-8 max-w-md w-full shadow-2xl">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertTriangle className="w-8 h-8 text-red-500" />
+            </div>
+            <h3 className="text-[22px] font-bold text-[#1E1548] text-center mb-3">
+              Supprimer la photo ?
+            </h3>
+            <p className="text-[14px] text-[#6B7280] text-center leading-[22px] mb-8">
+              Cette action est irréversible. Votre photo de profil sera définitivement supprimée.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeletePhotoModal(false)}
+                disabled={isDeletingPhoto}
+                className="flex-1 h-12 bg-white border border-[rgba(30,21,72,0.15)] text-[#1E1548] rounded-[12px] text-[15px] font-semibold hover:bg-[#F8F9FD] transition-colors disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleDeletePhoto}
+                disabled={isDeletingPhoto}
+                className="flex-1 h-12 bg-red-500 text-white rounded-[12px] text-[15px] font-semibold hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isDeletingPhoto ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Suppression...
+                  </>
+                ) : 'Supprimer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Account Modal */}
       {showDeleteModal && (
@@ -878,7 +1001,7 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
                 Annuler
               </button>
               <button
-                //onClick={handleDeleteAccount}
+                onClick={handleDeleteAccount}
                 disabled={isDeleting}
                 className="flex-1 h-12 bg-red-500 text-white rounded-[12px] text-[15px] font-semibold hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >

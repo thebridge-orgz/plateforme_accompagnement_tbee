@@ -1,5 +1,5 @@
 import { supabase } from '../../config/supabaseClient';
-import { Module, ModuleWithProgress, ModuleStatus } from '../../types/index';
+import { Module, ModuleWithProgress, ModuleResource } from '../../types/index';
 import { mapModuleFromDB, mapModuleProgressFromDB } from '../../utils/mappers';
 
 class ModuleService {
@@ -8,8 +8,8 @@ class ModuleService {
             .from('modules')
             .select('*')
             .eq('is_published', true)
+            .order('week_number')
             .order('order_index');
-        //console.log('supabase', await supabase.from('user_tracked_offers').select('*'));
 
         if (error) throw error;
         return (data).map(mapModuleFromDB);
@@ -25,30 +25,48 @@ class ModuleService {
             progresses.map(progress => [progress.moduleId, progress])
         );
 
-        return modules.map(module => {
-            const progress = progressMap.get(module.id);
-            //console.log(`module id : ${module.id}\nweek number : ${module.weekNumber}\n\nprogress : ${JSON.stringify(progress, null, 2)}`);
+        // Tri par semaine puis position — détermine la séquence de déblocage
+        const sorted = [...modules].sort(
+            (a, b) => a.weekNumber - b.weekNumber || a.orderIndex - b.orderIndex
+        );
 
-            if (!progress) {
-                return {
+        // Boucle séquentielle : chaque module utilise le statut EFFECTIF du précédent
+        // (pas son statut brut en DB) pour décider s'il est accessible.
+        // Cela garantit qu'un module intercalé bloque bien les suivants.
+        const result: ModuleWithProgress[] = [];
+
+        for (let i = 0; i < sorted.length; i++) {
+            const module = sorted[i];
+            const progress = progressMap.get(module.id);
+
+            // Le précédent doit être 'completed' (effectif) pour débloquer ce module.
+            // Le tout premier module est toujours accessible.
+            const prevCompleted = i === 0 || result[i - 1].status === 'completed';
+
+            if (progress) {
+                result.push({
                     ...module,
-                    status: 'locked',
+                    // Si le précédent n'est pas encore terminé, on verrouille même si
+                    // la DB indique 'in_progress' (module intercalé après coup).
+                    status: prevCompleted ? progress.status : 'locked',
+                    progress: progress.progress,
+                    xp: progress.xp,
+                    completedSteps: progress.completedSteps,
+                    moduleId: progress.moduleId,
+                });
+            } else {
+                result.push({
+                    ...module,
+                    status: prevCompleted ? 'available' : 'locked',
                     progress: 0,
                     xp: 0,
                     completedSteps: [],
-                    moduleId: module.id
-                };
+                    moduleId: module.id,
+                });
             }
+        }
 
-            return {
-                ...module,
-                status: progress.status,
-                progress: progress.progress,
-                xp: progress.xp,
-                completedSteps: progress.completedSteps,
-                moduleId: progress.moduleId
-            };
-        });
+        return result;
     }
 
     async getUserModuleProgress(userId: string) {
@@ -88,30 +106,36 @@ class ModuleService {
     }
 
     async unlockModule(userId: string, moduleId: string): Promise<void> {
+        // ignoreDuplicates: ne pas écraser un enregistrement existant (progression déjà en cours)
         const { error } = await supabase
             .from('user_module_progress')
-            .insert({
+            .upsert({
                 user_id: userId,
                 module_id: moduleId,
                 status: 'available',
                 completed_steps: [],
-                created_at: new Date().toISOString()
-            });
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+            }, { onConflict: 'user_id,module_id', ignoreDuplicates: true });
 
         if (error) throw error;
     }
 
     async startModule(userId: string, moduleId: string): Promise<void> {
+        // Upsert : crée la ligne si elle n'existe pas encore
+        // (cas d'un module ajouté après que l'étudiant ait déjà débloqué le précédent)
         const { error } = await supabase
             .from('user_module_progress')
-            .update({
+            .upsert({
+                user_id: userId,
+                module_id: moduleId,
                 status: 'in_progress',
                 progress: 0,
+                completed_steps: [],
                 started_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
-            })
-            .eq('user_id', userId)
-            .eq('module_id', moduleId);
+                created_at: new Date().toISOString(),
+            }, { onConflict: 'user_id,module_id' });
 
         if (error) throw error;
     }
@@ -128,6 +152,99 @@ class ModuleService {
             })
             .eq('user_id', userId)
             .eq('module_id', moduleId);
+
+        if (error) throw error;
+    }
+
+    // ── Admin methods ──────────────────────────────────────────────────────────
+
+    async uploadModuleResource(file: File): Promise<string> {
+        const ext = file.name.split('.').pop() ?? 'bin';
+        const path = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+
+        const { error } = await supabase.storage
+            .from('module-resources')
+            .upload(path, file, { upsert: false });
+
+        if (error) throw error;
+
+        const { data } = supabase.storage
+            .from('module-resources')
+            .getPublicUrl(path);
+
+        return data.publicUrl;
+    }
+
+    async getAllModulesAdmin(): Promise<Module[]> {
+        const { data, error } = await supabase
+            .from('modules')
+            .select('*')
+            .order('week_number')
+            .order('order_index');
+
+        if (error) throw error;
+        return data.map(mapModuleFromDB);
+    }
+
+    async createModule(input: {
+        title: string;
+        description: string;
+        weekNumber: number;
+        orderIndex: number;
+        isPublished: boolean;
+        resources?: ModuleResource[] | null;
+    }): Promise<Module> {
+        const { data, error } = await supabase
+            .from('modules')
+            .insert({
+                title: input.title,
+                description: input.description,
+                week_number: input.weekNumber,
+                order_index: input.orderIndex,
+                is_published: input.isPublished,
+                unlock_condition: 'none',
+                resources: input.resources ?? null,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return mapModuleFromDB(data);
+    }
+
+    async updateModule(moduleId: string, input: Partial<{
+        title: string;
+        description: string;
+        weekNumber: number;
+        orderIndex: number;
+        isPublished: boolean;
+        resources: ModuleResource[] | null;
+    }>): Promise<void> {
+        const updates: Record<string, unknown> = {
+            updated_at: new Date().toISOString(),
+        };
+        if (input.title !== undefined) updates.title = input.title;
+        if (input.description !== undefined) updates.description = input.description;
+        if (input.weekNumber !== undefined) updates.week_number = input.weekNumber;
+        if (input.orderIndex !== undefined) updates.order_index = input.orderIndex;
+        if (input.isPublished !== undefined) updates.is_published = input.isPublished;
+        if (input.resources !== undefined) updates.resources = input.resources;
+
+        const { error } = await supabase
+            .from('modules')
+            .update(updates)
+            .eq('id', moduleId);
+
+        if (error) throw error;
+    }
+
+    async deleteModule(moduleId: string): Promise<void> {
+        const { error } = await supabase
+            .from('modules')
+            .delete()
+            .eq('id', moduleId);
 
         if (error) throw error;
     }

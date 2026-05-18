@@ -31,6 +31,14 @@ export const routes = {
         path: '/sign-in',
         label: 'Se connecter'
     },
+    ForgotPassword: {
+        path: '/forgot-password',
+        label: 'Mot de passe oublié'
+    },
+    ResetPassword: {
+        path: '/reset-password',
+        label: 'Réinitialisation du mot de passe'
+    },
     Onboarding: {
         path: '/onboarding',
         label: 'Onboarding',
