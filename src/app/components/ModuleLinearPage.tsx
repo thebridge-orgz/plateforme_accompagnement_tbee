@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle2, ChevronLeft, ChevronRight, Clock, FileText, Lock, Play, Trophy, Upload, Video, X } from 'lucide-react';
+import { CheckCircle2, ChevronLeft, ChevronRight, Clock, FileText, Lock, Play, Trophy, Upload, Video, X, FileImage, Link2, ClipboardList, CheckSquare } from 'lucide-react';
 import { routes } from '../../app/router/routes';
 import { Link } from 'react-router-dom';
 import { useModules } from '../../hooks/useModules';
@@ -229,6 +229,25 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
 
   const staticModule = moduleStaticContent[`week${userModule?.weekNumber}`];
 
+  // Priorité aux ressources admin sur le contenu statique codé en dur.
+  // Cela rend les modules créés via l'interface admin pleinement fonctionnels.
+  const adminResources = Array.isArray(userModule?.resources) && (userModule?.resources?.length ?? 0) > 0
+    ? userModule!.resources!
+    : null;
+
+  const effectiveContent = adminResources
+    ? {
+        steps: adminResources.map(r => ({
+          id: r.id,
+          type: r.type,
+          title: r.title,
+          description: '',
+          duration: '–',
+          content: r,
+        })),
+      }
+    : staticModule;
+
   // Initialiser avec les steps déjà complétés (persistés en DB)
   const [completedStepsLocal, setCompletedStepsLocal] = useState<string[]>(
     () => userModule?.completedSteps ?? []
@@ -246,11 +265,10 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
   // -------------------- INITIALIZATION --------------------
 
   useEffect(() => {
-    if (userModule && staticModule) {
+    if (userModule && effectiveContent) {
       // Démarrer le module s'il est disponible mais pas encore commencé
       if (userModule.status === 'available') {
         startModule(userModule.id);
-        //updateStreak();
       }
 
       // Charger les steps persistés en DB (une seule fois au montage)
@@ -260,60 +278,49 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
         setInitialized(true);
 
         // Reprendre à la première étape non complétée, ou la première
-        const firstIncomplete = staticModule.steps.find(
+        const firstIncomplete = effectiveContent.steps.find(
           (s: any) => !persisted.includes(s.id)
         );
-        setActiveStepId(firstIncomplete?.id ?? staticModule.steps[0]?.id ?? null);
+        setActiveStepId(firstIncomplete?.id ?? effectiveContent.steps[0]?.id ?? null);
       }
     }
-  }, [userModule, staticModule, startModule/*, updateStreak*/, initialized]);
+  }, [userModule, effectiveContent, startModule, initialized]);
 
   // -------------------- HANDLERS --------------------
 
   const handleCompleteStep = async (stepId: string) => {
-    if (!userModule || !staticModule) return;
+    if (!userModule || !effectiveContent) return;
 
-    const step = staticModule.steps.find((step: any) => step.id === stepId);
+    const step = effectiveContent.steps.find((step: any) => step.id === stepId);
     if (!step) return;
 
     if (!completedStepsLocal.includes(stepId)) {
       const newCompleted = [...completedStepsLocal, stepId];
-      //console.log(`newCompleted : ${newCompleted}`)
       setCompletedStepsLocal(newCompleted);
 
       try {
-        // Persister les steps complétés en DB
         updateCompletedSteps(userModule.id, newCompleted);
 
-        // Incrémenter le temps d'étude
-        const minutes = parseDuration(step.duration);
-        //await incrementStudyTime(minutes);
-
-        // Calculer la nouvelle progression
-        const totalSteps = staticModule.steps.length;
+        const totalSteps = effectiveContent.steps.length;
         const completedCount = newCompleted.length;
         const newProgress = Math.round((completedCount / totalSteps) * 100);
 
-        // Mettre à jour la progression du module
         updateProgress(userModule.id, newProgress);
 
-        // Si toutes les étapes sont complétées, marquer le module comme terminé
         if (completedCount === totalSteps) {
           completeModule(userModule.id);
-          if (!isLastModule) unlockModule(nextModule.id)
+          if (!isLastModule && nextModule) unlockModule(nextModule.id);
           if (isLastModule) {
             setTimeout(() => setShowCelebration(true), 600);
           }
         }
 
-        // Passer à l'étape suivante
-        const currentIndex = staticModule.steps.findIndex((s: any) => s.id === stepId);
-        if (currentIndex < staticModule.steps.length - 1) {
-          setActiveStepId(staticModule.steps[currentIndex + 1].id);
+        const currentIndex = effectiveContent.steps.findIndex((s: any) => s.id === stepId);
+        if (currentIndex < effectiveContent.steps.length - 1) {
+          setActiveStepId(effectiveContent.steps[currentIndex + 1].id);
         }
       } catch (error: any) {
         alert(`Erreur sauvegarde progression: ${error?.message || JSON.stringify(error)}`);
-        //console.error('handleCompleteStep error:', error);
       }
     }
   };
@@ -326,13 +333,18 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
       case 'exercise': return <FileText className="w-5 h-5" />;
       case 'upload': return <Upload className="w-5 h-5" />;
       case 'text': return <FileText className="w-5 h-5" />;
+      case 'pdf': return <FileText className="w-5 h-5" />;
+      case 'image': return <FileImage className="w-5 h-5" />;
+      case 'link': return <Link2 className="w-5 h-5" />;
+      case 'form': return <ClipboardList className="w-5 h-5" />;
+      case 'quiz': return <CheckSquare className="w-5 h-5" />;
       default: return <Play className="w-5 h-5" />;
     }
   };
 
   const getStepStatus = (stepId: string, index: number) => {
     if (completedStepsLocal.includes(stepId)) return 'completed';
-    if (index === 0 || completedStepsLocal.includes(staticModule.steps[index - 1]?.id)) {
+    if (index === 0 || completedStepsLocal.includes(effectiveContent!.steps[index - 1]?.id)) {
       return 'available';
     }
     return 'locked';
@@ -340,7 +352,7 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
 
   // -------------------- GUARDS --------------------
 
-  if (!userModule || userModule.status === 'locked' || !staticModule) {
+  if (!userModule || userModule.status === 'locked' || !effectiveContent) {
     return (
       <div className="min-h-screen bg-[#ffffff] flex items-center justify-center">
         <div className="text-center">
@@ -360,8 +372,8 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
   // -------------------- COMPUTED VALUES --------------------
 
   const completedCount = completedStepsLocal.length;
-  const totalSteps = staticModule.steps.length;
-  const activeStep = staticModule.steps.find((s: any) => s.id === activeStepId);
+  const totalSteps = effectiveContent.steps.length;
+  const activeStep = effectiveContent.steps.find((s: any) => s.id === activeStepId);
 
   // -------------------- RENDER --------------------
 
@@ -417,7 +429,7 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
                   Étapes du module
                 </h4>
                 <div className="space-y-2">
-                  {staticModule.steps.map((step: any, index: number) => {
+                  {effectiveContent.steps.map((step: any, index: number) => {
                     const status = getStepStatus(step.id, index);
                     const isLocked = status === 'locked';
                     const isCompleted = status === 'completed';
@@ -517,11 +529,12 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
                   {/* Step Content */}
                   {activeStep.type === 'video' && (
                     <div className="space-y-4 sm:space-y-6">
-                      {/* Video Player */}
-                      {activeStep.content.videoUrl && activeStep.content.videoUrl !== '#' ? (
+                      {/* Video Player — accepte videoUrl (statique) ou url (admin) */}
+                      {(activeStep.content?.videoUrl || activeStep.content?.url) &&
+                       (activeStep.content?.videoUrl || activeStep.content?.url) !== '#' ? (
                         <div className="rounded-[16px] overflow-hidden aspect-video">
                           <iframe
-                            src={activeStep.content.videoUrl}
+                            src={activeStep.content?.videoUrl || activeStep.content?.url}
                             className="w-full h-full"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                             allowFullScreen
@@ -717,34 +730,122 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
                       <h4 className="text-[16px] sm:text-[18px] font-semibold text-[#1E1548] mb-4">
                         Renseigner une information
                       </h4>
-
-                      {/* Review Status for LinkedIn */}
                       {activeStep.reviewStatus && (
-                        <div className={`
-                        p-3 sm:p-4 rounded-[12px] mb-4
-                        ${activeStep.reviewStatus === 'pending' ? 'bg-[#FEF3C7] border border-[#F59E0B]' : ''}
-                        ${activeStep.reviewStatus === 'approved' ? 'bg-[#D1FAE5] border border-[#10B981]' : ''}
-                      `}>
+                        <div className={`p-3 sm:p-4 rounded-[12px] mb-4 ${activeStep.reviewStatus === 'pending' ? 'bg-[#FEF3C7] border border-[#F59E0B]' : 'bg-[#D1FAE5] border border-[#10B981]'}`}>
                           <p className="text-[13px] sm:text-[14px] font-medium text-[#1E1548]">
-                            {activeStep.reviewStatus === 'pending' && '⏳ En cours de révision'}
-                            {activeStep.reviewStatus === 'approved' && '✅ Validé'}
+                            {activeStep.reviewStatus === 'pending' ? '⏳ En cours de révision' : '✅ Validé'}
                           </p>
                         </div>
                       )}
-
-                      <input
-                        type="url"
-                        className="w-full h-10 sm:h-12 px-3 sm:px-4 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[12px] text-[13px] sm:text-[14px] text-[#1E1548] focus:outline-none focus:ring-2 focus:ring-[#FFD600]"
-                        placeholder={activeStep.content.placeholder}
-                      />
-                      <button
-                        onClick={() => handleCompleteStep(activeStep.id)}
-                        className="w-full h-10 sm:h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#FDC700] transition-colors mt-4"
-                      >
+                      <input type="url" className="w-full h-10 sm:h-12 px-3 sm:px-4 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[12px] text-[13px] sm:text-[14px] text-[#1E1548] focus:outline-none focus:ring-2 focus:ring-[#FFD600]" placeholder={activeStep.content.placeholder} />
+                      <button onClick={() => handleCompleteStep(activeStep.id)} className="w-full h-10 sm:h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#FDC700] transition-colors mt-4">
                         Enregistrer
                       </button>
                     </div>
                   )}
+
+                  {/* ── Rendu des ressources admin ────────────────────────────── */}
+
+                  {activeStep.type === 'pdf' && (
+                    <div className="bg-white border border-[rgba(30,21,72,0.1)] rounded-[16px] p-4 sm:p-6 space-y-4">
+                      {activeStep.content?.url ? (
+                        <a href={activeStep.content.url} target="_blank" rel="noreferrer"
+                          className="flex items-center gap-3 p-4 bg-[#E8ECFF] rounded-[12px] hover:bg-[#E8ECFF]/80 transition-colors">
+                          <FileText className="w-6 h-6 text-[#FFD600] flex-shrink-0" />
+                          <span className="text-[14px] font-medium text-[#1E1548]">Ouvrir le document PDF</span>
+                          <ChevronRight className="w-4 h-4 text-[#6B7280] ml-auto" />
+                        </a>
+                      ) : (
+                        <p className="text-[14px] text-[#6B7280]">Document non disponible.</p>
+                      )}
+                      <button onClick={() => handleCompleteStep(activeStep.id)} disabled={completedStepsLocal.includes(activeStep.id)}
+                        className={`w-full h-11 rounded-[12px] text-[14px] font-semibold transition-colors ${completedStepsLocal.includes(activeStep.id) ? 'bg-[#D1FAE5] text-[#10B981] cursor-not-allowed' : 'bg-[#FFD600] text-[#1E1548] hover:bg-[#FDC700]'}`}>
+                        {completedStepsLocal.includes(activeStep.id) ? '✓ Terminé' : 'Marquer comme terminé'}
+                      </button>
+                    </div>
+                  )}
+
+                  {activeStep.type === 'image' && (
+                    <div className="bg-white border border-[rgba(30,21,72,0.1)] rounded-[16px] p-4 sm:p-6 space-y-4">
+                      {activeStep.content?.url && (
+                        <img src={activeStep.content.url} alt={activeStep.title} className="w-full rounded-[12px] object-contain max-h-[500px]" />
+                      )}
+                      <button onClick={() => handleCompleteStep(activeStep.id)} disabled={completedStepsLocal.includes(activeStep.id)}
+                        className={`w-full h-11 rounded-[12px] text-[14px] font-semibold transition-colors ${completedStepsLocal.includes(activeStep.id) ? 'bg-[#D1FAE5] text-[#10B981] cursor-not-allowed' : 'bg-[#FFD600] text-[#1E1548] hover:bg-[#FDC700]'}`}>
+                        {completedStepsLocal.includes(activeStep.id) ? '✓ Terminé' : 'Marquer comme terminé'}
+                      </button>
+                    </div>
+                  )}
+
+                  {activeStep.type === 'link' && (
+                    <div className="bg-white border border-[rgba(30,21,72,0.1)] rounded-[16px] p-4 sm:p-6 space-y-4">
+                      {activeStep.content?.url ? (
+                        <a href={activeStep.content.url} target="_blank" rel="noreferrer"
+                          className="flex items-center gap-3 p-4 bg-[#E8ECFF] rounded-[12px] hover:bg-[#E8ECFF]/80 transition-colors">
+                          <Link2 className="w-6 h-6 text-[#FFD600] flex-shrink-0" />
+                          <span className="text-[14px] font-medium text-[#1E1548] truncate">{activeStep.content.url}</span>
+                          <ChevronRight className="w-4 h-4 text-[#6B7280] ml-auto flex-shrink-0" />
+                        </a>
+                      ) : (
+                        <p className="text-[14px] text-[#6B7280]">Lien non disponible.</p>
+                      )}
+                      <button onClick={() => handleCompleteStep(activeStep.id)} disabled={completedStepsLocal.includes(activeStep.id)}
+                        className={`w-full h-11 rounded-[12px] text-[14px] font-semibold transition-colors ${completedStepsLocal.includes(activeStep.id) ? 'bg-[#D1FAE5] text-[#10B981] cursor-not-allowed' : 'bg-[#FFD600] text-[#1E1548] hover:bg-[#FDC700]'}`}>
+                        {completedStepsLocal.includes(activeStep.id) ? '✓ Terminé' : 'Marquer comme terminé'}
+                      </button>
+                    </div>
+                  )}
+
+                  {activeStep.type === 'form' && (
+                    <div className="bg-white border border-[rgba(30,21,72,0.1)] rounded-[16px] p-4 sm:p-6 space-y-4">
+                      {(activeStep.content?.formFields ?? []).map((field: any) => (
+                        <div key={field.id}>
+                          <label className="block text-[13px] font-semibold text-[#1E1548] mb-1.5">
+                            {field.label}{field.required && <span className="text-red-500 ml-1">*</span>}
+                          </label>
+                          {field.type === 'text' && <input type="text" className="w-full h-10 px-3 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[10px] text-[14px] text-[#1E1548] focus:outline-none focus:ring-2 focus:ring-[#FFD600]" />}
+                          {field.type === 'textarea' && <textarea rows={3} className="w-full px-3 py-2 bg-[#F8F9FD] border border-[rgba(30,21,72,0.1)] rounded-[10px] text-[14px] text-[#1E1548] focus:outline-none focus:ring-2 focus:ring-[#FFD600] resize-y" />}
+                          {(field.type === 'radio' || field.type === 'checkbox') && (
+                            <div className="space-y-1.5">
+                              {(field.options ?? []).map((opt: string, i: number) => (
+                                <label key={i} className="flex items-center gap-2 cursor-pointer text-[14px] text-[#1E1548]">
+                                  <input type={field.type} name={field.id} className="accent-[#FFD600]" />
+                                  {opt}
+                                </label>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      <button onClick={() => handleCompleteStep(activeStep.id)} disabled={completedStepsLocal.includes(activeStep.id)}
+                        className={`w-full h-11 rounded-[12px] text-[14px] font-semibold transition-colors ${completedStepsLocal.includes(activeStep.id) ? 'bg-[#D1FAE5] text-[#10B981] cursor-not-allowed' : 'bg-[#FFD600] text-[#1E1548] hover:bg-[#FDC700]'}`}>
+                        {completedStepsLocal.includes(activeStep.id) ? '✓ Terminé' : 'Soumettre le formulaire'}
+                      </button>
+                    </div>
+                  )}
+
+                  {activeStep.type === 'quiz' && (
+                    <div className="bg-white border border-[rgba(30,21,72,0.1)] rounded-[16px] p-4 sm:p-6 space-y-6">
+                      {(activeStep.content?.quizQuestions ?? []).map((q: any, qi: number) => (
+                        <div key={q.id} className="space-y-2">
+                          <p className="text-[14px] font-semibold text-[#1E1548]">{qi + 1}. {q.question}</p>
+                          <div className="space-y-1.5">
+                            {(q.options ?? []).map((opt: any) => (
+                              <label key={opt.id} className="flex items-center gap-2 cursor-pointer p-2.5 rounded-[8px] hover:bg-[#F8F9FD] text-[14px] text-[#1E1548]">
+                                <input type="checkbox" className="accent-[#FFD600] w-4 h-4" />
+                                {opt.text}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                      <button onClick={() => handleCompleteStep(activeStep.id)} disabled={completedStepsLocal.includes(activeStep.id)}
+                        className={`w-full h-11 rounded-[12px] text-[14px] font-semibold transition-colors ${completedStepsLocal.includes(activeStep.id) ? 'bg-[#D1FAE5] text-[#10B981] cursor-not-allowed' : 'bg-[#FFD600] text-[#1E1548] hover:bg-[#FDC700]'}`}>
+                        {completedStepsLocal.includes(activeStep.id) ? '✓ Terminé' : 'Valider le quiz'}
+                      </button>
+                    </div>
+                  )}
+
                 </div>
               )}
             </div>

@@ -122,22 +122,37 @@ class ModuleService {
     }
 
     async startModule(userId: string, moduleId: string): Promise<void> {
-        // Upsert : crée la ligne si elle n'existe pas encore
-        // (cas d'un module ajouté après que l'étudiant ait déjà débloqué le précédent)
-        const { error } = await supabase
+        // UPDATE en premier (enregistrement déjà existant)
+        const { data, error: updateError } = await supabase
             .from('user_module_progress')
-            .upsert({
-                user_id: userId,
-                module_id: moduleId,
+            .update({
                 status: 'in_progress',
                 progress: 0,
-                completed_steps: [],
                 started_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
-                created_at: new Date().toISOString(),
-            }, { onConflict: 'user_id,module_id' });
+            })
+            .eq('user_id', userId)
+            .eq('module_id', moduleId)
+            .select('id');
 
-        if (error) throw error;
+        if (updateError) throw updateError;
+
+        // Aucune ligne mise à jour → module ajouté après la dernière session → INSERT
+        if (!data || data.length === 0) {
+            const { error: insertError } = await supabase
+                .from('user_module_progress')
+                .insert({
+                    user_id: userId,
+                    module_id: moduleId,
+                    status: 'in_progress',
+                    progress: 0,
+                    completed_steps: [],
+                    started_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    created_at: new Date().toISOString(),
+                });
+            if (insertError) throw insertError;
+        }
     }
 
     async completeModule(userId: string, moduleId: string): Promise<void> {

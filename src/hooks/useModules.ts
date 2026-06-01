@@ -75,8 +75,12 @@ export function useModules() {
     const completedCount = modules.filter(module => module.status === 'completed').length;
     const currentModule = modules.find(module => module.status === 'available' || module.status === 'in_progress');
 
-    const firstModule = modules.filter(module => module.orderIndex === 1)[0]
-    const nextModule = modules.filter(module => module.orderIndex === currentModule?.orderIndex + 1)[0]
+    // Les modules sont triés (weekNumber → orderIndex) par getUserModulesWithProgress
+    const firstModule = modules[0];
+    const currentModuleIndex = modules.findIndex(m => m.id === currentModule?.id);
+    const nextModule = currentModuleIndex >= 0 && currentModuleIndex < modules.length - 1
+        ? modules[currentModuleIndex + 1]
+        : undefined;
 
     return {
         modules,
