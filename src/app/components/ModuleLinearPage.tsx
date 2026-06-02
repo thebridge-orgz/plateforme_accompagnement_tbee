@@ -8,12 +8,6 @@ interface ModuleLinearPageProps {
   moduleId: string;
 }
 
-// Helper: Convertir durée en minutes (ex: "8min" -> 8)
-const parseDuration = (duration: string): number => {
-  const match = duration.match(/(\d+)min/);
-  return match ? parseInt(match[1]) : 0;
-};
-
 // Structure statique des contenus de modules (sera remplacé par Supabase)
 const moduleStaticContent: Record<string, any> = {
   'week1': {
@@ -241,8 +235,8 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
           id: r.id,
           type: r.type,
           title: r.title,
-          description: '',
-          duration: '–',
+          description: r.description || '',
+          duration: r.duration || '–',
           content: r,
         })),
       }
@@ -371,8 +365,6 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
 
   // -------------------- COMPUTED VALUES --------------------
 
-  const completedCount = completedStepsLocal.length;
-  const totalSteps = effectiveContent.steps.length;
   const activeStep = effectiveContent.steps.find((s: any) => s.id === activeStepId);
 
   // -------------------- RENDER --------------------
@@ -409,7 +401,7 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
           {/* Progress Bar */}
           <div className="mb-6 sm:mb-8">
             <div className="flex items-center justify-between text-[13px] font-medium text-[#6B7280] mb-2">
-              <span>Progression du moduleh</span>
+              <span>Progression du module</span>
               <span className="font-bold text-[#1E1548]">{userModule.progress}%</span>
             </div>
             <div className="relative w-full h-3 bg-[#E8ECFF] rounded-full overflow-hidden">
@@ -500,10 +492,15 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
                             {getStepIcon(activeStep.type)}
                           </div>
                           <span className="text-[12px] sm:text-[14px] font-medium text-[#6B7280]">
-                            {activeStep.type === 'video' && 'Vidéo'}
+                            {activeStep.type === 'video'    && 'Vidéo'}
                             {activeStep.type === 'exercise' && 'Exercice'}
-                            {activeStep.type === 'upload' && 'Upload'}
-                            {activeStep.type === 'text' && 'Saisie'}
+                            {activeStep.type === 'upload'   && 'Upload'}
+                            {activeStep.type === 'text'     && 'Saisie'}
+                            {activeStep.type === 'pdf'      && 'Document PDF'}
+                            {activeStep.type === 'image'    && 'Image'}
+                            {activeStep.type === 'link'     && 'Lien externe'}
+                            {activeStep.type === 'form'     && 'Formulaire'}
+                            {activeStep.type === 'quiz'     && 'Quiz QCM'}
                           </span>
                         </div>
                         <h3 className="text-[20px] sm:text-[24px] font-semibold leading-[28px] sm:leading-[32px] text-[#1E1548] mb-2">

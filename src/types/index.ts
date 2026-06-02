@@ -61,7 +61,9 @@ export interface ModuleResource {
   id: string;
   type: ResourceType;
   title: string;
+  description?: string;
   url?: string;
+  duration?: string;
   formFields?: FormField[];
   quizQuestions?: QuizQuestion[];
 }

@@ -256,6 +256,9 @@ function AddResourcePanel({ onAdd, onCancel, onFileUpload, uploading, initialRes
   const isEditing = !!initialResource;
   const [type, setType]               = useState<ResourceType>(initialResource?.type ?? 'pdf');
   const [title, setTitle]             = useState(initialResource?.title ?? '');
+  const [description, setDescription] = useState(initialResource?.description ?? '');
+  // Durée stockée en chiffre pur, "min" ajouté à la sauvegarde
+  const [duration, setDuration]       = useState(initialResource?.duration?.replace('min', '') ?? '');
   const [url, setUrl]                 = useState(initialResource?.url ?? '');
   const [uploadedName, setUploadedName] = useState('');
   const [formFields, setFormFields]   = useState<FormField[]>(initialResource?.formFields ?? []);
@@ -263,6 +266,8 @@ function AddResourcePanel({ onAdd, onCancel, onFileUpload, uploading, initialRes
 
   const reset = () => {
     setTitle('');
+    setDescription('');
+    setDuration('');
     setUrl('');
     setUploadedName('');
     setFormFields([]);
@@ -290,6 +295,8 @@ function AddResourcePanel({ onAdd, onCancel, onFileUpload, uploading, initialRes
       id: initialResource?.id ?? uid(),
       type,
       title: title.trim(),
+      ...(description.trim() ? { description: description.trim() } : {}),
+      ...(duration.trim() ? { duration: `${duration.trim()}min` } : {}),
       ...(type === 'pdf' || type === 'image' || type === 'link'
         ? { url }
         : type === 'video'
@@ -380,14 +387,41 @@ function AddResourcePanel({ onAdd, onCancel, onFileUpload, uploading, initialRes
         </div>
       </div>
 
-      {/* Title */}
+      {/* Title + Duration */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="col-span-2">
+          <label className={S.label}>Titre <span className="text-red-500">*</span></label>
+          <input
+            className={S.input}
+            placeholder="Titre du chapitre"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className={S.label}>Durée</label>
+          <div className="relative">
+            <input
+              type="number"
+              min={1}
+              className={S.input + ' pr-12'}
+              placeholder="15"
+              value={duration}
+              onChange={e => setDuration(e.target.value.replace(/\D/g, ''))}
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-[#6B7280] pointer-events-none">min</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Description */}
       <div>
-        <label className={S.label}>Titre <span className="text-red-500">*</span></label>
+        <label className={S.label}>Description</label>
         <input
           className={S.input}
-          placeholder="Titre de la ressource"
-          value={title}
-          onChange={e => setTitle(e.target.value)}
+          placeholder="Brève description du contenu de ce chapitre"
+          value={description}
+          onChange={e => setDescription(e.target.value)}
         />
       </div>
 
