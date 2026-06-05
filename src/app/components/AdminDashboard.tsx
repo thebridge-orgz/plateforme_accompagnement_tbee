@@ -10,16 +10,10 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
   // ============================================
   // DONNÉES RÉELLES DEPUIS LE CONTEXTE
   // ============================================
-  const {
-    students,
-    globalStats,
-    recentActivities,
-    cvSubmissions,
-    //exerciseSubmissions,
-    offerTrackings
-  } = useAdminData();
+  const { globalStats, recentActivities } = useAdminData();
 
-  // Calculer les tâches urgentes à partir des vraies données
+  const inactiveStudents = globalStats.totalStudents - globalStats.activeStudents;
+
   const urgentTasks = [
     {
       id: '1',
@@ -30,7 +24,7 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
     {
       id: '2',
       label: 'Exercices à corriger',
-      count: '',//globalStats.pendingExercises,
+      count: 0,
       action: 'admin-exercise-review'
     },
     {
@@ -42,24 +36,21 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
     {
       id: '4',
       label: 'Étudiants inactifs (+7j)',
-      count: '',//globalStats.totalstudents - globalStats.activestudents,
+      count: inactiveStudents,
       action: 'admin-tracking'
     }
   ];
 
-  // Calculer les statistiques admin depuis les vraies données
   const adminStats = {
-    totalstudents: '',//globalStats.totalstudents,
-    activestudents: '',//globalStats.activestudents,
-    pendingReviews: '',//globalStats.pendingCVs + globalStats.pendingExercises,
+    totalStudents: globalStats.totalStudents,
+    activeStudents: globalStats.activeStudents,
+    pendingReviews: globalStats.pendingCVs,
     completionRate: Math.round(globalStats.completionRate),
     averageProgress: Math.round(globalStats.averageProgress),
     cvToReview: globalStats.pendingCVs,
-    exercisesToGrade: '',//globalStats.pendingExercises,
+    exercisesToGrade: 0,
     offerSupport: globalStats.offersNeedingHelp
   };
-
-  const inactivestudents = ''//globalStats.totalstudents - globalStats.activestudents;
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -108,7 +99,7 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
               </div>
             </div>
             <p className="text-[32px] sm:text-[36px] font-bold text-[#1E1548]">
-              {adminStats.totalstudents}
+              {adminStats.totalStudents}
             </p>
           </div>
 
@@ -125,7 +116,7 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
               </div>
             </div>
             <p className="text-[32px] sm:text-[36px] font-bold text-[#1E1548]">
-              {adminStats.activestudents}
+              {adminStats.activeStudents}
             </p>
           </div>
 
@@ -299,13 +290,6 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
                 </button>
 
                 <button
-                  onClick={() => onNavigate('admin-tracking')}
-                  className="w-full h-12 bg-white border-2 border-[#E8ECFF] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#E8ECFF] transition-all flex items-center justify-center px-4"
-                >
-                  👥 Tous les étudiants
-                </button>
-
-                <button
                   onClick={() => onNavigate('admin-settings')}
                   className="w-full h-12 bg-white border-2 border-[#E8ECFF] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#E8ECFF] transition-all flex items-center justify-center px-4"
                 >
@@ -373,7 +357,7 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
                     ⚠️ Étudiants inactifs
                   </h3>
                   <p className="text-[13px] sm:text-[14px] text-[#6B7280] leading-[20px]">
-                    {inactivestudents} étudiants n'ont pas été actifs depuis plus de 7 jours
+                    {inactiveStudents} étudiant(s) n'ont pas été actifs depuis plus de 7 jours
                   </p>
                 </div>
               </div>

@@ -1,30 +1,20 @@
 import { useState } from 'react';
 import {
   Search,
-  Filter,
   Grid,
   List,
   ChevronLeft,
   ChevronRight,
   User,
-  GraduationCap,
   Clock,
   Award,
-  Mail,
-  Phone,
-  Calendar,
-  TrendingUp,
   Shield,
   Eye
 } from 'lucide-react';
-import { Button } from './Button';
-import { Input } from '../components/ui/input';
-import { Card } from '../components/ui/card';
 import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
 import { useAdminData } from '../../hooks/useAdminData';
 import { formatDateTime } from '../../utils/date';
-import { calculateGlobalProgress } from '../../utils/initialState';
 
 export function StudentsListPage() {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
@@ -33,17 +23,29 @@ export function StudentsListPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  const {
-    students,
-    //getstudentStats,
-    modules,
-    //studentModulesProgress
-  } = useAdminData();
+  const { students, modules } = useAdminData();
+
+  const getStudentProgress = (student: any): number => {
+    const progresses = Object.values(student.statistics?.moduleProgress || {}) as { completed: boolean; progress: number }[];
+    if (progresses.length === 0) return 0;
+    return Math.round(progresses.reduce((sum, m) => sum + m.progress, 0) / progresses.length);
+  };
+
+  const getCompletedModules = (student: any): number => {
+    const progresses = Object.values(student.statistics?.moduleProgress || {}) as { completed: boolean; progress: number }[];
+    return progresses.filter(m => m.completed).length;
+  };
+
+  const formatStudyTime = (minutes: number): string => {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return `${h}h ${m}min`;
+  };
 
   // Filter students
   const filteredStudents = students.filter(student => {
-    const matchesSearch = student.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = (student.firstName ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (student.lastName ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.email.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesRqth = rqthFilter === 'all' ||
@@ -95,14 +97,12 @@ export function StudentsListPage() {
         <div className="space-y-3 mb-4">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Progression</span>
-            <span className="font-medium">
-              calculateGlobalProgress(studentModulesProgress.filter(progress ={'>'} progress.user_id === student.id))%
-            </span>
+            <span className="font-medium">{getStudentProgress(student)}%</span>
           </div>
           <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
             <div
-              className={`h-full transition-all`}//${getProgressColor(calculateGlobalProgress(studentModulesProgress.filter(progress => progress.user_id === student.id)))}
-              style={{ width: '10%' }}//`${calculateGlobalProgress(studentModulesProgress.filter(progress => progress.user_id === student.id))}%`
+              className={`h-full transition-all ${getProgressColor(getStudentProgress(student))}`}
+              style={{ width: `${getStudentProgress(student)}%` }}
             />
           </div>
         </div>
@@ -110,13 +110,11 @@ export function StudentsListPage() {
         <div className="grid grid-cols-2 gap-3 mb-4 pt-3 border-t border-border">
           <div className="flex items-center gap-2 text-sm">
             <Clock className="w-4 h-4 text-muted-foreground" />
-            <span>student.stats.studyTime</span>
+            <span>{formatStudyTime(student.statistics?.totalTimeSpentMinutes || 0)}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Award className="w-4 h-4 text-muted-foreground" />
-            <span>{/*getstudentStats(student.id)
-              ? Object.values(getstudentStats(student.id).moduleProgress).filter(module => module.completed === true).length
-              : 0*/}/{modules.length}</span>
+            <span>{getCompletedModules(student)}/{modules.length}</span>
           </div>
         </div>
 
@@ -153,12 +151,12 @@ export function StudentsListPage() {
           <div className="flex-1 min-w-[150px]">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-sm text-muted-foreground">Progression:</span>
-              <span className="text-sm font-medium">calculateGlobalProgress(studentModulesProgress.filter(progress ={'>'} progress.user_id === student.id))%</span>
+              <span className="text-sm font-medium">{getStudentProgress(student)}%</span>
             </div>
             <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
               <div
-                className={`h-full transition-all`}//${getProgressColor(calculateGlobalProgress(studentModulesProgress.filter(progress => progress.user_id === student.id)))}
-                style={{ width: `10%` }}//${calculateGlobalProgress(studentModulesProgress.filter(progress => progress.user_id === student.id))}%
+                className={`h-full transition-all ${getProgressColor(getStudentProgress(student))}`}
+                style={{ width: `${getStudentProgress(student)}%` }}
               />
             </div>
           </div>
@@ -166,7 +164,7 @@ export function StudentsListPage() {
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <Clock className="w-4 h-4" />
-              <span>student.stats.studyTime</span>
+              <span>{formatStudyTime(student.statistics?.totalTimeSpentMinutes || 0)}</span>
             </div>
             <Eye className="w-4 h-4 group-hover:text-primary transition-colors" />
           </div>

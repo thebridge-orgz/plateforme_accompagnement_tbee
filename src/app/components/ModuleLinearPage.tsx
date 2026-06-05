@@ -9,7 +9,7 @@ interface ModuleLinearPageProps {
 }
 
 // Structure statique des contenus de modules (sera remplacé par Supabase)
-const moduleStaticContent: Record<string, any> = {
+export const moduleStaticContent: Record<string, any> = {
   'week1': {
     weekNumber: 1,
     title: 'Identifier mon projet',

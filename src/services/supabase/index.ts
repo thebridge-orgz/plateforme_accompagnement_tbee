@@ -5,3 +5,6 @@ export { moduleService } from './module.service';
 export { cvService } from './cv.service';
 export { offerService } from './offer.service';
 export { statisticsService } from './statistics.service';
+export { notesService } from './notes.service';
+export type { AdminNote } from './notes.service';
+export { practicalCasesService } from './practicalCases.service';

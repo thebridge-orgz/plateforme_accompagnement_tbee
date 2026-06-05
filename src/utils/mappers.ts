@@ -57,6 +57,7 @@ export function mapModuleProgressFromDB(raw: any): ModuleWithProgress {
         completedSteps: raw.completed_steps ?? [],
         startedAt: raw.started_at,
         completedAt: raw.completed_at,
+        updatedAt: raw.updated_at,
         moduleId: raw.module_id
     };
 }

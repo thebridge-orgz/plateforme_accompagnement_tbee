@@ -8,8 +8,9 @@ interface StatCardProps {
     value: number;
     isPositive: boolean;
   };
-  subtitle?: string; // Pour afficher un message supplémentaire (ex: "Commence pour débloquer")
+  subtitle?: string;
   className?: string;
+  valueClassName?: string;
 }
 
 export function StatCard({
@@ -18,14 +19,15 @@ export function StatCard({
   icon,
   trend,
   subtitle,
-  className = ''
+  className = '',
+  valueClassName = 'text-3xl'
 }: StatCardProps) {
   return (
     <div className={`bg-card border border-border rounded-2xl p-6 ${className}`}>
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <p className="text-sm text-muted-foreground mb-1">{title}</p>
-          <h3 className="text-3xl font-bold">{value}</h3>
+          <h3 className={`font-bold ${valueClassName}`}>{value}</h3>
           {subtitle && (
             <p className="text-xs text-muted-foreground mt-2 italic">{subtitle}</p>
           )}

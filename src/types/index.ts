@@ -96,6 +96,7 @@ export interface ModuleWithProgress extends Module {
   completedSteps: string[];
   startedAt?: string | null;
   completedAt?: string | null;
+  updatedAt?: string | null;
   moduleId: string;
 }
 

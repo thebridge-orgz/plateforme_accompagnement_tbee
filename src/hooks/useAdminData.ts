@@ -174,7 +174,7 @@ export function useAdminData(): UseAdminDataReturn {
                     const progress = await moduleService.getUserModuleProgress(student.id);
                     const progressMap: Record<string, { completed: boolean; progress: number }> = {};
                     progress.forEach(p => {
-                        progressMap[p.id] = {
+                        progressMap[p.moduleId] = {
                             completed: p.status === 'completed',
                             progress: p.progress,
                         };

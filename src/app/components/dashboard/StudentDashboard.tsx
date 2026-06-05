@@ -1,13 +1,17 @@
-import { Award, BookOpen, Clock, Target, TrendingUp } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Award, BookOpen, Clock, MessageSquare, Target, TrendingUp } from 'lucide-react';
 import { StatCard } from '../../components/StatCard';
 import { ProgressBar } from '../ui/ProgressBar';
 import { Button } from '../ui/button';
 import { useModules } from '../../../hooks/useModules';
-import { useStatistics } from '../../../hooks/userStatistics';
 import { formatStudyTime } from '../../../utils/initialState';
+import { moduleStaticContent } from '../ModuleLinearPage';
 import { routes } from '../../router/routes';
 import { Link } from 'react-router-dom';
 import { UserProfile } from '../../../types/user';
+import { notesService } from '../../../services/supabase';
+import type { AdminNote } from '../../../services/supabase';
+import { formatDateTime } from '../../../utils/date';
 
 interface StudentDashboardProps {
   user: UserProfile;
@@ -16,25 +20,57 @@ interface StudentDashboardProps {
 
 export function StudentDashboard({ user }: StudentDashboardProps) {
   const { loading, modules, totalCount, globalProgress, currentModule, completedCount } = useModules();
-  //console.log(`currentModule : ${currentModule}`);
+  const [adminNotes, setAdminNotes] = useState<AdminNote[]>([]);
 
-  const { statistics } = useStatistics();
+  useEffect(() => {
+    if (!user?.id) return;
+    notesService.getStudentNotes(user.id)
+      .then(setAdminNotes)
+      .catch(() => {});
+  }, [user?.id]);
+  //console.log(`currentModule : ${currentModule}`);
 
   // Parcours entièrement complété ?
   const allModulesCompleted = totalCount > 0 && completedCount === totalCount;
 
-  // Formater le temps d'étude
-  //const studyTimeFormatted = formatStudyTime(statistics.totalTimeSpentMinutes);
+  // Calcul dynamique du temps d'étude à partir des étapes réellement complétées.
+  // Pour les modules statiques : on lit les durées dans moduleStaticContent.
+  // Pour les modules admin : on lit module.resources[].duration.
+  const parseDurationMin = (dur: string | undefined): number => {
+    if (!dur) return 0;
+    const m = dur.match(/(\d+)/);
+    return m ? parseInt(m[1]) : 0;
+  };
 
-  // Modules à afficher (limiter à 3 pour l'affichage)
-  const displayModules = modules
-    .filter(module => module.status === 'in_progress' || module.status === 'available')
-    .slice(0, 3);
+  const totalStudyMinutes = modules.reduce((total, module) => {
+    if (!module.completedSteps || module.completedSteps.length === 0) return total;
 
-  // Si aucun module en cours/disponible, afficher les premiers modules
-  const modulesToShow = displayModules.length > 0
-    ? displayModules
-    : modules.slice(0, 3);
+    // Modules créés via l'admin (ressources en DB)
+    if (Array.isArray(module.resources) && module.resources.length > 0) {
+      return total + (module.resources as any[])
+        .filter(r => module.completedSteps.includes(r.id))
+        .reduce((s: number, r: any) => s + parseDurationMin(r.duration), 0);
+    }
+
+    // Modules statiques codés en dur
+    const staticContent = moduleStaticContent[`week${module.weekNumber}`];
+    if (staticContent?.steps) {
+      return total + staticContent.steps
+        .filter((s: any) => module.completedSteps.includes(s.id))
+        .reduce((s: number, step: any) => s + parseDurationMin(step.duration), 0);
+    }
+
+    return total;
+  }, 0);
+
+  const studyTimeFormatted = totalStudyMinutes > 0
+    ? formatStudyTime(totalStudyMinutes)
+    : completedCount === 0 ? '–' : '0min';
+
+  const streakDisplay = completedCount > 0
+    ? `${completedCount} module${completedCount > 1 ? 's' : ''}`
+    : '0 module';
+
 
   if (loading) {
     return (
@@ -84,15 +120,15 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
           />
           <StatCard
             title="Temps d'étude"
-            value={'studyTimeFormatted'}/*studyTimeFormatted*/
+            value={studyTimeFormatted}
             icon={<Clock className="w-6 h-6 text-primary" />}
-            subtitle={'Commence pour débloquer'}
+            subtitle={completedCount === 0 ? 'Commence pour débloquer' : 'Temps total de formation'}
           />
           <StatCard
-            title="Série en cours"
-            value={'streak'}/*statistics.currentStreakDays === 0 ? '0 jour' : `${statistics.currentStreakDays} jour${statistics.currentStreakDays > 1 ? 's' : ''}` */
+            title="Modules complétés"
+            value={streakDisplay}
             icon={<TrendingUp className="w-6 h-6 text-primary" />}
-            subtitle={'Commence pour débloquer'}
+            subtitle={completedCount === 0 ? 'Commence pour débloquer' : 'Sur ton parcours TBEE'}
           />
           <StatCard
             title="Objectif mensuel"
@@ -214,6 +250,24 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
                       </div>
                     </div>
                   )*/}
+                </div>
+              </div>
+            )}
+
+            {/* Notes de l'admin */}
+            {adminNotes.length > 0 && (
+              <div className="bg-card border border-border rounded-2xl p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <MessageSquare className="w-5 h-5 text-primary" />
+                  <h4>Messages de ton conseiller</h4>
+                </div>
+                <div className="space-y-3">
+                  {adminNotes.map((note) => (
+                    <div key={note.id} className="p-3 bg-primary/5 border border-primary/20 rounded-xl">
+                      <p className="text-sm">{note.content}</p>
+                      <p className="text-xs text-muted-foreground mt-2">{formatDateTime(note.createdAt)}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
