@@ -311,7 +311,7 @@ export function PracticalCasePage() {
       {/* Video Modal */}
       {videoModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          className="fixed inset-0 lg:left-72 z-50 flex items-center justify-center bg-black/70 p-4"
           onClick={() => setVideoModal(null)}
         >
           <div

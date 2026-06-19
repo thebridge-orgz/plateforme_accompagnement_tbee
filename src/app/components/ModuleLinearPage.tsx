@@ -254,6 +254,7 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
   const [initialized, setInitialized] = useState(false);
   // Popup félicitation fin de parcours
   const [showCelebration, setShowCelebration] = useState(false);
+  const [pdfViewerUrl, setPdfViewerUrl] = useState<string | null>(null);
 
   // Ce module est-il le dernier du parcours ?
   const moduleIndex = modules.findIndex(m => m.id === moduleId);
@@ -579,13 +580,15 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
                             Ressources
                           </h4>
                           <div className="space-y-3">
-                            <button className="w-full flex items-center justify-between p-3 sm:p-4 bg-[#E8ECFF] rounded-[12px] hover:bg-[#E8ECFF]/80 transition-colors">
+                            <button
+                              onClick={() => activeStep.content?.pdfUrl && setPdfViewerUrl(activeStep.content.pdfUrl)}
+                              className="w-full flex items-center justify-between p-3 sm:p-4 bg-[#E8ECFF] rounded-[12px] hover:bg-[#E8ECFF]/80 transition-colors">
                               <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[rgba(255,214,0,0.1)] rounded-full flex items-center justify-center">
                                   <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-[#FFD600]" />
                                 </div>
                                 <span className="text-[13px] sm:text-[14px] font-medium text-[#1E1548]">
-                                  Guide PDF
+                                  Lire le document
                                 </span>
                               </div>
                               <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-[#6B7280]" />
@@ -766,12 +769,13 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
                   {activeStep.type === 'pdf' && (
                     <div className="bg-white border border-[rgba(30,21,72,0.1)] rounded-[16px] p-4 sm:p-6 space-y-4">
                       {activeStep.content?.url ? (
-                        <a href={activeStep.content.url} target="_blank" rel="noreferrer"
-                          className="flex items-center gap-3 p-4 bg-[#E8ECFF] rounded-[12px] hover:bg-[#E8ECFF]/80 transition-colors">
+                        <button
+                          onClick={() => setPdfViewerUrl(activeStep.content.url)}
+                          className="w-full flex items-center gap-3 p-4 bg-[#E8ECFF] rounded-[12px] hover:bg-[#E8ECFF]/80 transition-colors text-left">
                           <FileText className="w-6 h-6 text-[#FFD600] flex-shrink-0" />
-                          <span className="text-[14px] font-medium text-[#1E1548]">Ouvrir le document PDF</span>
+                          <span className="text-[14px] font-medium text-[#1E1548]">Lire le document</span>
                           <ChevronRight className="w-4 h-4 text-[#6B7280] ml-auto" />
-                        </a>
+                        </button>
                       ) : (
                         <p className="text-[14px] text-[#6B7280]">Document non disponible.</p>
                       )}
@@ -869,6 +873,29 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
           </div>
         </div>
       </div>
+
+      {/* PDF Viewer Modal */}
+      {pdfViewerUrl && (
+        <div className="fixed inset-0 lg:left-72 z-50 bg-black/70 flex flex-col">
+          <div className="flex items-center justify-between px-4 py-3 bg-[#1E1548]">
+            <div className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-[#FFD600]" />
+              <span className="text-white text-[14px] font-semibold">Document</span>
+            </div>
+            <button
+              onClick={() => setPdfViewerUrl(null)}
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+            >
+              <X className="w-4 h-4 text-white" />
+            </button>
+          </div>
+          <iframe
+            src={`https://docs.google.com/viewer?url=${encodeURIComponent(pdfViewerUrl)}&embedded=true`}
+            className="flex-1 w-full border-0"
+            title="Document PDF"
+          />
+        </div>
+      )}
 
       {/* Popup félicitation - fin du parcours complet */}
       {showCelebration && (
