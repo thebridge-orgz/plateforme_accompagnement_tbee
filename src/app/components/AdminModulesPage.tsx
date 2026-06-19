@@ -1,13 +1,17 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   ArrowLeft, FileText, Plus, X, Pencil, Trash2,
   Calendar, Target, CheckSquare, Play, Upload,
   FileImage, ClipboardList, ChevronDown, ChevronUp, Loader2, Link2,
+  ShieldCheck, Clock, CheckCircle2, AlertCircle,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
 import { useAdminData } from '../../hooks/useAdminData';
+import { useAuth } from '../../hooks/useAuth';
 import { moduleService } from '../../services/supabase/module.service';
+import { proofsService } from '../../services/supabase';
+import type { PedagogicalProof } from '../../services/supabase';
 import {
   Module, ModuleResource, ResourceType,
   QuizQuestion, QuizOption, FormField,
@@ -75,7 +79,7 @@ type ModuleInfoForm = {
 };
 
 const EMPTY_INFO: ModuleInfoForm = {
-  title: '', description: '', weekNumber: 1, orderIndex: 1, isPublished: false,
+  title: '', description: '', weekNumber: 0, orderIndex: 0, isPublished: false,
 };
 
 // ── InfoTab — defined OUTSIDE to keep stable identity ─────────────────────────
@@ -119,7 +123,7 @@ function InfoTab({ form, onChange }: InfoTabProps) {
               value={form.weekNumber}
               onChange={e => onChange('weekNumber', parseInt(e.target.value))}
             >
-              {[1, 2, 3, 4, 5].map(w => (
+              {[0, 1, 2, 3, 4, 5].map(w => (
                 <option key={w} value={w}>Semaine {w}</option>
               ))}
             </select>
@@ -863,10 +867,221 @@ function ModuleCard({ module, onEdit, onTogglePublish, onDelete }: ModuleCardPro
   );
 }
 
+// ── ProofsSection ─────────────────────────────────────────────────────────────
+
+const PROOF_TYPE_LABEL: Record<string, { label: string; color: string }> = {
+  quiz_result:          { label: 'Quiz',      color: 'bg-[#FFF4CC] text-[#B45309]' },
+  exercise_submission:  { label: 'Exercice',  color: 'bg-[#E8ECFF] text-[#1E1548]' },
+  attendance:           { label: 'Présence',  color: 'bg-[#F0FDF4] text-[#10B981]' },
+  document:             { label: 'Document',  color: 'bg-[#F3F4F6] text-[#6B7280]' },
+};
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('fr-FR', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
+interface ProofsSectionProps {
+  modules: Module[];
+  students: any[];
+  adminId: string;
+}
+
+function ProofsSection({ modules, students, adminId }: ProofsSectionProps) {
+  const [proofs, setProofs] = useState<PedagogicalProof[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [validating, setValidating] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | 'pending' | 'validated'>('all');
+
+  useEffect(() => {
+    proofsService.getAllProofs()
+      .then(setProofs)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleValidate = async (proofId: string) => {
+    setValidating(proofId);
+    try {
+      const updated = await proofsService.validateProof(proofId, adminId);
+      setProofs(prev => prev.map(p => p.id === proofId ? updated : p));
+    } catch {
+      alert('Erreur lors de la validation.');
+    } finally {
+      setValidating(null);
+    }
+  };
+
+  const getStudentName = (userId: string) => {
+    const s = students.find((st: any) => st.id === userId);
+    if (!s) return userId.slice(0, 8) + '…';
+    return [s.firstName, s.lastName].filter(Boolean).join(' ') || s.email || userId.slice(0, 8) + '…';
+  };
+
+  const getModuleName = (moduleId: string | null) => {
+    if (!moduleId) return '—';
+    return modules.find(m => m.id === moduleId)?.title ?? moduleId.slice(0, 8) + '…';
+  };
+
+  const filtered = proofs.filter(p => {
+    if (filter === 'pending') return !p.validatedAt;
+    if (filter === 'validated') return !!p.validatedAt;
+    return true;
+  });
+
+  const pendingCount = proofs.filter(p => !p.validatedAt).length;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-10 h-10 text-[#FFD600] animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Summary */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[12px] p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#E8ECFF] flex items-center justify-center flex-shrink-0">
+            <ShieldCheck className="w-5 h-5 text-[#1E1548]" />
+          </div>
+          <div>
+            <p className="text-[12px] text-[#6B7280]">Total preuves</p>
+            <p className="text-[22px] font-bold text-[#1E1548]">{proofs.length}</p>
+          </div>
+        </div>
+        <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[12px] p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#FFF4CC] flex items-center justify-center flex-shrink-0">
+            <Clock className="w-5 h-5 text-[#B45309]" />
+          </div>
+          <div>
+            <p className="text-[12px] text-[#6B7280]">En attente</p>
+            <p className="text-[22px] font-bold text-[#B45309]">{pendingCount}</p>
+          </div>
+        </div>
+        <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[12px] p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#F0FDF4] flex items-center justify-center flex-shrink-0">
+            <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
+          </div>
+          <div>
+            <p className="text-[12px] text-[#6B7280]">Validées</p>
+            <p className="text-[22px] font-bold text-[#10B981]">{proofs.length - pendingCount}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter tabs */}
+      <div className="flex gap-2">
+        {(['all', 'pending', 'validated'] as const).map(f => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`h-9 px-4 rounded-[8px] text-[13px] font-semibold border-2 transition-all ${
+              filter === f
+                ? 'border-[#FFD600] bg-[#FFF4CC] text-[#1E1548]'
+                : 'border-[rgba(30,21,72,0.08)] bg-white text-[#6B7280] hover:border-[#FFD600]/50'
+            }`}
+          >
+            {f === 'all' ? 'Toutes' : f === 'pending' ? 'En attente' : 'Validées'}
+            {f === 'pending' && pendingCount > 0 && (
+              <span className="ml-1.5 bg-[#B45309] text-white text-[11px] font-bold px-1.5 py-0.5 rounded-full">
+                {pendingCount}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* List */}
+      {filtered.length === 0 ? (
+        <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[16px] p-12 text-center">
+          <AlertCircle className="w-12 h-12 text-[#E8ECFF] mx-auto mb-3" />
+          <p className="text-[15px] font-semibold text-[#1E1548] mb-1">Aucune preuve trouvée</p>
+          <p className="text-[13px] text-[#6B7280]">
+            {filter === 'pending' ? 'Aucune preuve en attente de validation.' : 'Les preuves apparaîtront ici quand les étudiants progressent dans les modules.'}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map(proof => {
+            const typeInfo = PROOF_TYPE_LABEL[proof.proofType] ?? { label: proof.proofType, color: 'bg-[#F3F4F6] text-[#6B7280]' };
+            const isValidated = !!proof.validatedAt;
+            const stepTitle = (proof.data as any)?.stepTitle as string | undefined;
+
+            return (
+              <div
+                key={proof.id}
+                className={`bg-white border rounded-[14px] p-4 sm:p-5 transition-all ${
+                  isValidated
+                    ? 'border-[rgba(30,21,72,0.08)]'
+                    : 'border-[#FFD600]/40 shadow-[0_2px_8px_rgba(255,214,0,0.12)]'
+                }`}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold ${typeInfo.color}`}>
+                        {typeInfo.label}
+                      </span>
+                      {isValidated ? (
+                        <span className="text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-[#F0FDF4] text-[#10B981] flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> Validée
+                        </span>
+                      ) : (
+                        <span className="text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-[#FFF4CC] text-[#B45309] flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> En attente
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[15px] font-bold text-[#1E1548] truncate">
+                      {getStudentName(proof.userId)}
+                    </p>
+                    <div className="flex flex-wrap gap-3 text-[12px] text-[#6B7280]">
+                      <span>📦 {getModuleName(proof.moduleId)}</span>
+                      {stepTitle && <span>📌 {stepTitle}</span>}
+                      <span>🕐 {formatDate(proof.createdAt)}</span>
+                    </div>
+                    {isValidated && proof.validatedAt && (
+                      <p className="text-[11px] text-[#10B981]">
+                        Validée le {formatDate(proof.validatedAt)}
+                      </p>
+                    )}
+                  </div>
+
+                  {!isValidated && (
+                    <button
+                      onClick={() => handleValidate(proof.id)}
+                      disabled={validating === proof.id}
+                      className="flex-shrink-0 h-9 px-4 bg-[#1E1548] text-white rounded-[8px] text-[13px] font-semibold hover:bg-[#2D2166] transition-colors flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {validating === proof.id
+                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        : <><ShieldCheck className="w-4 h-4" /> Valider</>
+                      }
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── AdminModulesPage ───────────────────────────────────────────────────────────
 
 export function AdminModulesPage() {
-  const { modules, loading, createModule, updateModule, togglePublish, deleteModule } = useAdminData();
+  const { modules, loading, createModule, updateModule, togglePublish, deleteModule, students } = useAdminData();
+  const { user } = useAuth();
+
+  // Page-level tab
+  const [pageTab, setPageTab] = useState<'modules' | 'preuves'>('modules');
 
   // Modal state
   const [activeModal, setActiveModal] = useState<'create' | 'edit' | null>(null);
@@ -1034,51 +1249,86 @@ export function AdminModulesPage() {
       </div>
 
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-8">
-        {/* Create button */}
-        <div className="mb-6">
+        {/* Page tabs */}
+        <div className="flex gap-1 mb-6 bg-[#F0F0F8] p-1 rounded-[10px] w-fit">
           <button
-            onClick={openCreate}
-            className="h-10 px-5 bg-[#FFD600] text-[#1E1548] rounded-[10px] text-[14px] font-semibold hover:bg-[#FDC700] transition-colors flex items-center gap-2"
+            onClick={() => setPageTab('modules')}
+            className={`h-9 px-5 rounded-[8px] text-[14px] font-semibold transition-all ${
+              pageTab === 'modules'
+                ? 'bg-white text-[#1E1548] shadow-sm'
+                : 'text-[#6B7280] hover:text-[#1E1548]'
+            }`}
           >
-            <Plus className="w-5 h-5" />
-            Créer un nouveau module
+            Modules
+          </button>
+          <button
+            onClick={() => setPageTab('preuves')}
+            className={`h-9 px-5 rounded-[8px] text-[14px] font-semibold transition-all flex items-center gap-1.5 ${
+              pageTab === 'preuves'
+                ? 'bg-white text-[#1E1548] shadow-sm'
+                : 'text-[#6B7280] hover:text-[#1E1548]'
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4" /> Preuves FSE
           </button>
         </div>
 
-        {/* Loading */}
-        {loading && (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-10 h-10 text-[#FFD600] animate-spin" />
-          </div>
-        )}
+        {/* Modules tab */}
+        {pageTab === 'modules' && (
+          <>
+            <div className="mb-6 flex justify-end">
+              <button
+                onClick={openCreate}
+                className="h-10 px-5 bg-[#FFD600] text-[#1E1548] rounded-[10px] text-[14px] font-semibold hover:bg-[#FDC700] transition-colors flex items-center gap-2"
+              >
+                <Plus className="w-5 h-5" />
+                Créer un nouveau module
+              </button>
+            </div>
 
-        {/* Module list */}
-        {!loading && (
-          <div className="space-y-4">
-            {modules.map(mod => (
-              <ModuleCard
-                key={mod.id}
-                module={mod}
-                onEdit={openEdit}
-                onTogglePublish={handleTogglePublish}
-                onDelete={handleDeleteModule}
-              />
-            ))}
-
-            {modules.length === 0 && (
-              <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[16px] p-12 text-center">
-                <FileText className="w-14 h-14 text-[#E8ECFF] mx-auto mb-4" />
-                <h3 className="text-[18px] font-bold text-[#1E1548] mb-2">Aucun module pour le moment</h3>
-                <p className="text-[14px] text-[#6B7280] mb-6">Commencez par créer votre premier module de formation</p>
-                <button
-                  onClick={openCreate}
-                  className="h-10 px-5 bg-[#FFD600] text-[#1E1548] rounded-[10px] text-[14px] font-semibold hover:bg-[#FDC700] transition-colors flex items-center gap-2 mx-auto"
-                >
-                  <Plus className="w-5 h-5" /> Créer un module
-                </button>
+            {loading && (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-10 h-10 text-[#FFD600] animate-spin" />
               </div>
             )}
-          </div>
+
+            {!loading && (
+              <div className="space-y-4">
+                {modules.map(mod => (
+                  <ModuleCard
+                    key={mod.id}
+                    module={mod}
+                    onEdit={openEdit}
+                    onTogglePublish={handleTogglePublish}
+                    onDelete={handleDeleteModule}
+                  />
+                ))}
+
+                {modules.length === 0 && (
+                  <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[16px] p-12 text-center">
+                    <FileText className="w-14 h-14 text-[#E8ECFF] mx-auto mb-4" />
+                    <h3 className="text-[18px] font-bold text-[#1E1548] mb-2">Aucun module pour le moment</h3>
+                    <p className="text-[14px] text-[#6B7280] mb-6">Commencez par créer votre premier module de formation</p>
+                    <button
+                      onClick={openCreate}
+                      className="h-10 px-5 bg-[#FFD600] text-[#1E1548] rounded-[10px] text-[14px] font-semibold hover:bg-[#FDC700] transition-colors flex items-center gap-2 mx-auto"
+                    >
+                      <Plus className="w-5 h-5" /> Créer un module
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Preuves FSE tab */}
+        {pageTab === 'preuves' && (
+          <ProofsSection
+            modules={modules}
+            students={students}
+            adminId={user?.id ?? ''}
+          />
         )}
       </div>
 

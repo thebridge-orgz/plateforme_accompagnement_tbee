@@ -3,6 +3,8 @@ import { CheckCircle2, ChevronLeft, ChevronRight, Clock, FileText, Lock, Play, T
 import { routes } from '../../app/router/routes';
 import { Link } from 'react-router-dom';
 import { useModules } from '../../hooks/useModules';
+import { useAuth } from '../../hooks/useAuth';
+import { proofsService, statisticsService } from '../../services/supabase';
 
 interface ModuleLinearPageProps {
   moduleId: string;
@@ -216,6 +218,7 @@ export const moduleStaticContent: Record<string, any> = {
 
 export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
   const { modules, totalCount, nextModule, startModule, updateProgress, updateCompletedSteps, completeModule, unlockModule } = useModules();
+  const { user } = useAuth();
 
   // Trouver le module dans le contexte UserData
   const userModule = modules.find(module => module.id === moduleId);
@@ -294,6 +297,23 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
 
       try {
         updateCompletedSteps(userModule.id, newCompleted);
+
+        if (user?.id) {
+          const proofType = step.type === 'quiz'
+            ? 'quiz_result'
+            : (step.type === 'exercise' || step.type === 'upload' || step.type === 'form')
+              ? 'exercise_submission'
+              : 'attendance';
+          proofsService.createProof({
+            userId: user.id,
+            moduleId: userModule.id,
+            stepId,
+            proofType,
+            data: { stepTitle: step.title, stepType: step.type },
+          }).catch(() => {});
+
+          statisticsService.updateActivityAndStreak(user.id).catch(() => {});
+        }
 
         const totalSteps = effectiveContent.steps.length;
         const completedCount = newCompleted.length;

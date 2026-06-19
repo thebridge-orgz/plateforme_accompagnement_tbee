@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Award, BookOpen, Clock, MessageSquare, Target, TrendingUp } from 'lucide-react';
+import { Award, BookOpen, Clock, MessageSquare, Star, Flame, CheckCheck } from 'lucide-react';
 import { StatCard } from '../../components/StatCard';
 import { ProgressBar } from '../ui/ProgressBar';
 import { Button } from '../ui/button';
@@ -9,7 +9,7 @@ import { moduleStaticContent } from '../ModuleLinearPage';
 import { routes } from '../../router/routes';
 import { Link } from 'react-router-dom';
 import { UserProfile } from '../../../types/user';
-import { notesService } from '../../../services/supabase';
+import { notesService, statisticsService } from '../../../services/supabase';
 import type { AdminNote } from '../../../services/supabase';
 import { formatDateTime } from '../../../utils/date';
 
@@ -21,11 +21,29 @@ interface StudentDashboardProps {
 export function StudentDashboard({ user }: StudentDashboardProps) {
   const { loading, modules, totalCount, globalProgress, currentModule, completedCount } = useModules();
   const [adminNotes, setAdminNotes] = useState<AdminNote[]>([]);
+  const [streakDays, setStreakDays] = useState(0);
+  const [readNoteIds, setReadNoteIds] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem(`tbee_read_notes_${user?.id}`);
+      return new Set(stored ? JSON.parse(stored) : []);
+    } catch { return new Set(); }
+  });
+
+  const markAsRead = (noteId: string) => {
+    setReadNoteIds(prev => {
+      const next = new Set(prev).add(noteId);
+      localStorage.setItem(`tbee_read_notes_${user?.id}`, JSON.stringify([...next]));
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (!user?.id) return;
     notesService.getStudentNotes(user.id)
       .then(setAdminNotes)
+      .catch(() => {});
+    statisticsService.getStreakData(user.id)
+      .then(d => setStreakDays(d.streakDays))
       .catch(() => {});
   }, [user?.id]);
   //console.log(`currentModule : ${currentModule}`);
@@ -67,9 +85,16 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
     ? formatStudyTime(totalStudyMinutes)
     : completedCount === 0 ? '–' : '0min';
 
-  const streakDisplay = completedCount > 0
-    ? `${completedCount} module${completedCount > 1 ? 's' : ''}`
-    : '0 module';
+  // Score TBEE : 10 XP par étape + 50 XP bonus par module complété
+  const tbeeScore = modules.reduce((sum, m) => {
+    const stepsXp = (m.completedSteps?.length ?? 0) * 10;
+    const bonusXp = m.status === 'completed' ? 50 : 0;
+    return sum + stepsXp + bonusXp;
+  }, 0);
+
+  const streakDisplay = streakDays > 0
+    ? `${streakDays} jour${streakDays > 1 ? 's' : ''}`
+    : '–';
 
 
   if (loading) {
@@ -125,16 +150,16 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
             subtitle={completedCount === 0 ? 'Commence pour débloquer' : 'Temps total de formation'}
           />
           <StatCard
-            title="Modules complétés"
-            value={streakDisplay}
-            icon={<TrendingUp className="w-6 h-6 text-primary" />}
-            subtitle={completedCount === 0 ? 'Commence pour débloquer' : 'Sur ton parcours TBEE'}
+            title="Score TBEE"
+            value={tbeeScore > 0 ? `${tbeeScore} XP` : '–'}
+            icon={<Star className="w-6 h-6 text-primary" />}
+            subtitle={tbeeScore === 0 ? 'Commence pour gagner des XP' : '10 XP/étape · 50 XP/module'}
           />
           <StatCard
-            title="Objectif mensuel"
-            value={globalProgress === 0 ? '0%' : `${globalProgress}%`}
-            icon={<Target className="w-6 h-6 text-primary" />}
-            subtitle={'Définis ton objectif'}
+            title="Série active"
+            value={streakDisplay}
+            icon={<Flame className="w-6 h-6 text-primary" />}
+            subtitle={streakDays === 0 ? 'Progresse chaque jour' : `${streakDays} jour${streakDays > 1 ? 's' : ''} consécutif${streakDays > 1 ? 's' : ''}`}
           />
         </div>
 
@@ -255,22 +280,61 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
             )}
 
             {/* Notes de l'admin */}
-            {adminNotes.length > 0 && (
-              <div className="bg-card border border-border rounded-2xl p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <MessageSquare className="w-5 h-5 text-primary" />
-                  <h4>Messages de ton conseiller</h4>
-                </div>
-                <div className="space-y-3">
-                  {adminNotes.map((note) => (
-                    <div key={note.id} className="p-3 bg-primary/5 border border-primary/20 rounded-xl">
-                      <p className="text-sm">{note.content}</p>
-                      <p className="text-xs text-muted-foreground mt-2">{formatDateTime(note.createdAt)}</p>
+            {adminNotes.length > 0 && (() => {
+              const unread = adminNotes.filter(n => !readNoteIds.has(n.id));
+              const readCount = adminNotes.length - unread.length;
+              if (unread.length === 0 && readCount === 0) return null;
+              return (
+                <div className="bg-card border border-border rounded-2xl p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <MessageSquare className="w-5 h-5 text-primary" />
+                    <h4>Messages de ton conseiller</h4>
+                    {unread.length > 0 && (
+                      <span className="ml-auto text-xs font-semibold bg-primary/10 text-[#1E1548] px-2 py-0.5 rounded-full">
+                        {unread.length}
+                      </span>
+                    )}
+                  </div>
+                  {unread.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-2">
+                      Tous les messages sont lus · {readCount} archivé{readCount > 1 ? 's' : ''}
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {unread.map((note) => (
+                        <div key={note.id} className="p-3 bg-primary/5 border border-primary/20 rounded-xl">
+                          {note.content.includes('\n\n') ? (() => {
+                            const [header, ...rest] = note.content.split('\n\n');
+                            return (
+                              <>
+                                <p className="text-xs font-semibold text-[#1E1548] mb-1">{header}</p>
+                                <p className="text-sm whitespace-pre-line">{rest.join('\n\n')}</p>
+                              </>
+                            );
+                          })() : (
+                            <p className="text-sm whitespace-pre-line">{note.content}</p>
+                          )}
+                          <div className="flex items-center justify-between mt-2">
+                            <p className="text-xs text-muted-foreground">{formatDateTime(note.createdAt)}</p>
+                            <button
+                              onClick={() => markAsRead(note.id)}
+                              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-[#1E1548] transition-colors"
+                            >
+                              <CheckCheck className="w-3.5 h-3.5" /> Marquer comme lu
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      {readCount > 0 && (
+                        <p className="text-xs text-muted-foreground text-center pt-1">
+                          + {readCount} message{readCount > 1 ? 's' : ''} archivé{readCount > 1 ? 's' : ''}
+                        </p>
+                      )}
                     </div>
-                  ))}
+                  )}
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Quick Actions */}
             <div className="bg-card border border-border rounded-2xl p-6">

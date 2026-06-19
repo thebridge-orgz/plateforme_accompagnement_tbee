@@ -22,10 +22,11 @@ import Onboarding from './app/pages/student/Onboarding';
 import ParcoursPage from './app/pages/student/Parcours';
 import ModuleDetail from './app/pages/student/ModulePageWrapper';
 import CvPage from './app/pages/student/CvPage';
-import OffersPage from './app/pages/student/OffersPage';
+
 import PracticalCasePageWrapper from './app/pages/student/PracticalCasePageWrapper';
 import ProfilePageWrapper from './app/pages/student/ProfilePageWrapper';
 import ModulePageWrapper from './app/pages/student/ModulePageWrapper';
+import ProspectionPageWrapper from './app/pages/student/ProspectionPageWrapper';
 
 // Pages protégées admin
 import AdminDashboard from './app/pages/admin/Dashboard';
@@ -109,15 +110,17 @@ function App() {
           </ProtectedRoute>
         } />
 
-        <Route path={routes.StudentJobTracking.path} element={
-          <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
-            <OffersPage />
-          </ProtectedRoute>
-        } />
+        {/* StudentJobTracking supprimé — remplacé par Mon Pokédex */}
 
         <Route path={routes.StudentPractical.path} element={
           <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
             <PracticalCasePageWrapper />
+          </ProtectedRoute>
+        } />
+
+        <Route path={routes.StudentProspection.path} element={
+          <ProtectedRoute allowedRoles={['student']} requireOnboarding={true}>
+            <ProspectionPageWrapper />
           </ProtectedRoute>
         } />
 

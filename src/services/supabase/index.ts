@@ -8,3 +8,7 @@ export { statisticsService } from './statistics.service';
 export { notesService } from './notes.service';
 export type { AdminNote } from './notes.service';
 export { practicalCasesService } from './practicalCases.service';
+export { proofsService } from './proofs.service';
+export type { PedagogicalProof, ProofType, CreateProofPayload } from './proofs.service';
+export { prospectingService } from './prospecting.service';
+export type { ProspectingEntry, ProspectingEntryWithStudent, ProspectingStatus, CreateProspectingEntry } from './prospecting.service';

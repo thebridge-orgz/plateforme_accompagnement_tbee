@@ -35,11 +35,43 @@ class StatisticsService {
         if (error) throw error;
     }
 
-    async updateStreak(userId: string): Promise<void> {
-        const { error } = await supabase.rpc('update_user_streak', {
-            p_user_id: userId,
-        });
-        if (error) throw error;
+    async updateActivityAndStreak(userId: string): Promise<void> {
+        const today = new Date().toISOString().split('T')[0];
+
+        const { data } = await supabase
+            .from('user_statistics')
+            .select('last_activity_date, streak_days')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        if (data?.last_activity_date) {
+            const last = new Date(data.last_activity_date);
+            const now = new Date(today);
+            const diffDays = Math.floor((now.getTime() - last.getTime()) / 86400000);
+            if (diffDays === 0) return; // déjà actif aujourd'hui
+            const newStreak = diffDays === 1 ? (data.streak_days ?? 0) + 1 : 1;
+            await supabase
+                .from('user_statistics')
+                .update({ last_activity_date: today, streak_days: newStreak, updated_at: new Date().toISOString() })
+                .eq('user_id', userId);
+        } else {
+            await supabase
+                .from('user_statistics')
+                .update({ last_activity_date: today, streak_days: 1, updated_at: new Date().toISOString() })
+                .eq('user_id', userId);
+        }
+    }
+
+    async getStreakData(userId: string): Promise<{ streakDays: number; lastActivityDate: string | null }> {
+        const { data } = await supabase
+            .from('user_statistics')
+            .select('streak_days, last_activity_date')
+            .eq('user_id', userId)
+            .maybeSingle();
+        return {
+            streakDays: data?.streak_days ?? 0,
+            lastActivityDate: data?.last_activity_date ?? null,
+        };
     }
 
     private mapFromDB(raw: any): UserStatistics {

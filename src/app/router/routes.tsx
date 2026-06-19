@@ -81,6 +81,12 @@ export const routes = {
         isProtected: true,
         allowedRoles: ['student']
     },
+    StudentProspection: {
+        path: '/student/pokedex',
+        label: 'Mon Pokédex',
+        isProtected: true,
+        allowedRoles: ['student']
+    },
     StudentProfile: {
         path: '/student/profil',
         label: 'Mon profil',

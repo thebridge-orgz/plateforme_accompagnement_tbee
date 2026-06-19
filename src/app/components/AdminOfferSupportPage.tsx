@@ -1,354 +1,252 @@
-﻿import { ArrowLeft, Briefcase, Send, CheckCircle2, Clock, AlertTriangle, MessageSquare, ExternalLink, User } from 'lucide-react';
-import { useState } from 'react';
-import { useAdminData } from '../../hooks/useAdminData';
+import { useState, useEffect } from 'react';
+import { ArrowLeft, Briefcase, Send, CheckCircle2, AlertTriangle, MessageSquare, ExternalLink, User, Loader2, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
+import { useAuth } from '../../hooks/useAuth';
+import { prospectingService, notesService } from '../../services/supabase';
+import type { ProspectingEntryWithStudent } from '../../services/supabase';
+
+const STATUS_LABEL: Record<string, string> = {
+  to_apply:  'À candidater',
+  applied:   'Candidature envoyée',
+  interview: 'Entretien',
+  offer:     'Offre reçue',
+  rejected:  'Refusé',
+  accepted:  'Accepté',
+};
 
 export function AdminOfferSupportPage() {
-  const { offerTrackings/*, updateOfferTracking*/ } = useAdminData();
+  const { user } = useAuth();
+  const [entries, setEntries] = useState<ProspectingEntryWithStudent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [responseMessage, setResponseMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [resolving, setResolving] = useState<string | null>(null);
 
-  const [selectedSupport, setSelectedSupport] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'needsHelp' | 'resolved'>('needsHelp');
-  const [responseMessage, setResponseMessage] = useState<string>('');
+  useEffect(() => {
+    prospectingService.getNeedingHelp()
+      .then(data => { setEntries(data); setLoadError(null); })
+      .catch(err => setLoadError(err?.message || 'Erreur de chargement'))
+      .finally(() => setLoading(false));
+  }, []);
 
-  const filteredSupports = filter === 'all'
-    ? offerTrackings
-    : filter === 'needsHelp'
-      ? offerTrackings.filter(o => o.needsHelp)
-      : offerTrackings.filter(o => !o.needsHelp);
+  const selectedEntry = entries.find(e => e.id === selectedId);
 
-  const needsHelpCount = offerTrackings.filter(o => o.needsHelp).length;
-
-  const selectedSupportData = offerTrackings.find(o => o.id === selectedSupport);
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFF4CC] text-[#1E1548] text-[12px] font-semibold">
-            <AlertTriangle className="w-3.5 h-3.5" />
-            En attente
-          </span>
-        );
-      case 'in_progress':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8ECFF] text-[#1E1548] text-[12px] font-semibold">
-            <Clock className="w-3.5 h-3.5" />
-            En cours
-          </span>
-        );
-      case 'resolved':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F0FDF4] text-[#10B981] text-[12px] font-semibold">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            Résolu
-          </span>
-        );
-      default:
-        return null;
+  const handleResolve = async (entryId: string) => {
+    setResolving(entryId);
+    try {
+      await prospectingService.toggleNeedsHelp(entryId, false);
+      setEntries(prev => prev.filter(e => e.id !== entryId));
+    } catch {
+      alert('Erreur lors de la mise à jour.');
+    } finally {
+      setResolving(null);
     }
   };
 
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return (
-          <span className="px-2 py-0.5 bg-[#FEF2F2] text-[#EF4444] text-[10px] font-bold rounded">
-            URGENT
-          </span>
-        );
-      case 'medium':
-        return (
-          <span className="px-2 py-0.5 bg-[#FFF4CC] text-[#1E1548] text-[10px] font-bold rounded">
-            MOYEN
-          </span>
-        );
-      case 'low':
-        return (
-          <span className="px-2 py-0.5 bg-[#F0FDF4] text-[#10B981] text-[10px] font-bold rounded">
-            FAIBLE
-          </span>
-        );
-      default:
-        return null;
+  const handleSendResponse = async () => {
+    if (!selectedEntry || !user?.id || !responseMessage.trim()) return;
+    setSending(true);
+    try {
+      const noteContent = `Candidature chez ${selectedEntry.companyName} — ${selectedEntry.positionTitle}\n\n${responseMessage.trim()}`;
+      await notesService.addNote(selectedEntry.userId, user.id, noteContent);
+      await prospectingService.toggleNeedsHelp(selectedEntry.id, false);
+      setEntries(prev => prev.filter(e => e.id !== selectedEntry.id));
+      setSelectedId(null);
+      setResponseMessage('');
+    } catch {
+      alert('Erreur lors de l\'envoi.');
+    } finally {
+      setSending(false);
     }
-  };
-
-  const handleSendResponse = (supportId: string) => {
-    console.log(`Response sent to support ${supportId}`);
-    alert('Réponse envoyée à l\'étudiant !');
-    setSelectedSupport(null);
-    setResponseMessage('');
-    //updateOfferTracking(supportId, { needsHelp: false });
   };
 
   return (
     <div className="min-h-screen bg-[#F8F9FD] pb-16">
       {/* Header */}
       <div className="bg-white border-b border-[rgba(30,21,72,0.08)] sticky top-0 z-30">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex items-start gap-3 sm:gap-6">
             <Link to={routes.AdminDashboard.path}>
-              <button
-                className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
-                aria-label="Retour"
-              >
+              <button className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0">
                 <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
               </button>
             </Link>
             <div className="flex-1 min-w-0">
-              <h1 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold leading-tight text-[#1E1548] mb-1 sm:mb-2">
-                Aide au suivi des offres
+              <h1 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold leading-tight text-[#1E1548] mb-1">
+                Support candidatures
               </h1>
-              <p className="text-[14px] sm:text-[16px] leading-[20px] sm:leading-[24px] text-[#6B7280]">
-                Accompagnez les étudiants dans leur recherche d'alternance
+              <p className="text-[14px] sm:text-[16px] text-[#6B7280]">
+                Étudiants ayant demandé de l'aide sur une candidature
               </p>
             </div>
+            {entries.length > 0 && (
+              <div className="flex-shrink-0 h-9 px-4 bg-[#FEF2F2] border border-[#EF4444]/30 text-[#EF4444] rounded-[8px] text-[13px] font-semibold flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4" />
+                {entries.length} en attente
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8 lg:pt-8 lg:pb-8">
-        {/* Filters */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-[10px] text-[14px] font-semibold transition-all ${filter === 'all'
-                ? 'bg-[#1E1548] text-white'
-                : 'bg-white border border-[rgba(30,21,72,0.08)] text-[#1E1548] hover:bg-[#F8F9FD]'
-                }`}
-            >
-              Toutes ({offerTrackings.length})
-            </button>
-            <button
-              onClick={() => setFilter('needsHelp')}
-              className={`px-4 py-2 rounded-[10px] text-[14px] font-semibold transition-all flex items-center gap-2 ${filter === 'needsHelp'
-                ? 'bg-[#FFD600] text-[#1E1548]'
-                : 'bg-white border border-[rgba(30,21,72,0.08)] text-[#1E1548] hover:bg-[#F8F9FD]'
-                }`}
-            >
-              En attente
-              {needsHelpCount > 0 && (
-                <span className="w-5 h-5 rounded-full bg-[#EF4444] text-white text-[11px] font-bold flex items-center justify-center">
-                  {needsHelpCount}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setFilter('resolved')}
-              className={`px-4 py-2 rounded-[10px] text-[14px] font-semibold transition-all ${filter === 'resolved'
-                ? 'bg-[#10B981] text-white'
-                : 'bg-white border border-[rgba(30,21,72,0.08)] text-[#1E1548] hover:bg-[#F8F9FD]'
-                }`}
-            >
-              Résolues
-            </button>
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 space-y-4">
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-10 h-10 text-[#FFD600] animate-spin" />
           </div>
-        </div>
-
-        {/* Support Requests List */}
-        <div className="grid grid-cols-1 gap-4 sm:gap-6">
-          {filteredSupports.length === 0 ? (
-            <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[16px] p-12 text-center">
-              <Briefcase className="w-16 h-16 text-[#6B7280] mx-auto mb-4" />
-              <p className="text-[16px] text-[#6B7280]">Aucune demande d'aide trouvée</p>
+        ) : loadError ? (
+          <div className="bg-white border border-[#EF4444]/30 rounded-[16px] p-6 text-center">
+            <p className="text-[14px] font-semibold text-[#EF4444] mb-1">Erreur de chargement</p>
+            <p className="text-[13px] text-[#6B7280]">{loadError}</p>
+          </div>
+        ) : entries.length === 0 ? (
+          <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[16px] p-12 text-center">
+            <div className="w-16 h-16 bg-[#F0FDF4] rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle2 className="w-8 h-8 text-[#10B981]" />
             </div>
-          ) : (
-            filteredSupports.map((support) => (
-              <div
-                key={support.id}
-                className={`bg-white border-2 rounded-[16px] p-4 sm:p-6 transition-all ${support.needsHelp
-                  ? 'border-[#FFD600] shadow-[0_2px_8px_rgba(255,214,0,0.1)]'
-                  : 'border-[rgba(30,21,72,0.08)] shadow-[0_2px_8px_rgba(30,21,72,0.04)]'
-                  } hover:shadow-[0_6px_20px_rgba(30,21,72,0.1)]`}
-              >
-                <div className="flex flex-col gap-4">
-                  <div>
-                    <h3 className="text-[18px] sm:text-[20px] font-bold text-[#1E1548] mb-2">
-                      {support.studentName}
-                    </h3>
-                    <div className="flex items-center gap-2 mb-3">
-                      {support.needsHelp ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFF4CC] text-[#1E1548] text-[12px] font-semibold">
-                          <AlertTriangle className="w-3.5 h-3.5" />
-                          Demande d'aide
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F0FDF4] text-[#10B981] text-[12px] font-semibold">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          Résolu
-                        </span>
-                      )}
+            <h3 className="text-[18px] font-bold text-[#1E1548] mb-2">Tout est traité</h3>
+            <p className="text-[14px] text-[#6B7280]">Aucune demande d'aide en attente.</p>
+          </div>
+        ) : (
+          entries.map(entry => (
+            <div key={entry.id}
+              className="bg-white border-2 border-[#FFD600]/40 rounded-[16px] p-5 sm:p-6 shadow-[0_2px_8px_rgba(255,214,0,0.08)]">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                <div className="flex-1 min-w-0 space-y-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFF4CC] text-[#B45309] text-[12px] font-semibold">
+                      <AlertTriangle className="w-3.5 h-3.5" /> Demande d'aide
+                    </span>
+                    <span className="text-[12px] text-[#6B7280] px-2.5 py-1 bg-[#F3F4F6] rounded-full">
+                      {STATUS_LABEL[entry.status] ?? entry.status}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 bg-[#1E1548] rounded-[8px] flex items-center justify-center flex-shrink-0">
+                      <User className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-[15px] font-bold text-[#1E1548]">{entry.studentName}</p>
+                      <p className="text-[12px] text-[#6B7280]">{entry.studentEmail}</p>
                     </div>
                   </div>
 
-                  <div className="bg-[#F8F9FD] rounded-[12px] p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-[10px] bg-[#E8ECFF] flex items-center justify-center flex-shrink-0">
-                        <Briefcase className="w-5 h-5 text-[#1E1548]" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-[15px] sm:text-[16px] font-semibold text-[#1E1548] mb-1">
-                          support.position
-                        </h4>
-                        <p className="text-[13px] text-[#6B7280]">
-                          support.company
-                        </p>
-                      </div>
+                  <div className="flex items-center gap-3 p-3 bg-[#F8F9FD] rounded-[10px]">
+                    <div className="w-8 h-8 bg-[#E8ECFF] rounded-[8px] flex items-center justify-center flex-shrink-0">
+                      <Briefcase className="w-4 h-4 text-[#1E1548]" />
                     </div>
+                    <div className="min-w-0">
+                      <p className="text-[14px] font-semibold text-[#1E1548] truncate">{entry.positionTitle}</p>
+                      <p className="text-[12px] text-[#6B7280]">{entry.companyName}</p>
+                    </div>
+                    {entry.offerUrl && (
+                      <a href={entry.offerUrl} target="_blank" rel="noopener noreferrer"
+                        className="ml-auto flex-shrink-0 text-[#6B7280] hover:text-[#1E1548] transition-colors">
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    )}
                   </div>
 
-                  {support.helpRequest && (
-                    <div className="bg-white border-2 border-[#E8ECFF] rounded-[12px] p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <User className="w-4 h-4 text-[#6B7280]" />
-                        <p className="text-[12px] font-semibold text-[#6B7280]">
-                          Demande d'aide
-                        </p>
-                      </div>
-                      <p className="text-[13px] sm:text-[14px] text-[#1E1548] leading-[22px]">
-                        {support.helpRequest}
-                      </p>
+                  {entry.notes && (
+                    <div className="p-3 bg-[#E8ECFF] border border-[#1E1548]/10 rounded-[10px]">
+                      <p className="text-[12px] font-semibold text-[#6B7280] mb-1">Note de l'étudiant</p>
+                      <p className="text-[13px] text-[#1E1548] leading-[20px]">{entry.notes}</p>
                     </div>
                   )}
-
-                  {/*support.notes && (
-                    <div className="bg-[#E8ECFF] border-2 border-[#1E1548] rounded-[12px] p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <MessageSquare className="w-4 h-4 text-[#1E1548]" />
-                        <p className="text-[12px] font-semibold text-[#1E1548]">
-                          Notes
-                        </p>
-                      </div>
-                      <p className="text-[13px] sm:text-[14px] text-[#1E1548] leading-[22px]">
-                        {support.notes}
-                      </p>
-                    </div>
-                  )*/}
-
-                  {support.needsHelp && (
-                    <button
-                      onClick={() => setSelectedSupport(support.id)}
-                      className="w-full h-10 bg-[#FFD600] text-[#1E1548] rounded-[10px] text-[14px] font-semibold hover:bg-[#FDC700] transition-all flex items-center justify-center gap-2"
-                    >
-                      <MessageSquare className="w-4 h-4" />
-                      Répondre
-                    </button>
-                  )}
                 </div>
-              </div>
-            ))
-          )}
-        </div>
 
-        {/* Response Modal */}
-        {selectedSupport && selectedSupportData && selectedSupportData.needsHelp && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-[16px] max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="sticky top-0 bg-white border-b border-[rgba(30,21,72,0.08)] p-4 sm:p-6 rounded-t-[16px]">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-[20px] sm:text-[24px] font-bold text-[#1E1548]">
-                    Répondre à {selectedSupportData.studentName}
-                  </h2>
+                <div className="flex sm:flex-col gap-2 flex-shrink-0">
                   <button
-                    onClick={() => setSelectedSupport(null)}
-                    className="w-8 h-8 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors"
+                    onClick={() => { setSelectedId(entry.id); setResponseMessage(''); }}
+                    className="flex-1 sm:flex-none h-9 px-4 bg-[#1E1548] text-white rounded-[8px] text-[13px] font-semibold hover:bg-[#2D2166] transition-colors flex items-center justify-center gap-1.5"
                   >
-                    ✕
-                  </button>
-                </div>
-              </div>
-
-              <div className="p-4 sm:p-6 space-y-6">
-                {/* Context */}
-                <div>
-                  <label className="block text-[14px] font-semibold text-[#1E1548] mb-2">
-                    Offre concernée
-                  </label>
-                  <div className="bg-[#F8F9FD] rounded-[12px] p-4">
-                    <p className="text-[15px] font-semibold text-[#1E1548] mb-1">
-                      {selectedSupportData.positionTitle}
-                    </p>
-                    <p className="text-[13px] text-[#6B7280]">
-                      {selectedSupportData.companyName}
-                    </p>
-                  </div>
-                </div>
-
-                {/* student Message */}
-                {selectedSupportData.helpRequest && (
-                  <div>
-                    <label className="block text-[14px] font-semibold text-[#1E1548] mb-2">
-                      Demande de l'étudiant
-                    </label>
-                    <div className="bg-[#E8ECFF] rounded-[12px] p-4 border border-[#1E1548]">
-                      <p className="text-[14px] text-[#1E1548] leading-[22px]">
-                        {selectedSupportData.helpRequest}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Response Input */}
-                <div>
-                  <label className="block text-[14px] font-semibold text-[#1E1548] mb-2">
-                    Votre réponse
-                  </label>
-                  <textarea
-                    value={responseMessage}
-                    onChange={(e) => setResponseMessage(e.target.value)}
-                    placeholder="Rédige une réponse personnalisée et encourageante..."
-                    className="w-full h-40 px-4 py-3 border-2 border-[rgba(30,21,72,0.08)] rounded-[12px] text-[14px] text-[#1E1548] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#FFD600] resize-none"
-                  />
-                </div>
-
-                {/* Quick Responses */}
-                <div className="bg-[#FFF4CC] rounded-[12px] p-4">
-                  <p className="text-[13px] font-semibold text-[#1E1548] mb-2">
-                    💡 Réponses rapides
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      'Adapte ta lettre de motivation',
-                      'Mets en avant tes compétences',
-                      'Relance après 2 semaines',
-                      'Postule même sans toutes les compétences',
-                      'Montre ta motivation'
-                    ].map((quickResponse) => (
-                      <button
-                        key={quickResponse}
-                        onClick={() => setResponseMessage(prev => prev + (prev ? ' ' : '') + quickResponse + '. ')}
-                        className="px-3 py-1.5 bg-white border border-[#1E1548] text-[#1E1548] rounded-[8px] text-[12px] font-medium hover:bg-[#1E1548] hover:text-white transition-all"
-                      >
-                        + {quickResponse}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                  <button
-                    onClick={() => setSelectedSupport(null)}
-                    className="flex-1 h-12 bg-white border-2 border-[#E5E7EB] text-[#6B7280] rounded-[12px] text-[16px] font-semibold hover:bg-[#F8F9FD] transition-all"
-                  >
-                    Annuler
+                    <MessageSquare className="w-4 h-4" /> Répondre
                   </button>
                   <button
-                    onClick={() => handleSendResponse(selectedSupport)}
-                    disabled={!responseMessage}
-                    className="flex-1 h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[16px] font-semibold hover:bg-[#FDC700] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    onClick={() => handleResolve(entry.id)}
+                    disabled={resolving === entry.id}
+                    className="flex-1 sm:flex-none h-9 px-4 bg-[#F0FDF4] border border-[#10B981]/30 text-[#10B981] rounded-[8px] text-[13px] font-semibold hover:bg-[#DCFCE7] transition-colors flex items-center justify-center gap-1.5 disabled:opacity-60"
                   >
-                    <Send className="w-5 h-5" />
-                    Envoyer la réponse
+                    {resolving === entry.id
+                      ? <Loader2 className="w-4 h-4 animate-spin" />
+                      : <><CheckCircle2 className="w-4 h-4" /> Résolu</>}
                   </button>
                 </div>
               </div>
             </div>
-          </div>
+          ))
         )}
       </div>
+
+      {/* Response modal */}
+      {selectedId && selectedEntry && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[16px] w-full max-w-lg shadow-xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(30,21,72,0.08)]">
+              <h2 className="text-[18px] font-bold text-[#1E1548]">
+                Répondre à {selectedEntry.studentName}
+              </h2>
+              <button onClick={() => setSelectedId(null)}
+                className="w-8 h-8 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center">
+                <X className="w-5 h-5 text-[#1E1548]" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="p-3 bg-[#F8F9FD] rounded-[10px]">
+                <p className="text-[13px] font-semibold text-[#1E1548]">{selectedEntry.positionTitle}</p>
+                <p className="text-[12px] text-[#6B7280]">{selectedEntry.companyName}</p>
+              </div>
+
+              <div>
+                <label className="block text-[13px] font-semibold text-[#1E1548] mb-1.5">
+                  Votre message (visible dans le dashboard de l'étudiant)
+                </label>
+                <textarea
+                  value={responseMessage}
+                  onChange={e => setResponseMessage(e.target.value)}
+                  rows={5}
+                  placeholder="Rédige un conseil personnalisé…"
+                  className="w-full px-4 py-3 border-2 border-[rgba(30,21,72,0.10)] rounded-[10px] text-[14px] text-[#1E1548] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#FFD600] resize-y"
+                />
+              </div>
+
+              <div className="bg-[#FFF4CC] rounded-[10px] p-3">
+                <p className="text-[12px] font-semibold text-[#B45309] mb-2">Suggestions rapides</p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    'Adapte ta lettre de motivation',
+                    'Relance après 2 semaines',
+                    'Postule même sans toutes les compétences',
+                    'Mets en avant ta motivation',
+                  ].map(s => (
+                    <button key={s}
+                      onClick={() => setResponseMessage(prev => prev + (prev ? ' ' : '') + s + '. ')}
+                      className="px-2.5 py-1 bg-white border border-[#B45309]/30 text-[#B45309] rounded-[6px] text-[12px] font-medium hover:bg-[#FFF4CC] transition-colors">
+                      + {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 px-6 py-4 border-t border-[rgba(30,21,72,0.08)]">
+              <button onClick={() => setSelectedId(null)}
+                className="flex-1 h-10 bg-white border-2 border-[#E5E7EB] text-[#6B7280] rounded-[10px] text-[14px] font-semibold hover:bg-[#F8F9FD]">
+                Annuler
+              </button>
+              <button onClick={handleSendResponse} disabled={!responseMessage.trim() || sending}
+                className="flex-1 h-10 bg-[#FFD600] text-[#1E1548] rounded-[10px] text-[14px] font-semibold hover:bg-[#FDC700] flex items-center justify-center gap-2 disabled:opacity-60">
+                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send className="w-4 h-4" /> Envoyer</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

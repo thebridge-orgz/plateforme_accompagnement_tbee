@@ -10,11 +10,11 @@ import {
   Menu,
   X,
   CheckSquare,
-  Search,
   GraduationCap,
   ClipboardCheck,
   MessageSquare,
-  UserCog
+  UserCog,
+  MapPin,
 } from 'lucide-react';
 import { useState } from 'react';
 import { routes } from '../../router/routes';
@@ -47,9 +47,9 @@ export function DashboardSidebar({
     navItems = [
       { label: 'Tableau de bord', icon: <Home className="w-5 h-5" />, path: routes.StudentDashboard.path },
       { label: 'Mon parcours', icon: <GraduationCap className="w-5 h-5" />, path: routes.StudentModules.path },
-      { label: 'Suivi des offres', icon: <Search className="w-5 h-5" />, path: routes.StudentJobTracking.path },
       { label: 'Mon CV', icon: <FileText className="w-5 h-5" />, path: routes.StudentCv.path },
       { label: 'Cas pratiques', icon: <Briefcase className="w-5 h-5" />, path: routes.StudentPractical.path },
+      { label: 'Mon Pokédex', icon: <MapPin className="w-5 h-5" />, path: routes.StudentProspection.path },
       { label: 'Mon profil', icon: <User className="w-5 h-5" />, path: routes.StudentProfile.path },
     ];
   }
