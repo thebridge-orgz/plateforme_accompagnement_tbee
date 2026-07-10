@@ -44,11 +44,15 @@ class ModuleService {
             const prevCompleted = i === 0 || result[i - 1].status === 'completed';
 
             if (progress) {
+                // Un module à 100% est traité comme 'completed' même si la DB
+                // indique encore 'in_progress' (cas où completeModule a échoué).
+                const effectiveStatus = (progress.status === 'in_progress' && progress.progress >= 100)
+                    ? 'completed'
+                    : progress.status;
+
                 result.push({
                     ...module,
-                    // Si le précédent n'est pas encore terminé, on verrouille même si
-                    // la DB indique 'in_progress' (module intercalé après coup).
-                    status: prevCompleted ? progress.status : 'locked',
+                    status: prevCompleted ? effectiveStatus : 'locked',
                     progress: progress.progress,
                     xp: progress.xp,
                     completedSteps: progress.completedSteps,
@@ -256,11 +260,22 @@ class ModuleService {
     }
 
     async deleteModule(moduleId: string): Promise<void> {
+        const { error: progressError } = await supabase
+            .from('user_module_progress')
+            .delete()
+            .eq('module_id', moduleId);
+        if (progressError) throw progressError;
+
+        const { error: proofsError } = await supabase
+            .from('pedagogical_proofs')
+            .delete()
+            .eq('module_id', moduleId);
+        if (proofsError) throw proofsError;
+
         const { error } = await supabase
             .from('modules')
             .delete()
             .eq('id', moduleId);
-
         if (error) throw error;
     }
 }

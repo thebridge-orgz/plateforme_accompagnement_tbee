@@ -1165,7 +1165,11 @@ export function AdminModulesPage() {
   }, []);
 
   const handleDeleteModule = useCallback(async (mod: Module) => {
-    await deleteModule(mod.id);
+    try {
+      await deleteModule(mod.id);
+    } catch (err: any) {
+      alert(`Erreur lors de la suppression : ${err?.message ?? 'Vérifiez les politiques RLS dans Supabase.'}`);
+    }
   }, [deleteModule]);
 
   // ── File upload ────────────────────────────────────────────────────────────

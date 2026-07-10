@@ -46,6 +46,11 @@ export function useModules() {
     const unlockModule = useCallback(async (moduleId: string) => {
         if (!user?.id) return;
         await moduleService.unlockModule(user.id, moduleId);
+        setModules(prev => prev.map(module =>
+            module.id === moduleId && module.status === 'locked'
+                ? { ...module, status: 'available' }
+                : module
+        ));
     }, [user?.id]);
 
     const startModule = useCallback(async (moduleId: string) => {
