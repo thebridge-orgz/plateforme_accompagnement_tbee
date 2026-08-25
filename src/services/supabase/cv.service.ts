@@ -14,7 +14,10 @@ class CVService {
     }
 
     async uploadCV(userId: string, file: File): Promise<CVData> {
-        const filePath = `${userId}/${Date.now()}_${file.name}`;
+        const safeName = file.name
+            .normalize('NFD').replace(/[̀-ͯ]/g, '')  // supprime les accents
+            .replace(/[^a-zA-Z0-9._-]/g, '_');                  // remplace tout caractère non-safe
+        const filePath = `${userId}/${Date.now()}_${safeName}`;
         const { error: uploadError } = await supabase.storage
             .from('cv-uploads')
             .upload(filePath, file, { upsert: true });
