@@ -59,7 +59,7 @@ class CVService {
                 user_id: userId,
                 ...dbUpdates,
                 uploaded_at: cvData.uploadedAt || (cvData.status === 'uploaded' ? new Date().toISOString() : undefined)
-            })
+            }, { onConflict: 'user_id' })
             .select()
             .single();
 
