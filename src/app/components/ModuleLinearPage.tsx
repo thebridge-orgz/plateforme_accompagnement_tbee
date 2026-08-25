@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle2, ChevronLeft, ChevronRight, Clock, FileText, Lock, Play, Trophy, Upload, Video, X, FileImage, Link2, ClipboardList, CheckSquare } from 'lucide-react';
+import { CheckCircle2, ChevronLeft, ChevronRight, Clock, FileText, Lock, Play, Trophy, Upload, Video, X, FileImage, Link2, ClipboardList, CheckSquare, Target, Search, Briefcase } from 'lucide-react';
 import { routes } from '../../app/router/routes';
 import { Link } from 'react-router-dom';
 import { useModules } from '../../hooks/useModules';
@@ -946,9 +946,16 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
               </p>
 
               <div className="flex justify-center gap-4 mb-6">
-                {[['🎯', 'Projet'], ['📄', 'CV'], ['🔍', 'Recherche'], ['💼', 'Entretien']].map(([emoji, label]) => (
+                {([
+                  { Icon: Target, label: 'Projet' },
+                  { Icon: FileText, label: 'CV' },
+                  { Icon: Search, label: 'Recherche' },
+                  { Icon: Briefcase, label: 'Entretien' },
+                ] as const).map(({ Icon, label }) => (
                   <div key={label} className="flex flex-col items-center gap-1">
-                    <span className="text-3xl">{emoji}</span>
+                    <div className="w-12 h-12 bg-[#E8ECFF] rounded-full flex items-center justify-center">
+                      <Icon className="w-6 h-6 text-[#1E1548]" />
+                    </div>
                     <span className="text-[11px] text-[#6B7280]">{label}</span>
                   </div>
                 ))}
