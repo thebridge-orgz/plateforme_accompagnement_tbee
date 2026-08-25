@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, CheckCircle2, FileText, Download, Eye, Upload } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, FileText, Download, Eye, Upload, LayoutTemplate, Target, BarChart2, SpellCheck } from 'lucide-react';
 import { Button } from './Button';
 import { FileUploader } from './FileUploader';
 import { routes } from '../router/routes';
@@ -10,23 +10,23 @@ const cvTips = [
   {
     title: 'Mise en page',
     description: 'Utilisez une structure claire avec des sections bien définies',
-    icon: '📐'
+    Icon: LayoutTemplate,
   },
   {
     title: 'Contenu ciblé',
     description: 'Adaptez votre CV à chaque offre d\'alternance',
-    icon: '🎯'
+    Icon: Target,
   },
   {
     title: 'Expériences',
     description: 'Privilégiez les verbes d\'action et les résultats mesurables',
-    icon: '📊'
+    Icon: BarChart2,
   },
   {
     title: 'Relecture',
     description: 'Vérifiez l\'orthographe et la grammaire',
-    icon: '✓'
-  }
+    Icon: SpellCheck,
+  },
 ];
 
 export function CVUploadPage() {
@@ -272,7 +272,9 @@ export function CVUploadPage() {
               <div className="space-y-4">
                 {cvTips.map((tip, index) => (
                   <div key={index} className="flex items-start gap-3">
-                    <span className="text-2xl">{tip.icon}</span>
+                    <div className="w-9 h-9 bg-[#E8ECFF] rounded-full flex items-center justify-center shrink-0">
+                      <tip.Icon className="w-4 h-4 text-[#1E1548]" />
+                    </div>
                     <div>
                       <p className="font-medium text-sm mb-1">{tip.title}</p>
                       <p className="text-xs text-muted-foreground">{tip.description}</p>

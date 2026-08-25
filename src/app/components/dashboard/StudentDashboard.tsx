@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Award, BookOpen, Clock, MessageSquare, Star, Flame, CheckCheck } from 'lucide-react';
+import { Award, BookOpen, Clock, MessageSquare, Star, Flame, CheckCheck, Target, FileText, Briefcase } from 'lucide-react';
 import { StatCard } from '../../components/StatCard';
 import { ProgressBar } from '../ui/ProgressBar';
 import { Button } from '../ui/button';
@@ -259,7 +259,9 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
                 <div className="space-y-3">
                   {completedCount >= 1 && (
                     <div className="flex items-start gap-3 p-3 bg-secondary/50 rounded-xl">
-                      <span className="text-2xl">🎯</span>
+                      <div className="w-9 h-9 bg-[#E8ECFF] rounded-full flex items-center justify-center shrink-0">
+                        <Target className="w-4 h-4 text-[#1E1548]" />
+                      </div>
                       <div>
                         <p className="text-sm font-medium">Premier module terminé</p>
                         <p className="text-xs text-muted-foreground">Bravo !</p>
@@ -343,17 +345,19 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
                 <Link to={routes.StudentCv.path} className="block w-full">
                   <Button
                     variant="outline"
-                    className="w-full justify-start"
+                    className="w-full justify-start gap-2"
                   >
-                    📄 {'Importer'} mon CV
+                    <FileText className="w-4 h-4 text-[#1E1548]" />
+                    Importer mon CV
                   </Button>
                 </Link>
                 <Link to={routes.StudentJobTracking.path} className="block w-full">
                   <Button
                     variant="outline"
-                    className="w-full justify-start"
+                    className="w-full justify-start gap-2"
                   >
-                    💼 Suivre mes offres
+                    <Briefcase className="w-4 h-4 text-[#1E1548]" />
+                    Suivre mes offres
                   </Button>
                 </Link>
               </div>
