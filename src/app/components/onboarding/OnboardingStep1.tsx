@@ -1,17 +1,17 @@
 import { useState } from 'react';
-import { ChevronRight, Search, Target, ArrowLeft } from 'lucide-react';
+import { ChevronRight, Search, Target, ArrowLeft, Palette, TrendingUp, Globe, Briefcase, Cpu, Megaphone } from 'lucide-react';
 
 interface OnboardingStep1Props {
   onComplete: (data: { hasFormation: boolean; formationChoice?: string; questionnaireResults?: any }) => void;
 }
 
 const formations = [
-  { id: 'ux-ui', name: 'UX/UI Design', icon: '🎨' },
-  { id: 'traffic', name: 'Traffic Management', icon: '📈' },
-  { id: 'seo', name: 'SEO', icon: '🔍' },
-  { id: 'business-dev', name: 'Business Dev', icon: '💼' },
-  { id: 'ia-nocode', name: 'IA & No code', icon: '🤖' },
-  { id: 'marketing', name: 'Marketing digital', icon: '📱' }
+  { id: 'ux-ui', name: 'UX/UI Design', Icon: Palette },
+  { id: 'traffic', name: 'Traffic Management', Icon: TrendingUp },
+  { id: 'seo', name: 'SEO', Icon: Globe },
+  { id: 'business-dev', name: 'Business Dev', Icon: Briefcase },
+  { id: 'ia-nocode', name: 'IA & No code', Icon: Cpu },
+  { id: 'marketing', name: 'Marketing digital', Icon: Megaphone },
 ];
 
 const questionnaireQuestions = [
@@ -207,13 +207,19 @@ export function OnboardingStep1({ onComplete }: OnboardingStep1Props) {
                 onClick={() => handleFormationSelect(formation.id)}
                 className={`
                   bg-white border rounded-[16px] p-6 text-center transition-all
-                  ${selectedFormation === formation.id 
-                    ? 'border-[#FFD600] bg-[#FFD600]/10 shadow-lg' 
+                  ${selectedFormation === formation.id
+                    ? 'border-[#FFD600] bg-[#FFD600]/10 shadow-lg'
                     : 'border-[rgba(30,21,72,0.1)] hover:border-[#FFD600]/50'
                   }
                 `}
               >
-                <div className="text-4xl mb-3">{formation.icon}</div>
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 ${
+                  selectedFormation === formation.id ? 'bg-[#FFD600]' : 'bg-[#E8ECFF]'
+                }`}>
+                  <formation.Icon className={`w-7 h-7 ${
+                    selectedFormation === formation.id ? 'text-[#1E1548]' : 'text-[#1E1548]'
+                  }`} />
+                </div>
                 <h4 className="text-[16px] font-semibold leading-[24px] text-[#1E1548]">
                   {formation.name}
                 </h4>
