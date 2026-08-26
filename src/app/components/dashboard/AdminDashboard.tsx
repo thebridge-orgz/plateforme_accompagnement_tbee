@@ -88,7 +88,6 @@ export function AdminDashboard({ user }: AdminDashboardProps) {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 {[
                                     { label: 'CVs en attente de validation', count: globalStats.pendingCVs, path: routes.AdminCvReview.path },
-                                    { label: 'Exercices à corriger', count: 0, path: routes.AdminExerciceReview.path },
                                     { label: 'Demandes d\'aide sur offres', count: globalStats.offersNeedingHelp, path: routes.AdminOfferSupport.path },
                                     { label: 'Étudiants inactifs (+7j)', count: inactiveStudents, path: routes.AdminStudentList.path },
                                 ].map((task, i) => (

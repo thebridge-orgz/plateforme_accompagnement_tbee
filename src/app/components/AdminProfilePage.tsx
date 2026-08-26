@@ -1,4 +1,4 @@
-﻿import { ArrowLeft, User, Mail, Building, Shield, Edit2, Save, X } from 'lucide-react';
+﻿import { ArrowLeft, User, Mail, Building, Shield, Edit2, Save, X, Phone, CheckCircle2, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
@@ -30,7 +30,7 @@ export function AdminProfilePage() {
     establishment: 'TBEE Formation',
     phone: user.phone,
     joinedDate: formatDateTime(user.createdAt),
-    permissions: ['Validation CVs', 'Correction exercices', 'Gestion utilisateurs', 'Support offres']
+    permissions: ['Validation CVs', 'Gestion utilisateurs', 'Support offres', 'Gestion modules']
   });
 
   const [editData, setEditData] = useState({ ...adminData });
@@ -256,7 +256,7 @@ export function AdminProfilePage() {
                     />
                   ) : (
                     <div className="flex items-center gap-3 h-12 px-4 bg-[#F8F9FD] rounded-[12px]">
-                      <span className="text-[18px]">📞</span>
+                      <Phone className="w-5 h-5 text-[#6B7280]" />
                       <span className="text-[14px] text-[#1E1548] font-medium">
                         {adminData.phone}
                       </span>
@@ -278,7 +278,7 @@ export function AdminProfilePage() {
                     className="flex items-center gap-3 p-3 bg-[#E8ECFF] rounded-[12px]"
                   >
                     <div className="w-8 h-8 rounded-full bg-[#FFD600] flex items-center justify-center flex-shrink-0">
-                      <span className="text-[16px]">✓</span>
+                      <CheckCircle2 className="w-4 h-4 text-[#1E1548]" />
                     </div>
                     <span className="text-[14px] font-semibold text-[#1E1548]">
                       {permission}
@@ -289,33 +289,8 @@ export function AdminProfilePage() {
             </div>
           </div>
 
-          {/* Right Column - Stats & Info */}
+          {/* Right Column - Info */}
           <div className="space-y-6">
-            {/* Stats Card */}
-            <div className="bg-gradient-to-br from-[#1E1548] to-[#2D2166] border border-[rgba(30,21,72,0.08)] rounded-[16px] p-4 sm:p-6 shadow-[0_2px_8px_rgba(30,21,72,0.04)]">
-              <h3 className="text-[18px] sm:text-[20px] font-bold text-white mb-4">
-                📊 Vos statistiques
-              </h3>
-              <div className="space-y-4">
-                <div className="pb-4 border-b border-white/10">
-                  <p className="text-[13px] text-[#E8ECFF] mb-1">CVs validés</p>
-                  <p className="text-[28px] font-bold text-white">{stats.cvsValidated}</p>
-                </div>
-                <div className="pb-4 border-b border-white/10">
-                  <p className="text-[13px] text-[#E8ECFF] mb-1">Exercices corrigés</p>
-                  <p className="text-[28px] font-bold text-white">{stats.exercisesGraded}</p>
-                </div>
-                <div className="pb-4 border-b border-white/10">
-                  <p className="text-[13px] text-[#E8ECFF] mb-1">Étudiants aidés</p>
-                  <p className="text-[28px] font-bold text-white">{stats.studentsHelped}</p>
-                </div>
-                <div>
-                  <p className="text-[13px] text-[#E8ECFF] mb-1">Temps de réponse moyen</p>
-                  <p className="text-[24px] font-bold text-[#FFD600]">{stats.avgResponseTime}</p>
-                </div>
-              </div>
-            </div>
-
             {/* Account Info */}
             <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[16px] p-4 sm:p-6 shadow-[0_2px_8px_rgba(30,21,72,0.04)]">
               <h3 className="text-[18px] sm:text-[20px] font-bold text-[#1E1548] mb-4">
@@ -343,8 +318,9 @@ export function AdminProfilePage() {
 
             {/* Security */}
             <div className="bg-[#FFF4CC] border-2 border-[#FFD600] rounded-[16px] p-4 sm:p-6">
-              <h3 className="text-[18px] font-bold text-[#1E1548] mb-2">
-                🔐 Sécurité
+              <h3 className="text-[18px] font-bold text-[#1E1548] mb-2 flex items-center gap-2">
+                <Lock className="w-5 h-5 text-[#1E1548]" />
+                Sécurité
               </h3>
               <p className="text-[13px] text-[#1E1548] mb-4 leading-[20px]">
                 Modifiez votre mot de passe régulièrement pour assurer la sécurité de votre compte.

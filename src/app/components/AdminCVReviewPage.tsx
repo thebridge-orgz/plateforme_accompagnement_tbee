@@ -1,8 +1,9 @@
-﻿import { ArrowLeft, FileText, Download, CheckCircle2, AlertCircle, Star, Send } from 'lucide-react';
+﻿import { ArrowLeft, FileText, Download, CheckCircle2, AlertCircle, Star, Send, Sparkles, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useAdminData } from '../../hooks/useAdminData';
 import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
+import { supabase } from '../../config/supabaseClient';
 
 export function AdminCVReviewPage() {
   const { cvSubmissions, reviewCV } = useAdminData();
@@ -12,6 +13,25 @@ export function AdminCVReviewPage() {
   const [reviewScore, setReviewScore] = useState<number>(0);
   const [reviewFeedback, setReviewFeedback] = useState<string>('');
   const [reviewStatus, setReviewStatus] = useState<'approved' | 'needs_revision'>('approved');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const handleAiAnalyze = async () => {
+    if (!selectedCV?.fileUrl) return;
+    setIsAnalyzing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-cv', {
+        body: { fileUrl: selectedCV.fileUrl },
+      });
+      if (error) throw error;
+      if (data?.analysis) {
+        setReviewFeedback(data.analysis);
+      }
+    } catch (err: any) {
+      alert(`Erreur analyse IA : ${err?.message ?? String(err)}`);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const filteredCVs = cvSubmissions.filter(cv => {
     if (filter === 'all') return true;
@@ -187,6 +207,26 @@ export function AdminCVReviewPage() {
                 {selectedCV.status === 'pending' && (
                   <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[16px] p-6">
                     <h3 className="text-[18px] font-bold text-[#1E1548] mb-4">Évaluation du CV</h3>
+
+                    {/* Bouton analyse IA */}
+                    <div className="mb-6 p-4 bg-[#F8F9FD] border border-[#E8ECFF] rounded-[12px]">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-[14px] font-semibold text-[#1E1548] mb-1">Analyse IA</p>
+                          <p className="text-[12px] text-[#6B7280]">Génère automatiquement un retour structuré sur le CV</p>
+                        </div>
+                        <button
+                          onClick={handleAiAnalyze}
+                          disabled={isAnalyzing}
+                          className="flex items-center gap-2 px-4 py-2 bg-[#1E1548] text-white rounded-[10px] text-[13px] font-semibold hover:bg-[#2D2166] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {isAnalyzing
+                            ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyse en cours…</>
+                            : <><Sparkles className="w-4 h-4" /> Analyser avec l'IA</>
+                          }
+                        </button>
+                      </div>
+                    </div>
 
                     <div className="mb-6">
                       <label className="block text-[14px] font-medium text-[#1E1548] mb-3">

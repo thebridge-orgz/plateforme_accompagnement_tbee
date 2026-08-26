@@ -11,7 +11,6 @@ import {
   X,
   CheckSquare,
   GraduationCap,
-  ClipboardCheck,
   MessageSquare,
   UserCog,
   MapPin,
@@ -57,7 +56,6 @@ export function DashboardSidebar({
     navItems = [
       { label: 'Vue d\'ensemble', icon: <BarChart3 className="w-5 h-5" />, path: routes.AdminDashboard.path },
       { label: 'Validation CVs', icon: <CheckSquare className="w-5 h-5" />, path: routes.AdminCvReview.path },
-      { label: 'Correction exercices', icon: <ClipboardCheck className="w-5 h-5" />, path: routes.AdminExerciceReview.path },
       { label: 'Gestion modules', icon: <FileText className="w-5 h-5" />, path: routes.AdminModules.path },
       { label: 'Support offres', icon: <MessageSquare className="w-5 h-5" />, path: routes.AdminOfferSupport.path },
       { label: 'Suivi étudiants', icon: <Users className="w-5 h-5" />, path: routes.AdminStudentList.path },
