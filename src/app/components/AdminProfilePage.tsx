@@ -1,4 +1,4 @@
-﻿import { ArrowLeft, User, Mail, Building, Shield, Edit2, Save, X, Phone, CheckCircle2, Lock } from 'lucide-react';
+﻿import { ArrowLeft, User, Mail, Building, Shield, Edit2, Save, X, Phone, CheckCircle2, Lock, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
@@ -16,6 +16,14 @@ export function AdminProfilePage() {
   const { user, updateProfil, refreshUser, uploadProfilePicture, deleteProfilePicture, updatePassword, deleteAccount, signOut, isAdmin } = useAuth();
 
   const [isEditing, setIsEditing] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [pwNew, setPwNew] = useState('');
+  const [pwConfirm, setPwConfirm] = useState('');
+  const [pwError, setPwError] = useState('');
+  const [pwSuccess, setPwSuccess] = useState(false);
+  const [isSavingPw, setIsSavingPw] = useState(false);
+  const [showPwNew, setShowPwNew] = useState(false);
+  const [showPwConfirm, setShowPwConfirm] = useState(false);
 
   if (!user?.id) {
     alert('Erreur: utilisateur non connecté');
@@ -325,7 +333,10 @@ export function AdminProfilePage() {
               <p className="text-[13px] text-[#1E1548] mb-4 leading-[20px]">
                 Modifiez votre mot de passe régulièrement pour assurer la sécurité de votre compte.
               </p>
-              <button className="w-full h-10 bg-white border-2 border-[#1E1548] text-[#1E1548] rounded-[10px] text-[14px] font-semibold hover:bg-[#1E1548] hover:text-white transition-all">
+              <button
+                onClick={() => { setShowPasswordModal(true); setPwNew(''); setPwConfirm(''); setPwError(''); setPwSuccess(false); }}
+                className="w-full h-10 bg-white border-2 border-[#1E1548] text-[#1E1548] rounded-[10px] text-[14px] font-semibold hover:bg-[#1E1548] hover:text-white transition-all"
+              >
                 Changer le mot de passe
               </button>
             </div>
@@ -333,5 +344,87 @@ export function AdminProfilePage() {
         </div>
       </div>
     </div>
+
+    {/* Modal changement de mot de passe */}
+    {showPasswordModal && (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-[20px] p-6 sm:p-8 w-full max-w-[420px] shadow-xl">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-[20px] font-bold text-[#1E1548] flex items-center gap-2">
+              <Lock className="w-5 h-5" />
+              Nouveau mot de passe
+            </h3>
+            <button onClick={() => setShowPasswordModal(false)} className="w-8 h-8 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center">
+              <X className="w-5 h-5 text-[#6B7280]" />
+            </button>
+          </div>
+
+          <div className="space-y-4 mb-6">
+            <div>
+              <label className="block text-[13px] font-semibold text-[#1E1548] mb-2">Nouveau mot de passe</label>
+              <div className="relative">
+                <input
+                  type={showPwNew ? 'text' : 'password'}
+                  value={pwNew}
+                  onChange={(e) => setPwNew(e.target.value)}
+                  placeholder="Min. 8 caractères"
+                  className="w-full h-12 px-4 pr-12 border-2 border-[rgba(30,21,72,0.08)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:border-[#FFD600]"
+                />
+                <button type="button" onClick={() => setShowPwNew(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280]">
+                  {showPwNew ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-[13px] font-semibold text-[#1E1548] mb-2">Confirmer le mot de passe</label>
+              <div className="relative">
+                <input
+                  type={showPwConfirm ? 'text' : 'password'}
+                  value={pwConfirm}
+                  onChange={(e) => setPwConfirm(e.target.value)}
+                  placeholder="Répétez le mot de passe"
+                  className="w-full h-12 px-4 pr-12 border-2 border-[rgba(30,21,72,0.08)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:border-[#FFD600]"
+                />
+                <button type="button" onClick={() => setShowPwConfirm(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280]">
+                  {showPwConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+            {pwError && <p className="text-[13px] text-[#EF4444] font-medium">{pwError}</p>}
+            {pwSuccess && <p className="text-[13px] text-[#10B981] font-medium">Mot de passe modifié avec succès ✓</p>}
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowPasswordModal(false)}
+              className="flex-1 h-11 bg-white border-2 border-[#E5E7EB] text-[#6B7280] rounded-[12px] text-[14px] font-semibold hover:bg-[#F8F9FD] transition-all"
+            >
+              Annuler
+            </button>
+            <button
+              disabled={isSavingPw}
+              onClick={async () => {
+                setPwError('');
+                if (pwNew.length < 8) { setPwError('Le mot de passe doit contenir au moins 8 caractères.'); return; }
+                if (pwNew !== pwConfirm) { setPwError('Les mots de passe ne correspondent pas.'); return; }
+                setIsSavingPw(true);
+                try {
+                  await updatePassword(pwNew);
+                  setPwSuccess(true);
+                  setTimeout(() => setShowPasswordModal(false), 1500);
+                } catch {
+                  setPwError('Erreur lors du changement de mot de passe.');
+                } finally {
+                  setIsSavingPw(false);
+                }
+              }}
+              className="flex-1 h-11 bg-[#1E1548] text-white rounded-[12px] text-[14px] font-semibold hover:bg-[#2D2166] transition-all disabled:opacity-60"
+            >
+              {isSavingPw ? 'Enregistrement…' : 'Enregistrer'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
   );
 }
