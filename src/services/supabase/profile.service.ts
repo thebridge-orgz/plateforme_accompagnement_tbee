@@ -61,6 +61,40 @@ class ProfileService {
         if (error) throw error;
     }
 
+    async getNotificationPreferences(userId: string) {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('notification_email, notification_module_updates, notification_progress_reports, notification_tips')
+            .eq('id', userId)
+            .single();
+        if (error) throw error;
+        return {
+            emailNotifications: data?.notification_email ?? true,
+            moduleUpdates: data?.notification_module_updates ?? true,
+            progressReports: data?.notification_progress_reports ?? true,
+            tips: data?.notification_tips ?? false,
+        };
+    }
+
+    async saveNotificationPreferences(userId: string, prefs: {
+        emailNotifications: boolean;
+        moduleUpdates: boolean;
+        progressReports: boolean;
+        tips: boolean;
+    }): Promise<void> {
+        const { error } = await supabase
+            .from('profiles')
+            .update({
+                notification_email: prefs.emailNotifications,
+                notification_module_updates: prefs.moduleUpdates,
+                notification_progress_reports: prefs.progressReports,
+                notification_tips: prefs.tips,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('id', userId);
+        if (error) throw error;
+    }
+
     async getAllStudents(): Promise<UserProfile[]> {
         const { data, error } = await supabase
             .from('profiles')

@@ -27,6 +27,7 @@ import { FormInput } from './FormInput';
 import { useUserData } from '../../hooks/useUserData';
 import { useAuth } from '../../hooks/useAuth'
 import { supabase } from '../../config/supabaseClient';
+import { profileService } from '../../services/supabase/profile.service';
 import { routes } from '../router/routes';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -94,6 +95,8 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
     progressReports: true,
     tips: false
   });
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+  const [notifSaveSuccess, setNotifSaveSuccess] = useState(false);
 
   if (!user?.id) {
     alert('Erreur: utilisateur non connecté');
@@ -119,8 +122,25 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
         rqth: user.hasRQTH || false,
         rqthDetails: ''
       });
+      profileService.getNotificationPreferences(user.id)
+        .then(prefs => setNotificationSettings(prefs))
+        .catch(() => {});
     }
   }, [user]);
+
+  const handleSaveNotifications = async () => {
+    if (!user?.id) return;
+    setIsSavingNotifications(true);
+    try {
+      await profileService.saveNotificationPreferences(user.id, notificationSettings);
+      setNotifSaveSuccess(true);
+      setTimeout(() => setNotifSaveSuccess(false), 3000);
+    } catch (err) {
+      alert('Erreur lors de la sauvegarde des préférences');
+    } finally {
+      setIsSavingNotifications(false);
+    }
+  };
 
   // ============================================
   // GESTION DE L'UPLOAD DE PHOTO
@@ -921,9 +941,12 @@ export function StudentProfilePage({ userName, authEmail, authFirstName, authLas
             </div>
 
             {/* Save Notification Settings */}
-            <div className="flex justify-end">
-              <Button>
-                Enregistrer les préférences
+            <div className="flex items-center justify-end gap-3">
+              {notifSaveSuccess && (
+                <span className="text-sm text-[#10B981] font-medium">Préférences enregistrées ✓</span>
+              )}
+              <Button onClick={handleSaveNotifications} disabled={isSavingNotifications}>
+                {isSavingNotifications ? 'Enregistrement...' : 'Enregistrer les préférences'}
               </Button>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import { supabase } from '../../config/supabaseClient';
 import { CVData, CVStatus } from '../../types/index';
+import { notificationService } from './notification.service';
 
 class CVService {
     async getCVData(userId: string) {
@@ -80,6 +81,12 @@ class CVService {
     }
 
     async reviewCV(cvId: string, status: CVStatus, feedback: string, score?: number) {
+        const { data: cv } = await supabase
+            .from('cv_data')
+            .select('user_id')
+            .eq('id', cvId)
+            .single();
+
         const { error } = await supabase
             .from('cv_data')
             .update({
@@ -92,6 +99,10 @@ class CVService {
             .eq('id', cvId);
 
         if (error) throw error;
+
+        if (cv?.user_id) {
+            notificationService.onCvReviewed(cv.user_id, status, feedback);
+        }
     }
 
     async deleteCv(cvId: string, filePath: string) {

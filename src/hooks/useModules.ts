@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { moduleService } from '../services/supabase/module.service';
+import { notificationService } from '../services/supabase/notification.service';
 import { ModuleWithProgress } from '../types/index';
 import { useAuth } from './useAuth';
 
@@ -66,12 +67,16 @@ export function useModules() {
     const completeModule = useCallback(async (moduleId: string) => {
         if (!user?.id) return;
         await moduleService.completeModule(user.id, moduleId);
+        const completed = modules.find(m => m.id === moduleId);
         setModules(prev => prev.map(module =>
             module.id === moduleId
                 ? { ...module, status: 'completed', progress: 100, xp: 250 }
                 : module
         ));
-    }, [user?.id]);
+        if (completed) {
+            notificationService.onModuleCompleted(user.id, completed.title);
+        }
+    }, [user?.id, modules]);
 
     const globalProgress = modules.length > 0
         ? Math.round(modules.reduce((sum, module) => sum + module.progress, 0) / modules.length)
