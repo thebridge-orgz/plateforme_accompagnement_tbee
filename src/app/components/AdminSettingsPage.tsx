@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { 
+import {
   Settings,
   Database,
   Shield,
@@ -15,12 +15,10 @@ import {
 import { Button } from './Button';
 import { FormInput } from './FormInput';
 import { StatCard } from './StatCard';
+import { Link } from 'react-router-dom';
+import { routes } from '../router/routes';
 
-interface AdminSettingsPageProps {
-  onNavigate: (page: string) => void;
-}
-
-export function AdminSettingsPage({ onNavigate }: AdminSettingsPageProps) {
+export function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState<'general' | 'users' | 'system'>('general');
   const [maintenanceMode, setMaintenanceMode] = useState(false);
 
@@ -59,13 +57,14 @@ export function AdminSettingsPage({ onNavigate }: AdminSettingsPageProps) {
       <div className="bg-white border-b border-[rgba(30,21,72,0.08)] sticky top-0 z-30">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex items-start gap-3 sm:gap-6">
-            <button
-              onClick={() => onNavigate('admin-dashboard')}
-              className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
-              aria-label="Retour"
-            >
-              <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
-            </button>
+            <Link to={routes.AdminDashboard.path}>
+              <button
+                className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
+                aria-label="Retour"
+              >
+                <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
+              </button>
+            </Link>
             <div className="flex-1 min-w-0">
               <h1 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold leading-tight text-[#1E1548] mb-1 sm:mb-2">
                 Paramètres
@@ -103,33 +102,30 @@ export function AdminSettingsPage({ onNavigate }: AdminSettingsPageProps) {
           <div className="flex gap-2 min-w-max">
             <button
               onClick={() => setActiveTab('general')}
-              className={`px-4 py-3 font-medium transition-all border-b-2 whitespace-nowrap ${
-                activeTab === 'general'
-                  ? 'border-primary text-foreground'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
+              className={`px-4 py-3 font-medium transition-all border-b-2 whitespace-nowrap ${activeTab === 'general'
+                ? 'border-primary text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
             >
               <Settings className="w-4 h-4 inline mr-2" />
               Général
             </button>
             <button
               onClick={() => setActiveTab('users')}
-              className={`px-4 py-3 font-medium transition-all border-b-2 whitespace-nowrap ${
-                activeTab === 'users'
-                  ? 'border-primary text-foreground'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
+              className={`px-4 py-3 font-medium transition-all border-b-2 whitespace-nowrap ${activeTab === 'users'
+                ? 'border-primary text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
             >
               <Users className="w-4 h-4 inline mr-2" />
               Utilisateurs
             </button>
             <button
               onClick={() => setActiveTab('system')}
-              className={`px-4 py-3 font-medium transition-all border-b-2 whitespace-nowrap ${
-                activeTab === 'system'
-                  ? 'border-primary text-foreground'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
+              className={`px-4 py-3 font-medium transition-all border-b-2 whitespace-nowrap ${activeTab === 'system'
+                ? 'border-primary text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
             >
               <Database className="w-4 h-4 inline mr-2" />
               Système
@@ -151,25 +147,25 @@ export function AdminSettingsPage({ onNavigate }: AdminSettingsPageProps) {
                   label="Nom de la plateforme"
                   type="text"
                   value={generalSettings.platformName}
-                  onChange={(e) => setGeneralSettings({...generalSettings, platformName: e.target.value})}
+                  onChange={(e) => setGeneralSettings({ ...generalSettings, platformName: e.target.value })}
                 />
                 <FormInput
                   label="Email de support"
                   type="email"
                   value={generalSettings.supportEmail}
-                  onChange={(e) => setGeneralSettings({...generalSettings, supportEmail: e.target.value})}
+                  onChange={(e) => setGeneralSettings({ ...generalSettings, supportEmail: e.target.value })}
                 />
                 <FormInput
                   label="Taille max upload (MB)"
                   type="number"
                   value={generalSettings.maxUploadSize}
-                  onChange={(e) => setGeneralSettings({...generalSettings, maxUploadSize: e.target.value})}
+                  onChange={(e) => setGeneralSettings({ ...generalSettings, maxUploadSize: e.target.value })}
                 />
                 <FormInput
                   label="Timeout session (min)"
                   type="number"
                   value={generalSettings.sessionTimeout}
-                  onChange={(e) => setGeneralSettings({...generalSettings, sessionTimeout: e.target.value})}
+                  onChange={(e) => setGeneralSettings({ ...generalSettings, sessionTimeout: e.target.value })}
                 />
               </div>
               <div className="mt-6 flex justify-end">

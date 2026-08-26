@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ROUTES } from '../router/routes';
+import { routes } from '../router/routes';
 
 export function Footer() {
   return (
@@ -27,17 +27,17 @@ export function Footer() {
             </h4>
             <ul className="flex flex-col gap-2 sm:gap-3">
               <li>
-                <Link to={`${ROUTES.Home}#services`} className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]">
+                <Link to={`${routes.Home.path}#services`} className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]">
                   Nos services
                 </Link>
               </li>
               <li>
-                <Link to={`${ROUTES.Home}#accompagnement`} className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]">
+                <Link to={`${routes.Home.path}#accompagnement`} className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]">
                   Accompagnement
                 </Link>
               </li>
               <li>
-                <Link to={`${ROUTES.Home}#inscription`} className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]">
+                <Link to={`${routes.Home.path}#inscription`} className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]">
                   Inscription
                 </Link>
               </li>
@@ -51,17 +51,17 @@ export function Footer() {
             </h4>
             <ul className="flex flex-col gap-2 sm:gap-3">
               <li>
-                <Link to={ROUTES.Commitments} className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-left text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]">
+                <Link to={routes.Commitments.path} className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-left text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]">
                   Nos engagements
                 </Link>
               </li>
               <li>
-                <Link to={ROUTES.PrivacyPolicy} className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-left text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]">
+                <Link to={routes.PrivacyPolicy.path} className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-left text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]">
                   Politique de confidentialité
                 </Link>
               </li>
               <li>
-                <Link to={ROUTES.LegalNotice} className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-left text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]">
+                <Link to={routes.LegalNotice.path} className="text-white/80 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded text-left text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px]">
                   Mentions légales
                 </Link>
               </li>

@@ -1,5 +1,5 @@
 import { CheckCircle2, Clock, Lock, Play } from 'lucide-react';
-import { ProgressBar } from './ProgressBar';
+import { ProgressBar } from '../ui/ProgressBar';
 
 interface ModuleCardProps {
   title: string;

@@ -1534,9 +1534,9 @@ function Container52() {
   );
 }
 
-function StudentDashboard() {
+function studentDashboard() {
   return (
-    <div className="basis-0 bg-white grow h-[1874px] min-h-px min-w-px relative shrink-0" data-name="StudentDashboard">
+    <div className="basis-0 bg-white grow h-[1874px] min-h-px min-w-px relative shrink-0" data-name="studentDashboard">
       <div className="content-stretch flex flex-col gap-[32px] items-start pb-0 pt-[24px] px-[24px] relative size-full">
         <Container4 />
         <Container17 />
@@ -1550,7 +1550,7 @@ function Frame() {
   return (
     <div className="absolute content-stretch flex items-start left-0 top-0 w-[1440px]">
       <Frame1 />
-      <StudentDashboard />
+      <studentDashboard />
     </div>
   );
 }

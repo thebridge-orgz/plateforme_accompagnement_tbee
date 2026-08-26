@@ -1,12 +1,19 @@
-import { useAuth } from '../../auth/AuthContext';
+import { StudentDashboard } from '../../components/dashboard/StudentDashboard';
+import StudentLayout from '../../layouts/StudentLayout';
+import { routes } from '../../router/routes';
+import { useAuth } from '../../../hooks/useAuth';
 
-function StudentDashboard() {
-    const { user } = useAuth();
-    console.log(JSON.stringify(user, null, 2));
-    
-    return (
-        <p>StudentDashboard</p>
-    );
+export default function DashboardPage() {
+  const { user, signOut } = useAuth();
+
+  if (!user) return null;
+
+  return (
+    <StudentLayout currentPage={routes.StudentDashboard.path}
+      user={user}
+      signOut={signOut}
+    >
+      <StudentDashboard user={user} />
+    </StudentLayout>
+  );
 }
-
-export default StudentDashboard;

@@ -6,66 +6,149 @@ export interface RouteConfig {
     allowedRoles?: ('student' | 'admin')[]; // Optionnel, pour information
 }
 
-export const routes: RouteConfig[] = [
-    {
-        name: 'Home',
+export const routes = {
+    Home: {
         path: '/',
         label: 'Accueil'
     },
-    {
-        name: 'Commitments',
+    Commitments: {
         path: '/commitments',
         label: 'Nos engagements'
     },
-    {
-        name: 'PrivacyPolicy',
+    PrivacyPolicy: {
         path: '/privacy-policy',
         label: 'Politique de confidentialité'
     },
-    {
-        name: 'LegalNotice',
+    LegalNotice: {
         path: '/legal-notice',
         label: 'Mentions légales'
     },
-    {
-        name: 'SignUp',
+    SignUp: {
         path: '/sign-up',
         label: 'S\'inscrire'
     },
-    {
-        name: 'SignIn',
+    SignIn: {
         path: '/sign-in',
         label: 'Se connecter'
     },
-    {
-        name: 'StudentDashboard',
-        path: '/student/dashboard',
-        label: 'Dashboard Etudiant',
-        isProtected: true,
-        allowedRoles: ['student']
+    ForgotPassword: {
+        path: '/forgot-password',
+        label: 'Mot de passe oublié'
     },
-    {
-        name: 'Onboarding',
+    ResetPassword: {
+        path: '/reset-password',
+        label: 'Réinitialisation du mot de passe'
+    },
+    Onboarding: {
         path: '/onboarding',
         label: 'Onboarding',
         isProtected: true,
         allowedRoles: ['student']
     },
-    {
-        name: 'AdminDashboard',
+    StudentDashboard: {
+        path: '/student/dashboard',
+        label: 'Dashboard Etudiant',
+        isProtected: true,
+        allowedRoles: ['student']
+    },
+    StudentModules: {
+        path: '/student/modules',
+        label: 'Mon parcours',
+        isProtected: true,
+        allowedRoles: ['student']
+    },
+    StudentModulesDetails: {
+        path: '/student/modules/:id',
+        label: 'Module Week',
+        isProtected: true,
+        allowedRoles: ['student']
+    },
+    StudentJobTracking: {
+        path: '/student/offres',
+        label: 'Suivi des offres',
+        isProtected: true,
+        allowedRoles: ['student']
+    },
+    StudentCv: {
+        path: '/student/cv',
+        label: 'Mon CV',
+        isProtected: true,
+        allowedRoles: ['student']
+    },
+    StudentPractical: {
+        path: '/student/cas-pratiques',
+        label: 'Cas pratiques',
+        isProtected: true,
+        allowedRoles: ['student']
+    },
+    StudentProspection: {
+        path: '/student/pokedex',
+        label: 'Mon Pokédex',
+        isProtected: true,
+        allowedRoles: ['student']
+    },
+    StudentProfile: {
+        path: '/student/profil',
+        label: 'Mon profil',
+        isProtected: true,
+        allowedRoles: ['student']
+    },
+    AdminDashboard: {
         path: '/admin/dashboard',
         label: 'Dashboard Admin',
         isProtected: true,
         allowedRoles: ['admin']
     },
-    {
-        name: 'NotFound',
+    AdminCvReview: {
+        path: '/admin/validation-cv',
+        label: 'Validation CVs',
+        isProtected: true,
+        allowedRoles: ['admin']
+    },
+    AdminExerciceReview: {
+        path: '/admin/exercices',
+        label: 'Correction exercices',
+        isProtected: true,
+        allowedRoles: ['admin']
+    },
+    AdminModules: {
+        path: '/admin/modules',
+        label: 'Gestion modules',
+        isProtected: true,
+        allowedRoles: ['admin']
+    },
+    AdminOfferSupport: {
+        path: '/admin/support-offres',
+        label: 'Support offres',
+        isProtected: true,
+        allowedRoles: ['admin']
+    },
+    AdminStudentList: {
+        path: '/admin/etudiants-liste',
+        label: 'Suivi étudiants',
+        isProtected: true,
+        allowedRoles: ['admin']
+    },
+    AdminStudentTracking: {
+        path: '/admin/etudiants-liste/:id',
+        label: 'Statistique étudiant',
+        isProtected: true,
+        allowedRoles: ['admin']
+    },
+    AdminProfile: {
+        path: '/admin/profil',
+        label: 'Mon profil',
+        isProtected: true,
+        allowedRoles: ['admin']
+    },
+    AdminSettings: {
+        path: '/admin/parametres',
+        label: 'Paramètres',
+        isProtected: true,
+        allowedRoles: ['admin']
+    },
+    NotFound: {
         path: '*',
         label: 'Page non trouvée'
     }
-];
-
-export const ROUTES = routes.reduce((acc, route) => {
-    acc[route.name] = route.path;
-    return acc;
-}, {} as Record<string, string>);
+};

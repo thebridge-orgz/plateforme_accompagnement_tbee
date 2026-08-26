@@ -1,12 +1,20 @@
-import { useAuth } from '../../auth/AuthContext';
+import { AdminDashboard } from '../../components/dashboard/AdminDashboard';
+import AdminLayout from '../../layouts/AdminLayout';
+import { routes } from '../../router/routes';
+import { useAuth } from '../../../hooks/useAuth';
 
-function AdminDashboard() {
-    const { user } = useAuth();
-    console.log(JSON.stringify(user, null, 2));
+export default function DashboardPage() {
+    const { user, signOut } = useAuth();
+
+    if (!user) return null;
 
     return (
-        <p>AdminDashboard</p>
+        <AdminLayout
+            currentPage={routes.AdminDashboard.path}
+            user={user}
+            signOut={signOut}
+        >
+            <AdminDashboard user={user} />
+        </AdminLayout>
     );
 }
-
-export default AdminDashboard;

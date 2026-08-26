@@ -1,27 +1,71 @@
 import { ArrowLeft, Lock, CheckCircle, Trophy, Star, Zap, Target, Award } from 'lucide-react';
-import { useUserData } from '@/context/UserDataContext';
+import { routes } from '../router/routes';
+import { Link } from 'react-router-dom';
+import { useModules } from '../../hooks/useModules';
 
-interface StudentJourneyPageProps {
-  onNavigate: (page: string) => void;
-  userData?: any;
+// Astuces par niveau (0 = nouveau, 1-4 = modules complétés)
+const TIPS_BY_LEVEL: Record<number, string[]> = {
+  0: [
+    'Consacre 20 minutes par jour à ton parcours. La régularité est la clé du succès !',
+    'Définis tes valeurs professionnelles avant de choisir ton secteur d\'activité.',
+    'Note tes idées au fur et à mesure, ça t\'aidera à mieux te connaître.',
+    'Parle de ton projet à ton entourage, les opportunités viennent souvent du réseau !',
+  ],
+  1: [
+    'Pour ton CV, mets en avant tes soft skills : elles sont très valorisées en alternance.',
+    'Un CV aéré et lisible est souvent préféré à un CV trop chargé d\'informations.',
+    'Personnalise ton CV pour chaque offre en mettant en avant les compétences demandées.',
+    'Fais relire ton CV par quelqu\'un de confiance avant de l\'envoyer.',
+  ],
+  2: [
+    'Utilise LinkedIn pour suivre les entreprises qui t\'intéressent et leurs actualités.',
+    'Une candidature spontanée bien ciblée vaut souvent mieux qu\'une candidature standard.',
+    'Ton réseau est ta meilleure ressource : parle de ta recherche autour de toi.',
+    'Cible des entreprises précises plutôt que d\'envoyer ton CV en masse.',
+  ],
+  3: [
+    'Prépare-toi à l\'entretien en faisant des simulations avec un ami ou devant un miroir.',
+    'Renseigne-toi en profondeur sur l\'entreprise avant chaque entretien.',
+    'Prépare 3 questions à poser au recruteur, ça montre ton intérêt sérieux.',
+    'Arrive 10 minutes en avance et prépare un pitch de présentation de 2 minutes.',
+  ],
+  4: [
+    'Félicitations ! Partage ton expérience avec d\'autres étudiants pour les inspirer.',
+    'Continue de te former même après ton alternance, les compétences s\'entretiennent.',
+    'Garde le contact avec tes interlocuteurs, le réseau professionnel se construit sur la durée.',
+    'Ton parcours TBEE est un atout : mets-le en avant dans tes candidatures !',
+  ],
+};
+
+function getSessionTip(completedCount: number): string {
+  const level = Math.min(completedCount, 4);
+  const tips = TIPS_BY_LEVEL[level];
+  const storageKey = 'tbee_session_tip';
+  const stored = sessionStorage.getItem(storageKey);
+  if (stored) {
+    try {
+      const { text, storedLevel } = JSON.parse(stored);
+      if (storedLevel === level) return text;
+    } catch { }
+  }
+  const text = tips[Math.floor(Math.random() * tips.length)];
+  sessionStorage.setItem(storageKey, JSON.stringify({ text, storedLevel: level }));
+  return text;
 }
 
-export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
-  // TODO: fetch from Supabase - using context for now
-  const {
-    isLoading,
-    modules,
-    statistics,
-    completedModulesCount,
-    totalModulesCount,
-    isNewUser,
-  } = useUserData();
+export function StudentJourneyPage() {
+  const { loading, modules, totalCount, completedCount } = useModules();
 
   // Calculer XP total (chaque module complété donne 250 XP)
   const totalXP = modules.reduce((sum, m) => sum + (m.xp || 0), 0);
 
+  const isNewUser = modules.filter(module => module.orderIndex === 1 && module.status === 'available').length === 1;
+
   // Trouver le prochain module non complété
   const nextModule = modules.find(m => m.status === 'in_progress' || m.status === 'available');
+
+  // Astuce du jour dynamique
+  const dailyTip = getSessionTip(completedCount);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -51,7 +95,7 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-[#F8F9FD] flex items-center justify-center">
         <div className="text-center">
@@ -68,20 +112,21 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
       <div className="bg-white border-b border-[rgba(30,21,72,0.08)] sticky top-0 z-30">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex items-start gap-3 sm:gap-6">
-            <button
-              onClick={() => onNavigate('student-dashboard')}
-              className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
-              aria-label="Retour"
-            >
-              <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
-            </button>
-            
+            <Link to={routes.StudentDashboard.path}>
+              <button
+                className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
+                aria-label="Retour"
+              >
+                <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
+              </button>
+            </Link>
+
             <div className="flex-1 min-w-0">
               <h1 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold leading-tight text-[#1E1548] mb-1 sm:mb-2">
                 Mon Parcours
               </h1>
               <p className="text-[14px] sm:text-[16px] leading-[20px] sm:leading-[24px] text-[#6B7280]">
-                {isNewUser 
+                {isNewUser
                   ? 'Commence ton parcours vers l\'alternance étape par étape'
                   : 'Progresse étape par étape vers ton alternance de rêve'}
               </p>
@@ -90,7 +135,7 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
         </div>
       </div>
 
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-6 sm:pt-20 sm:pb-8 lg:pt-8 lg:pb-8">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8 lg:pt-8 lg:pb-8">
         {/* Stats Overview */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-8 sm:mb-12">
           {/* Total XP */}
@@ -116,9 +161,9 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
               <span className="text-[14px] font-medium text-[#6B7280]">Progression</span>
             </div>
             <p className="text-[32px] font-bold text-[#1E1548]">
-              {totalModulesCount > 0 ? Math.round((completedModulesCount / totalModulesCount) * 100) : 0}%
+              {totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0}%
             </p>
-            <p className="text-[14px] text-[#6B7280] mt-1">{completedModulesCount} / {totalModulesCount} modules complétés</p>
+            <p className="text-[14px] text-[#6B7280] mt-1">{completedCount} / {totalCount} modules complétés</p>
           </div>
 
           {/* Next Milestone */}
@@ -133,8 +178,8 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
               {nextModule ? `Semaine ${nextModule.weekNumber}` : 'Parcours terminé !'}
             </p>
             <p className="text-[14px] text-[#E8ECFF] mt-1">
-              {nextModule 
-                ? `${100 - nextModule.progress}% restants` 
+              {nextModule
+                ? `${100 - nextModule.progress}% restants`
                 : 'Félicitations ! 🎉'}
             </p>
           </div>
@@ -160,10 +205,10 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
               <div key={module.id} className="relative">
                 {/* Connection Line */}
                 {index < modules.length - 1 && (
-                  <div 
+                  <div
                     className="absolute left-[31px] top-[80px] w-[2px] h-[120px] bg-gradient-to-b from-[#E5E7EB] to-transparent"
                     style={{
-                      background: module.status === 'completed' 
+                      background: module.status === 'completed'
                         ? 'linear-gradient(to bottom, #10B981, #E5E7EB)'
                         : 'linear-gradient(to bottom, #E5E7EB, #E5E7EB)'
                     }}
@@ -174,7 +219,7 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
                 <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 mb-8 relative z-10">
                   {/* Status Indicator Circle */}
                   <div className="relative flex-shrink-0">
-                    <div 
+                    <div
                       className={`w-16 h-16 rounded-full ${getStatusColor(module.status)} flex items-center justify-center shadow-lg border-4 border-white transition-all hover:scale-110 cursor-pointer`}
                       style={{
                         boxShadow: module.status === 'in_progress' || module.status === 'available'
@@ -184,7 +229,7 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
                     >
                       {getStatusIcon(module.status)}
                     </div>
-                    
+
                     {/* Week Number Badge */}
                     <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-[#1E1548] text-white text-[12px] font-bold flex items-center justify-center border-2 border-white">
                       {module.weekNumber}
@@ -192,19 +237,13 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
                   </div>
 
                   {/* Module Content Card */}
-                  <div 
-                    className={`flex-1 w-full bg-white border-2 rounded-[16px] p-4 sm:p-6 transition-all cursor-pointer ${
-                      module.status === 'in_progress' || module.status === 'available'
-                        ? 'border-[#FFD600] shadow-[0_4px_16px_rgba(255,214,0,0.15)]'
-                        : module.status === 'completed'
+                  <div
+                    className={`flex-1 w-full bg-white border-2 rounded-[16px] p-4 sm:p-6 transition-all cursor-pointer ${module.status === 'in_progress' || module.status === 'available'
+                      ? 'border-[#FFD600] shadow-[0_4px_16px_rgba(255,214,0,0.15)]'
+                      : module.status === 'completed'
                         ? 'border-[#10B981] shadow-[0_2px_8px_rgba(16,185,129,0.1)]'
                         : 'border-[#E5E7EB] opacity-60'
-                    } hover:shadow-[0_6px_20px_rgba(30,21,72,0.1)]`}
-                    onClick={() => {
-                      if (module.status !== 'locked') {
-                        onNavigate(module.id);
-                      }
-                    }}
+                      } hover:shadow-[0_6px_20px_rgba(30,21,72,0.1)]`}
                   >
                     <div className="flex flex-col sm:flex-row items-start justify-between mb-3 gap-3">
                       <div className="flex-1 min-w-0 w-full">
@@ -212,9 +251,9 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
                           <h3 className="text-[18px] sm:text-[20px] font-bold text-[#1E1548]">
                             {module.title}
                           </h3>
-                          {module.badge && (
+                          {/*module.badge && (
                             <span className="text-[20px] sm:text-[24px]">{module.badge}</span>
-                          )}
+                          )*/}
                         </div>
                         <p className="text-[13px] sm:text-[14px] text-[#6B7280] leading-[20px] sm:leading-[22px]">
                           {module.description}
@@ -239,9 +278,8 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
                         </div>
                         <div className="h-2 bg-[#F3F4F6] rounded-full overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all duration-500 ${
-                              module.status === 'completed' ? 'bg-[#10B981]' : 'bg-[#FFD600]'
-                            }`}
+                            className={`h-full rounded-full transition-all duration-500 ${module.status === 'completed' ? 'bg-[#10B981]' : 'bg-[#FFD600]'
+                              }`}
                             style={{ width: `${module.progress}%` }}
                           />
                         </div>
@@ -258,27 +296,23 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
 
                     {/* Call to Action */}
                     {(module.status === 'in_progress' || module.status === 'available') && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onNavigate(module.id);
-                        }}
-                        className="w-full mt-4 h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[16px] font-semibold hover:bg-[#FDC700] transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-[#FFD600] focus:ring-offset-2 shadow-sm flex items-center justify-center gap-2"
-                      >
-                        {module.progress === 0 ? 'Commencer le module' : 'Continuer le module'} →
-                      </button>
+                      <Link to={routes.StudentModulesDetails.path.replace(":id", module.id)} className="block w-full">
+                        <button
+                          className="w-full mt-4 h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[16px] font-semibold hover:bg-[#FDC700] transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-[#FFD600] focus:ring-offset-2 shadow-sm flex items-center justify-center gap-2"
+                        >
+                          {module.progress === 0 ? 'Commencer le module' : 'Continuer le module'} →
+                        </button>
+                      </Link>
                     )}
 
                     {module.status === 'completed' && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onNavigate(module.id);
-                        }}
-                        className="w-full mt-4 h-12 bg-white border-2 border-[#10B981] text-[#10B981] rounded-[12px] text-[16px] font-semibold hover:bg-[#F0FDF4] transition-all focus:outline-none focus:ring-2 focus:ring-[#10B981] focus:ring-offset-2 flex items-center justify-center gap-2"
-                      >
-                        Revoir le module
-                      </button>
+                      <Link to={routes.StudentModulesDetails.path.replace(":id", module.id)} className="block w-full">
+                        <button
+                          className="w-full mt-4 h-12 bg-white border-2 border-[#10B981] text-[#10B981] rounded-[12px] text-[16px] font-semibold hover:bg-[#F0FDF4] transition-all focus:outline-none focus:ring-2 focus:ring-[#10B981] focus:ring-offset-2 flex items-center justify-center gap-2"
+                        >
+                          Revoir le module
+                        </button>
+                      </Link>
                     )}
                   </div>
                 </div>
@@ -315,7 +349,7 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
                   💡 Astuce du jour
                 </h3>
                 <p className="text-[14px] text-[#6B7280] leading-[22px]">
-                  Consacre 20 minutes par jour à ton parcours. La régularité est la clé du succès dans ta recherche d'alternance !
+                  {dailyTip}
                 </p>
               </div>
             </div>
@@ -332,9 +366,9 @@ export function StudentJourneyPage({ onNavigate }: StudentJourneyPageProps) {
                   {isNewUser ? '🚀 Lance-toi !' : '🚀 Continue comme ça !'}
                 </h3>
                 <p className="text-[14px] text-[#E8ECFF] leading-[22px]">
-                  {isNewUser 
-                    ? `Tu es prêt à commencer ! ${totalModulesCount} modules t'attendent pour t'aider à décrocher ton alternance.`
-                    : `Tu es sur la bonne voie ! ${completedModulesCount} module${completedModulesCount > 1 ? 's' : ''} complété${completedModulesCount > 1 ? 's' : ''}, encore ${totalModulesCount - completedModulesCount} à découvrir.`}
+                  {isNewUser
+                    ? `Tu es prêt à commencer ! ${totalCount} modules t'attendent pour t'aider à décrocher ton alternance.`
+                    : `Tu es sur la bonne voie ! ${completedCount} module${completedCount > 1 ? 's' : ''} complété${completedCount > 1 ? 's' : ''}, encore ${totalCount - completedCount} à découvrir.`}
                 </p>
               </div>
             </div>

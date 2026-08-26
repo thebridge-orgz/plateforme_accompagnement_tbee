@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { Eye, EyeOff, Lock } from "lucide-react";
-import { useAuth } from "../../auth/AuthContext";
-import { UserRole } from '../../types/user';
+import { useAuth } from "../../../hooks/useAuth";
+import { UserRole } from '../../../types/user';
 import { Navbar } from "../../components/Navbar";
 import { Footer } from "../../components/Footer";
 import { Link, useNavigate } from 'react-router-dom';
-import { ROUTES } from '../../router/routes';
+import { routes } from '../../router/routes';
 
 function SignIn() {
     const { user, signIn, loading: authLoading } = useAuth();
@@ -22,9 +22,9 @@ function SignIn() {
         if (user) {
             console.log('User detected, redirecting...', user.role);
             if (user.role === 'admin') {
-                navigate(ROUTES.AdminDashboard, { replace: true });
+                navigate(routes.AdminDashboard.path, { replace: true });
             } else {
-                navigate(ROUTES.StudentDashboard, { replace: true });
+                navigate(routes.StudentDashboard.path, { replace: true });
             }
         }
     }, [user, navigate]);
@@ -185,7 +185,7 @@ function SignIn() {
                             {/* Forgot Password Link */}
                             <div className="text-right">
                                 <a
-                                    href="#forgot-password"
+                                    href={routes.ForgotPassword.path}
                                     className="text-[14px] font-normal text-[#1E1548] hover:text-[#FFD600] focus:outline-none underline transition-colors"
                                 >
                                     Mot de passe oublié ?
@@ -218,7 +218,7 @@ function SignIn() {
                         <div className="text-center">
                             <p className="text-[14px] sm:text-[16px] font-normal text-[#6B7280]">
                                 Pas encore de compte ?{" "}
-                                <Link to={ROUTES.SignUp}>
+                                <Link to={routes.SignUp.path}>
                                     <button
                                         className="text-[#1E1548] font-semibold hover:text-[#FFD600] focus:outline-none underline transition-colors"
                                     >
@@ -231,7 +231,7 @@ function SignIn() {
 
                     {/* Back to Home Link */}
                     <div className="text-center mt-6">
-                        <Link to={ROUTES.Home}>
+                        <Link to={routes.Home.path}>
                             <button
                                 className="text-[14px] text-[#6B7280] hover:text-[#1E1548] focus:outline-none transition-colors"
                             >

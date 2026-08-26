@@ -8,7 +8,15 @@ export interface UserProfile {
     firstName: string;
     lastName: string;
     role: UserRole;
+    phone: string;
+    birthDate: string;
+    onboardingStep: number;
+    currentLevel: string;
+    postalCode: string;
+    city: string;
+    address: string;
     hasRQTH?: boolean;
+    profilePictureUrl?: string;
     createdAt: string;
     updatedAt: string;
     onboardingCompleted?: boolean; // Indique si l'onboarding est fini

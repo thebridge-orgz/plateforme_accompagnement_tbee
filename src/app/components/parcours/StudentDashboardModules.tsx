@@ -1,37 +1,35 @@
-import { CheckCircle2, Lock, Play, Trophy, Target, TrendingUp, Clock } from 'lucide-react';
-import { useUserData } from '@/context/UserDataContext';
-import { formatStudyTime } from '@/utils/initialState';
+﻿import { CheckCircle2, Lock, Play, Trophy, Target, TrendingUp, Clock } from 'lucide-react';
+import { useUserData } from '../../../hooks/useUserData';
+//import { formatStudyTime } from '@/utils/initialState';
 
-interface StudentDashboardModulesProps {
+interface studentDashboardModulesProps {
   onNavigate: (page: string) => void;
   authFirstName?: string;
   userData?: any;
 }
 
-export function StudentDashboardModules({ onNavigate, authFirstName }: StudentDashboardModulesProps) {
+export function studentDashboardModules({ onNavigate, authFirstName }: studentDashboardModulesProps) {
   // TODO: fetch from Supabase - using context for now
   const {
-    isLoading,
-    userProfile,
+    loading,
     statistics,
     modules,
     globalProgress,
     completedModulesCount,
-    totalModulesCount,
-    isNewUser,
+    totalModulesCount
   } = useUserData();
 
   // Récupérer le prénom : auth (Supabase) > onboarding context > placeholder
-  const firstName = authFirstName || userProfile?.firstName || 'Candidat';
-  
+  const firstName = 'Candidat';
+
   // Formater le temps d'étude
-  const studyTimeFormatted = formatStudyTime(statistics.totalTimeSpentMinutes);
-  
+  //const studyTimeFormatted = formatStudyTime(statistics.totalTimeSpentMinutes);
+
   // Trouver le module actuel : en cours ou disponible
   const currentModule = modules.find(m => m.status === 'in_progress') || modules.find(m => m.status === 'available');
   const nextModule = modules.find(m => m.status === 'available');
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-[#ffffff] flex items-center justify-center">
         <div className="text-center">
@@ -44,9 +42,9 @@ export function StudentDashboardModules({ onNavigate, authFirstName }: StudentDa
 
   return (
     <div className="min-h-screen bg-[#ffffff]">
-      <div className="max-w-[1152px] mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-6 sm:pt-20 sm:pb-8 lg:pt-8 lg:pb-8">
+      <div className="max-w-[1152px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8 lg:pt-8 lg:pb-8">
         {/* Welcome Section */}
-        <div 
+        <div
           className="rounded-[16px] p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8"
           style={{
             background: 'linear-gradient(169.732deg, rgba(255, 214, 0, 0.1) 0%, rgb(232, 236, 255) 100%)'
@@ -56,11 +54,11 @@ export function StudentDashboardModules({ onNavigate, authFirstName }: StudentDa
             Bienvenue, {firstName} ! 👋
           </h2>
           <p className="text-sm sm:text-base lg:text-[16px] font-normal leading-[24px] text-[#101828] mb-4 sm:mb-6">
-            {isNewUser 
+            {/*isNewUser
               ? 'Commence ton parcours pour trouver ton alternance'
-              : 'Continue ton parcours vers l\'alternance. Tu es sur la bonne voie !'}
+              : 'Continue ton parcours vers l\'alternance. Tu es sur la bonne voie !'*/}
           </p>
-          
+
           {/* Overall Progress */}
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -68,17 +66,17 @@ export function StudentDashboardModules({ onNavigate, authFirstName }: StudentDa
               <span className="text-xs sm:text-sm lg:text-[14px] font-medium text-[#1E1548]">{globalProgress}%</span>
             </div>
             <div className="relative w-full h-3 bg-white/60 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="absolute left-0 top-0 h-full bg-[#FFD600] rounded-full transition-all duration-300"
                 style={{ width: `${globalProgress}%` }}
               />
             </div>
           </div>
-          {isNewUser && (
+          {/*isNewUser && (
             <p className="text-sm text-[#6B7280] mt-3">
               💡 Commence pour débloquer tes statistiques et suivre ta progression
             </p>
-          )}
+          )*/}
         </div>
 
         {/* Quick Stats */}
@@ -104,7 +102,7 @@ export function StudentDashboardModules({ onNavigate, authFirstName }: StudentDa
               </div>
               <div>
                 <p className="text-[10px] sm:text-[12px] font-normal text-[#6B7280]">Temps d'étude</p>
-                <p className="text-base sm:text-lg lg:text-[20px] font-bold text-[#1E1548]">{studyTimeFormatted}</p>
+                <p className="text-base sm:text-lg lg:text-[20px] font-bold text-[#1E1548]">studyTimeFormatted</p>
               </div>
             </div>
           </div>
@@ -117,7 +115,7 @@ export function StudentDashboardModules({ onNavigate, authFirstName }: StudentDa
               <div>
                 <p className="text-[10px] sm:text-[12px] font-normal text-[#6B7280]">Série</p>
                 <p className="text-base sm:text-lg lg:text-[20px] font-bold text-[#1E1548]">
-                  {statistics.currentStreakDays === 0 ? '0 jour' : `${statistics.currentStreakDays} jour${statistics.currentStreakDays > 1 ? 's' : ''}`}
+                  {statistics?.currentStreakDays === 0 ? '0 jour' : `${statistics?.currentStreakDays} jour${statistics.currentStreakDays > 1 ? 's' : ''}`}
                 </p>
               </div>
             </div>
@@ -165,7 +163,7 @@ export function StudentDashboardModules({ onNavigate, authFirstName }: StudentDa
               </button>
             </div>
             <div className="relative w-full h-2 bg-[#1E1548]/20 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="absolute left-0 top-0 h-full bg-[#1E1548] rounded-full"
                 style={{ width: `${currentModule.progress}%` }}
               />
@@ -176,13 +174,13 @@ export function StudentDashboardModules({ onNavigate, authFirstName }: StudentDa
         {/* Module Path (Duolingo style) */}
         <div className="mb-8">
           <h3 className="text-[24px] font-semibold leading-[32px] text-[#1E1548] mb-6">
-            {isNewUser ? 'Ton parcours' : 'Ton parcours'}
+            isNewUser ? 'Ton parcours' : 'Ton parcours'
           </h3>
-          
+
           <div className="relative">
             {/* Connecting line */}
             <div className="absolute left-5 top-20 bottom-20 w-1 bg-[#E8ECFF]" />
-            
+
             <div className="space-y-6">
               {modules.map((module, index) => {
                 const isLocked = module.status === 'locked';
@@ -196,8 +194,8 @@ export function StudentDashboardModules({ onNavigate, authFirstName }: StudentDa
                     <div
                       className={`
                         bg-white border rounded-[16px] p-6 transition-all
-                        ${isLocked 
-                          ? 'border-[rgba(30,21,72,0.1)] opacity-60' 
+                        ${isLocked
+                          ? 'border-[rgba(30,21,72,0.1)] opacity-60'
                           : 'border-[rgba(30,21,72,0.1)] hover:border-[#FFD600] hover:shadow-lg cursor-pointer'
                         }
                         ${isCurrent ? 'ring-2 ring-[#FFD600]' : ''}
@@ -255,7 +253,7 @@ export function StudentDashboardModules({ onNavigate, authFirstName }: StudentDa
                           <p className="text-[14px] font-normal leading-[20px] text-[#6B7280] mb-4">
                             {module.description}
                           </p>
-                          
+
                           {/* Progress bar for in-progress modules */}
                           {!isLocked && module.progress >= 0 && (
                             <div className="mt-4">
@@ -266,10 +264,9 @@ export function StudentDashboardModules({ onNavigate, authFirstName }: StudentDa
                                 </span>
                               </div>
                               <div className="relative w-full h-2 bg-[#E8ECFF] rounded-full overflow-hidden">
-                                <div 
-                                  className={`absolute left-0 top-0 h-full rounded-full transition-all ${
-                                    isCompleted ? 'bg-[#10B981]' : 'bg-[#FFD600]'
-                                  }`}
+                                <div
+                                  className={`absolute left-0 top-0 h-full rounded-full transition-all ${isCompleted ? 'bg-[#10B981]' : 'bg-[#FFD600]'
+                                    }`}
                                   style={{ width: `${module.progress}%` }}
                                 />
                               </div>
@@ -294,7 +291,7 @@ export function StudentDashboardModules({ onNavigate, authFirstName }: StudentDa
         </div>
 
         {/* Help Section */}
-        <div 
+        <div
           className="rounded-[16px] p-6"
           style={{
             background: 'linear-gradient(169.732deg, rgba(255, 214, 0, 0.1) 0%, rgb(232, 236, 255) 100%)'

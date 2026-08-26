@@ -1,148 +1,1230 @@
-import { ArrowLeft, FileText, Plus, X, Calendar, BookOpen, Target } from 'lucide-react';
-import { useState } from 'react';
-import { Button } from './Button';
+import React, { useState, useCallback, useEffect } from 'react';
+import {
+  ArrowLeft, FileText, Plus, X, Pencil, Trash2,
+  Calendar, Target, CheckSquare, Play, Upload,
+  FileImage, ClipboardList, ChevronDown, ChevronUp, Loader2, Link2,
+  ShieldCheck, Clock, CheckCircle2, AlertCircle,
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { routes } from '../router/routes';
+import { useAdminData } from '../../hooks/useAdminData';
+import { useAuth } from '../../hooks/useAuth';
+import { moduleService } from '../../services/supabase/module.service';
+import { proofsService } from '../../services/supabase';
+import type { PedagogicalProof } from '../../services/supabase';
+import {
+  Module, ModuleResource, ResourceType,
+  QuizQuestion, QuizOption, FormField,
+} from '../../types/index';
 
-interface AdminModulesPageProps {
-  onNavigate: (page: string) => void;
+// ── Utilities ──────────────────────────────────────────────────────────────────
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
-interface Module {
-  id: string;
-  name: string;
-  status: 'Publié' | 'Brouillon';
-  users: number;
-  completion: number;
-  description: string;
-  thematic: string;
-  week: string;
-  order: number;
-}
-
-export function AdminModulesPage({ onNavigate }: AdminModulesPageProps) {
-  const [modules, setModules] = useState<Module[]>([
-    { 
-      id: '1',
-      name: 'Rédiger son CV', 
-      status: 'Publié', 
-      users: 245, 
-      completion: 85,
-      description: 'Apprenez à créer un CV professionnel et attractif',
-      thematic: 'CV et candidature',
-      week: 'Semaine 1',
-      order: 1
-    },
-    { 
-      id: '2',
-      name: 'Préparer son entretien', 
-      status: 'Publié', 
-      users: 218, 
-      completion: 72,
-      description: 'Maîtrisez les techniques d\'entretien d\'embauche',
-      thematic: 'Entretien',
-      week: 'Semaine 2',
-      order: 1
-    },
-    { 
-      id: '3',
-      name: 'Comprendre l\'alternance', 
-      status: 'Publié', 
-      users: 198, 
-      completion: 68,
-      description: 'Découvrez le fonctionnement de l\'alternance',
-      thematic: 'Alternance',
-      week: 'Semaine 1',
-      order: 2
-    },
-    { 
-      id: '4',
-      name: 'Rechercher son entreprise', 
-      status: 'Brouillon', 
-      users: 0, 
-      completion: 0,
-      description: 'Stratégies pour trouver votre entreprise d\'alternance',
-      thematic: 'Recherche d\'emploi',
-      week: 'Semaine 3',
-      order: 1
-    },
-    { 
-      id: '5',
-      name: 'Postuler efficacement', 
-      status: 'Brouillon', 
-      users: 0, 
-      completion: 0,
-      description: 'Optimisez vos candidatures et démarquez-vous',
-      thematic: 'CV et candidature',
-      week: 'Semaine 3',
-      order: 2
+function toVideoEmbed(url: string): string {
+  try {
+    const u = new URL(url);
+    // YouTube
+    if (u.hostname.includes('youtube.com')) {
+      const v = u.searchParams.get('v');
+      if (v) return `https://www.youtube.com/embed/${v}`;
+    } else if (u.hostname.includes('youtu.be')) {
+      return `https://www.youtube.com/embed/${u.pathname.slice(1)}`;
     }
-  ]);
+    // Vimeo
+    if (u.hostname.includes('vimeo.com')) {
+      // Formats : vimeo.com/123456789  ou  vimeo.com/channels/xxx/123456789
+      const segments = u.pathname.split('/').filter(Boolean);
+      const videoId = segments[segments.length - 1];
+      if (videoId && /^\d+$/.test(videoId)) {
+        return `https://player.vimeo.com/video/${videoId}`;
+      }
+    }
+  } catch { /* keep as-is */ }
+  return url;
+}
 
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newModule, setNewModule] = useState({
-    name: '',
-    description: '',
-    thematic: '',
-    week: '',
-    order: 1,
-    status: 'Brouillon' as 'Publié' | 'Brouillon'
+const RESOURCE_TYPES: { type: ResourceType; label: string; icon: React.ReactNode }[] = [
+  { type: 'pdf',   label: 'Document PDF', icon: <FileText      className="w-4 h-4" /> },
+  { type: 'image', label: 'Image',        icon: <FileImage     className="w-4 h-4" /> },
+  { type: 'video', label: 'Vidéo',        icon: <Play          className="w-4 h-4" /> },
+  { type: 'link',  label: 'Lien externe', icon: <Link2         className="w-4 h-4" /> },
+  { type: 'form',  label: 'Formulaire',   icon: <ClipboardList className="w-4 h-4" /> },
+  { type: 'quiz',  label: 'Quiz QCM',     icon: <CheckSquare   className="w-4 h-4" /> },
+];
+
+const RESOURCE_EMOJI: Record<ResourceType, string> = {
+  pdf: '📄', image: '🖼️', video: '🎥', link: '🔗', form: '📝', quiz: '✅',
+};
+
+// ── Shared styles (constants — not components) ─────────────────────────────────
+
+const S = {
+  input:    'w-full h-11 px-4 border-2 border-[rgba(30,21,72,0.10)] rounded-[10px] text-[14px] text-[#1E1548] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#FFD600] transition-colors bg-white',
+  textarea: 'w-full px-4 py-3 border-2 border-[rgba(30,21,72,0.10)] rounded-[10px] text-[14px] text-[#1E1548] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#FFD600] transition-colors resize-y bg-white',
+  label:    'block text-[13px] font-semibold text-[#1E1548] mb-1.5',
+  smInput:  'h-8 px-3 border border-[rgba(30,21,72,0.12)] rounded-[6px] text-[13px] text-[#1E1548] bg-white focus:outline-none focus:border-[#FFD600]',
+};
+
+// ── Types ──────────────────────────────────────────────────────────────────────
+
+type ModuleInfoForm = {
+  title: string;
+  description: string;
+  weekNumber: number;
+  orderIndex: number;
+  isPublished: boolean;
+};
+
+const EMPTY_INFO: ModuleInfoForm = {
+  title: '', description: '', weekNumber: 0, orderIndex: 0, isPublished: false,
+};
+
+// ── InfoTab — defined OUTSIDE to keep stable identity ─────────────────────────
+
+interface InfoTabProps {
+  form: ModuleInfoForm;
+  onChange: (field: keyof ModuleInfoForm, value: string | number | boolean) => void;
+}
+
+function InfoTab({ form, onChange }: InfoTabProps) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className={S.label}>Nom du module <span className="text-red-500">*</span></label>
+        <input
+          className={S.input}
+          placeholder="Ex : Rédiger son CV"
+          value={form.title}
+          onChange={e => onChange('title', e.target.value)}
+        />
+      </div>
+
+      <div>
+        <label className={S.label}>Description <span className="text-red-500">*</span></label>
+        <textarea
+          className={S.textarea}
+          rows={3}
+          placeholder="Objectifs et contenu du module…"
+          value={form.description}
+          onChange={e => onChange('description', e.target.value)}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className={S.label}>Semaine</label>
+          <div className="relative">
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B7280] pointer-events-none" />
+            <select
+              className={S.input + ' pl-10 appearance-none cursor-pointer'}
+              value={form.weekNumber}
+              onChange={e => onChange('weekNumber', parseInt(e.target.value))}
+            >
+              {[0, 1, 2, 3, 4, 5].map(w => (
+                <option key={w} value={w}>Semaine {w}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B7280] pointer-events-none" />
+          </div>
+        </div>
+        <div>
+          <label className={S.label}>Position dans la semaine</label>
+          <input
+            type="number"
+            min={1}
+            className={S.input}
+            value={form.orderIndex}
+            onChange={e => onChange('orderIndex', parseInt(e.target.value) || 1)}
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className={S.label}>Statut de publication</label>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => onChange('isPublished', false)}
+            className={`flex-1 h-11 rounded-[10px] text-[14px] font-semibold border-2 transition-all ${
+              !form.isPublished
+                ? 'border-[#B45309] bg-[#FFF4CC] text-[#B45309]'
+                : 'border-[rgba(30,21,72,0.08)] bg-white text-[#6B7280] hover:border-[#B45309]/40'
+            }`}
+          >
+            📝 Brouillon
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange('isPublished', true)}
+            className={`flex-1 h-11 rounded-[10px] text-[14px] font-semibold border-2 transition-all ${
+              form.isPublished
+                ? 'border-[#10B981] bg-[#F0FDF4] text-[#10B981]'
+                : 'border-[rgba(30,21,72,0.08)] bg-white text-[#6B7280] hover:border-[#10B981]/40'
+            }`}
+          >
+            ✅ Publié
+          </button>
+        </div>
+        <p className="text-[12px] text-[#6B7280] mt-1">Les brouillons ne sont pas visibles par les étudiants.</p>
+      </div>
+    </div>
+  );
+}
+
+// ── FileDropZone — defined OUTSIDE ────────────────────────────────────────────
+
+interface FileDropZoneProps {
+  accept: string;
+  hint: string;
+  fileName?: string;
+  uploading: boolean;
+  onFile: (file: File) => void;
+  onClear: () => void;
+}
+
+function FileDropZone({ accept, hint, fileName, uploading, onFile, onClear }: FileDropZoneProps) {
+  const [dragging, setDragging] = useState(false);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) onFile(file);
+  };
+
+  if (uploading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-28 border-2 border-dashed border-[rgba(30,21,72,0.15)] rounded-[10px] gap-2">
+        <Loader2 className="w-6 h-6 text-[#FFD600] animate-spin" />
+        <span className="text-[13px] text-[#6B7280]">Téléversement en cours…</span>
+      </div>
+    );
+  }
+
+  if (fileName) {
+    return (
+      <div className="flex items-center justify-between gap-3 p-3 bg-[#F0FDF4] border border-[#10B981]/30 rounded-[10px]">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-[#10B981]">✅</span>
+          <span className="text-[14px] font-medium text-[#1E1548] truncate">{fileName}</span>
+        </div>
+        <button
+          type="button"
+          onClick={onClear}
+          className="text-[12px] text-[#6B7280] hover:text-red-500 whitespace-nowrap flex-shrink-0"
+        >
+          Changer
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <label
+      className={`relative flex flex-col items-center justify-center h-28 border-2 border-dashed rounded-[10px] cursor-pointer transition-all ${
+        dragging
+          ? 'border-[#FFD600] bg-[#FFFDF0]'
+          : 'border-[rgba(30,21,72,0.15)] hover:border-[#FFD600]/60 hover:bg-[#FFFDF0]/50'
+      }`}
+      onDragOver={e => { e.preventDefault(); setDragging(true); }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={handleDrop}
+    >
+      <input
+        type="file"
+        accept={accept}
+        className="sr-only"
+        onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }}
+      />
+      <Upload className="w-7 h-7 text-[#6B7280] mb-1.5" />
+      <span className="text-[13px] font-medium text-[#1E1548]">Glisser-déposer ou cliquer pour parcourir</span>
+      <span className="text-[12px] text-[#9CA3AF] mt-0.5">{hint}</span>
+    </label>
+  );
+}
+
+// ── AddResourcePanel — defined OUTSIDE, owns its own state ────────────────────
+
+interface AddResourcePanelProps {
+  onAdd: (resource: ModuleResource) => void;
+  onCancel: () => void;
+  onFileUpload: (file: File) => Promise<string>;
+  uploading: boolean;
+  initialResource?: ModuleResource;
+}
+
+function AddResourcePanel({ onAdd, onCancel, onFileUpload, uploading, initialResource }: AddResourcePanelProps) {
+  const isEditing = !!initialResource;
+  const [type, setType]               = useState<ResourceType>(initialResource?.type ?? 'pdf');
+  const [title, setTitle]             = useState(initialResource?.title ?? '');
+  const [description, setDescription] = useState(initialResource?.description ?? '');
+  // Durée stockée en chiffre pur, "min" ajouté à la sauvegarde
+  const [duration, setDuration]       = useState(initialResource?.duration?.replace('min', '') ?? '');
+  const [url, setUrl]                 = useState(initialResource?.url ?? '');
+  const [uploadedName, setUploadedName] = useState('');
+  const [formFields, setFormFields]   = useState<FormField[]>(initialResource?.formFields ?? []);
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>(initialResource?.quizQuestions ?? []);
+
+  const reset = () => {
+    setTitle('');
+    setDescription('');
+    setDuration('');
+    setUrl('');
+    setUploadedName('');
+    setFormFields([]);
+    setQuizQuestions([]);
+  };
+
+  const handleTypeChange = (t: ResourceType) => {
+    setType(t);
+    reset();
+  };
+
+  const handleFile = async (file: File) => {
+    try {
+      const publicUrl = await onFileUpload(file);
+      setUrl(publicUrl);
+      setUploadedName(file.name);
+    } catch {
+      alert('Erreur lors du téléversement du fichier. Vérifiez que le bucket "module-resources" existe dans Supabase.');
+    }
+  };
+
+  const handleAdd = () => {
+    if (!title.trim()) return;
+    const resource: ModuleResource = {
+      id: initialResource?.id ?? uid(),
+      type,
+      title: title.trim(),
+      ...(description.trim() ? { description: description.trim() } : {}),
+      ...(duration.trim() ? { duration: `${duration.trim()}min` } : {}),
+      ...(type === 'pdf' || type === 'image' || type === 'link'
+        ? { url }
+        : type === 'video'
+        ? { url: toVideoEmbed(url) }
+        : type === 'form'
+        ? { formFields }
+        : { quizQuestions }),
+    };
+    onAdd(resource);
+    if (!isEditing) { reset(); setType('pdf'); }
+  };
+
+  // ── Quiz helpers (local state) ─────────────────────────────────────────────
+  const addQuestion = () =>
+    setQuizQuestions(prev => [...prev, {
+      id: uid(), question: '',
+      options: [
+        { id: uid(), text: '', isCorrect: false },
+        { id: uid(), text: '', isCorrect: false },
+      ],
+    }]);
+
+  const removeQuestion = (qId: string) =>
+    setQuizQuestions(prev => prev.filter(q => q.id !== qId));
+
+  const updateQuestion = (qId: string, text: string) =>
+    setQuizQuestions(prev => prev.map(q => q.id === qId ? { ...q, question: text } : q));
+
+  const addOption = (qId: string) =>
+    setQuizQuestions(prev => prev.map(q =>
+      q.id === qId ? { ...q, options: [...q.options, { id: uid(), text: '', isCorrect: false }] } : q
+    ));
+
+  const removeOption = (qId: string, oId: string) =>
+    setQuizQuestions(prev => prev.map(q =>
+      q.id === qId ? { ...q, options: q.options.filter(o => o.id !== oId) } : q
+    ));
+
+  const updateOption = (qId: string, oId: string, field: keyof QuizOption, value: string | boolean) =>
+    setQuizQuestions(prev => prev.map(q =>
+      q.id === qId
+        ? { ...q, options: q.options.map(o => o.id === oId ? { ...o, [field]: value } : o) }
+        : q
+    ));
+
+  // ── Form field helpers (local state) ──────────────────────────────────────
+  const addField = () =>
+    setFormFields(prev => [...prev, { id: uid(), label: '', type: 'text', required: false }]);
+
+  const removeField = (fId: string) =>
+    setFormFields(prev => prev.filter(f => f.id !== fId));
+
+  const updateField = (fId: string, updates: Partial<FormField>) =>
+    setFormFields(prev => prev.map(f => f.id === fId ? { ...f, ...updates } : f));
+
+  const addFieldOption = (fId: string) =>
+    setFormFields(prev => prev.map(f =>
+      f.id === fId ? { ...f, options: [...(f.options ?? []), ''] } : f
+    ));
+
+  const updateFieldOption = (fId: string, idx: number, val: string) =>
+    setFormFields(prev => prev.map(f =>
+      f.id === fId
+        ? { ...f, options: (f.options ?? []).map((o, i) => i === idx ? val : o) }
+        : f
+    ));
+
+  return (
+    <div className="border-2 border-[#FFD600]/50 rounded-[12px] p-4 space-y-4 bg-[#FFFDF0]">
+      {/* Type selector */}
+      <div>
+        <p className={S.label}>Type de ressource</p>
+        <div className="flex flex-wrap gap-2">
+          {RESOURCE_TYPES.map(rt => (
+            <button
+              key={rt.type}
+              type="button"
+              onClick={() => handleTypeChange(rt.type)}
+              className={`flex items-center gap-1.5 h-9 px-3 rounded-[8px] text-[13px] font-medium border-2 transition-all ${
+                type === rt.type
+                  ? 'border-[#FFD600] bg-[#FFF4CC] text-[#1E1548]'
+                  : 'border-[rgba(30,21,72,0.08)] bg-white text-[#6B7280] hover:border-[#FFD600]/60'
+              }`}
+            >
+              {rt.icon} {rt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Title + Duration */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="col-span-2">
+          <label className={S.label}>Titre <span className="text-red-500">*</span></label>
+          <input
+            className={S.input}
+            placeholder="Titre du chapitre"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className={S.label}>Durée</label>
+          <div className="relative">
+            <input
+              type="number"
+              min={1}
+              className={S.input + ' pr-12'}
+              placeholder="15"
+              value={duration}
+              onChange={e => setDuration(e.target.value.replace(/\D/g, ''))}
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-[#6B7280] pointer-events-none">min</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Description */}
+      <div>
+        <label className={S.label}>Description</label>
+        <input
+          className={S.input}
+          placeholder="Brève description du contenu de ce chapitre"
+          value={description}
+          onChange={e => setDescription(e.target.value)}
+        />
+      </div>
+
+      {/* PDF */}
+      {type === 'pdf' && (
+        <div>
+          <label className={S.label}>Fichier PDF</label>
+          <FileDropZone
+            accept=".pdf"
+            hint="PDF jusqu'à 20 Mo"
+            fileName={uploadedName}
+            uploading={uploading}
+            onFile={handleFile}
+            onClear={() => { setUrl(''); setUploadedName(''); }}
+          />
+        </div>
+      )}
+
+      {/* Image */}
+      {type === 'image' && (
+        <div>
+          <label className={S.label}>Fichier image</label>
+          <FileDropZone
+            accept="image/*"
+            hint="JPG, PNG, GIF, WebP…"
+            fileName={uploadedName}
+            uploading={uploading}
+            onFile={handleFile}
+            onClear={() => { setUrl(''); setUploadedName(''); }}
+          />
+        </div>
+      )}
+
+      {/* Video */}
+      {type === 'video' && (
+        <div>
+          <label className={S.label}>URL de la vidéo</label>
+          <input
+            className={S.input}
+            placeholder="https://vimeo.com/123456789  ou  https://www.youtube.com/watch?v=…"
+            value={url}
+            onChange={e => setUrl(e.target.value)}
+          />
+          <p className="text-[12px] text-[#6B7280] mt-1">
+            Vimeo et YouTube sont automatiquement convertis en lecteur intégré.
+          </p>
+        </div>
+      )}
+
+      {/* Link */}
+      {type === 'link' && (
+        <div>
+          <label className={S.label}>URL du lien</label>
+          <input
+            className={S.input}
+            placeholder="https://www.linkedin.com/in/…  ou  https://monportfolio.fr"
+            value={url}
+            onChange={e => setUrl(e.target.value)}
+          />
+          <p className="text-[12px] text-[#6B7280] mt-1">
+            Portfolio, LinkedIn, GitHub, site web…
+          </p>
+        </div>
+      )}
+
+      {/* Form builder */}
+      {type === 'form' && (
+        <div className="space-y-3">
+          <p className={S.label}>Champs du formulaire</p>
+          {formFields.map((field, fi) => (
+            <div key={field.id} className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[10px] p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-[12px] font-bold text-[#9CA3AF] w-5 flex-shrink-0">{fi + 1}.</span>
+                <input
+                  className={S.input + ' flex-1'}
+                  placeholder="Label du champ"
+                  value={field.label}
+                  onChange={e => updateField(field.id, { label: e.target.value })}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeField(field.id)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 text-red-400 flex-shrink-0"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="flex items-center gap-3 pl-7">
+                <select
+                  className={S.smInput}
+                  value={field.type}
+                  onChange={e => updateField(field.id, { type: e.target.value as FormField['type'], options: [] })}
+                >
+                  <option value="text">Texte court</option>
+                  <option value="textarea">Texte long</option>
+                  <option value="radio">Choix unique</option>
+                  <option value="checkbox">Choix multiple</option>
+                </select>
+                <label className="flex items-center gap-1.5 text-[13px] text-[#6B7280] cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={field.required}
+                    onChange={e => updateField(field.id, { required: e.target.checked })}
+                    className="accent-[#FFD600]"
+                  />
+                  Obligatoire
+                </label>
+              </div>
+              {(field.type === 'radio' || field.type === 'checkbox') && (
+                <div className="pl-7 space-y-1.5">
+                  {(field.options ?? []).map((opt, oi) => (
+                    <input
+                      key={oi}
+                      className={S.smInput + ' w-full'}
+                      placeholder={`Option ${oi + 1}`}
+                      value={opt}
+                      onChange={e => updateFieldOption(field.id, oi, e.target.value)}
+                    />
+                  ))}
+                  <button type="button" onClick={() => addFieldOption(field.id)}
+                    className="text-[12px] text-[#1E1548] font-medium hover:underline">
+                    + Ajouter une option
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={addField}
+            className="flex items-center gap-1.5 text-[13px] font-medium text-[#1E1548] hover:underline">
+            <Plus className="w-4 h-4" /> Ajouter un champ
+          </button>
+        </div>
+      )}
+
+      {/* Quiz builder */}
+      {type === 'quiz' && (
+        <div className="space-y-3">
+          <p className={S.label}>Questions</p>
+          {quizQuestions.map((q, qi) => (
+            <div key={q.id} className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[10px] p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-[12px] font-bold text-[#9CA3AF] w-5 flex-shrink-0">{qi + 1}.</span>
+                <input
+                  className={S.input + ' flex-1'}
+                  placeholder="Intitulé de la question"
+                  value={q.question}
+                  onChange={e => updateQuestion(q.id, e.target.value)}
+                />
+                <button type="button" onClick={() => removeQuestion(q.id)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 text-red-400 flex-shrink-0">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="pl-7 space-y-1.5">
+                {q.options.map(opt => (
+                  <div key={opt.id} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={opt.isCorrect}
+                      onChange={e => updateOption(q.id, opt.id, 'isCorrect', e.target.checked)}
+                      className="accent-[#10B981] w-4 h-4 flex-shrink-0"
+                      title="Bonne réponse"
+                    />
+                    <input
+                      className={S.smInput + ' flex-1'}
+                      placeholder="Réponse…"
+                      value={opt.text}
+                      onChange={e => updateOption(q.id, opt.id, 'text', e.target.value)}
+                    />
+                    {q.options.length > 2 && (
+                      <button type="button" onClick={() => removeOption(q.id, opt.id)}
+                        className="w-6 h-6 flex items-center justify-center text-red-400 hover:bg-red-50 rounded flex-shrink-0">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <div className="flex items-center gap-3 mt-1">
+                  <button type="button" onClick={() => addOption(q.id)}
+                    className="text-[12px] text-[#1E1548] font-medium hover:underline">
+                    + Option
+                  </button>
+                  <span className="text-[11px] text-[#9CA3AF]">☑ = bonne réponse</span>
+                </div>
+              </div>
+            </div>
+          ))}
+          <button type="button" onClick={addQuestion}
+            className="flex items-center gap-1.5 text-[13px] font-medium text-[#1E1548] hover:underline">
+            <Plus className="w-4 h-4" /> Ajouter une question
+          </button>
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex gap-2 justify-end pt-1 border-t border-[rgba(30,21,72,0.06)]">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="h-9 px-4 bg-white border-2 border-[#E5E7EB] text-[#6B7280] rounded-[8px] text-[13px] font-semibold hover:bg-[#F8F9FD] transition-colors"
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          onClick={handleAdd}
+          disabled={!title.trim()}
+          className="h-9 px-4 bg-[#FFD600] text-[#1E1548] rounded-[8px] text-[13px] font-semibold hover:bg-[#FDC700] transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isEditing ? <><Pencil className="w-4 h-4" /> Modifier</> : <><Plus className="w-4 h-4" /> Ajouter</>}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── ResourcesTab — defined OUTSIDE ────────────────────────────────────────────
+
+interface ResourcesTabProps {
+  resources: ModuleResource[];
+  uploading: boolean;
+  onRemove: (id: string) => void;
+  onAddResource: (resource: ModuleResource) => void;
+  onUpdateResource: (id: string, resource: ModuleResource) => void;
+  onMoveResource: (id: string, direction: 'up' | 'down') => void;
+  onFileUpload: (file: File) => Promise<string>;
+}
+
+function ResourcesTab({
+  resources, uploading,
+  onRemove, onAddResource, onUpdateResource, onMoveResource, onFileUpload,
+}: ResourcesTabProps) {
+  const [showAddPanel, setShowAddPanel] = useState(false);
+  const [editingResourceId, setEditingResourceId] = useState<string | null>(null);
+
+  const openEdit = (id: string) => { setEditingResourceId(id); setShowAddPanel(false); };
+  const closeEdit = () => setEditingResourceId(null);
+  const toggleAdd = () => { setShowAddPanel(prev => !prev); setEditingResourceId(null); };
+
+  return (
+    <div className="space-y-3">
+      {resources.length === 0 && !showAddPanel && !editingResourceId && (
+        <div className="text-center py-8 text-[#6B7280]">
+          <div className="text-4xl mb-2 opacity-30">📦</div>
+          <p className="text-[14px]">Aucune ressource pour ce module.</p>
+          <p className="text-[13px] text-[#9CA3AF] mt-1">Ajoutez des documents, vidéos ou quiz.</p>
+        </div>
+      )}
+
+      {resources.map((r, index) =>
+        editingResourceId === r.id ? (
+          <AddResourcePanel
+            key={r.id}
+            initialResource={r}
+            onAdd={updated => { onUpdateResource(r.id, updated); closeEdit(); }}
+            onCancel={closeEdit}
+            onFileUpload={onFileUpload}
+            uploading={uploading}
+          />
+        ) : (
+          <div
+            key={r.id}
+            className="flex items-center justify-between gap-3 p-3 bg-[#F8F9FD] border border-[rgba(30,21,72,0.08)] rounded-[10px]"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="text-xl flex-shrink-0">{RESOURCE_EMOJI[r.type]}</span>
+              <div className="min-w-0">
+                <p className="text-[14px] font-semibold text-[#1E1548] truncate">{r.title}</p>
+                <p className="text-[12px] text-[#6B7280]">
+                  {RESOURCE_TYPES.find(rt => rt.type === r.type)?.label}
+                  {r.type === 'quiz' && r.quizQuestions ? ` · ${r.quizQuestions.length} question(s)` : ''}
+                  {r.type === 'form' && r.formFields ? ` · ${r.formFields.length} champ(s)` : ''}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {index > 0 && (
+                <button
+                  type="button"
+                  onClick={() => onMoveResource(r.id, 'up')}
+                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#F0F0F8] text-[#6B7280]"
+                  title="Monter"
+                >
+                  <ChevronUp className="w-4 h-4" />
+                </button>
+              )}
+              {index < resources.length - 1 && (
+                <button
+                  type="button"
+                  onClick={() => onMoveResource(r.id, 'down')}
+                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#F0F0F8] text-[#6B7280]"
+                  title="Descendre"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => openEdit(r.id)}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#E8ECFF] text-[#1E1548]"
+                title="Modifier"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onRemove(r.id)}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 text-red-400"
+                title="Supprimer"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )
+      )}
+
+      {!editingResourceId && (showAddPanel ? (
+        <AddResourcePanel
+          onAdd={resource => { onAddResource(resource); setShowAddPanel(false); }}
+          onCancel={toggleAdd}
+          onFileUpload={onFileUpload}
+          uploading={uploading}
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={toggleAdd}
+          className="w-full h-11 border-2 border-dashed border-[rgba(30,21,72,0.15)] rounded-[10px] text-[14px] font-medium text-[#6B7280] hover:border-[#FFD600] hover:text-[#1E1548] transition-colors flex items-center justify-center gap-2"
+        >
+          <Plus className="w-4 h-4" /> Ajouter une ressource
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ── ModuleCard — defined OUTSIDE ───────────────────────────────────────────────
+
+interface ModuleCardProps {
+  module: Module;
+  onEdit: (module: Module) => void;
+  onTogglePublish: (module: Module) => void;
+  onDelete: (module: Module) => void;
+}
+
+function ModuleCard({ module, onEdit, onTogglePublish, onDelete }: ModuleCardProps) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  return (
+    <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[16px] p-4 sm:p-6 shadow-[0_2px_8px_rgba(30,21,72,0.04)] hover:shadow-[0_4px_12px_rgba(30,21,72,0.08)] transition-shadow">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2 mb-1.5">
+            <FileText className="w-5 h-5 text-[#FFD600] flex-shrink-0" />
+            <h3 className="text-[18px] sm:text-[20px] font-bold text-[#1E1548]">{module.title}</h3>
+            <span className={`px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${
+              module.isPublished
+                ? 'bg-[#F0FDF4] text-[#10B981]'
+                : 'bg-[#FFF4CC] text-[#B45309]'
+            }`}>
+              {module.isPublished ? 'Publié' : 'Brouillon'}
+            </span>
+          </div>
+
+          {module.description && (
+            <p className="text-[14px] text-[#6B7280] mb-3 leading-relaxed">{module.description}</p>
+          )}
+
+          <div className="flex flex-wrap gap-4 text-[13px] text-[#6B7280]">
+            <div className="flex items-center gap-1.5">
+              <Calendar className="w-4 h-4" />
+              <span>Semaine {module.weekNumber}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Target className="w-4 h-4" />
+              <span>Position {module.orderIndex}</span>
+            </div>
+            {Array.isArray(module.resources) && module.resources.length > 0 && (
+              <div className="flex items-center gap-1.5">
+                <span>📦</span>
+                <span>{module.resources.length} ressource{module.resources.length > 1 ? 's' : ''}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+          {confirmDelete ? (
+            <>
+              <span className="text-[13px] text-red-500 font-medium">Supprimer définitivement ?</span>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="h-9 px-3 bg-white border-2 border-[#E5E7EB] text-[#6B7280] rounded-[8px] text-[13px] font-semibold hover:bg-[#F8F9FD] transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => onDelete(module)}
+                className="h-9 px-3 bg-red-500 text-white rounded-[8px] text-[13px] font-semibold hover:bg-red-600 transition-colors"
+              >
+                Confirmer
+              </button>
+            </>
+          ) : (
+            <>
+              {module.isPublished ? (
+                <button
+                  onClick={() => onTogglePublish(module)}
+                  className="h-9 px-4 bg-white border-2 border-[rgba(30,21,72,0.12)] text-[#6B7280] rounded-[8px] text-[13px] font-semibold hover:border-[#B45309] hover:text-[#B45309] hover:bg-[#FFF4CC] transition-all"
+                >
+                  Mettre en brouillon
+                </button>
+              ) : (
+                <button
+                  onClick={() => onTogglePublish(module)}
+                  className="h-9 px-4 bg-[#F0FDF4] border-2 border-[#10B981] text-[#10B981] rounded-[8px] text-[13px] font-semibold hover:bg-[#DCFCE7] transition-all"
+                >
+                  Publier
+                </button>
+              )}
+              <button
+                onClick={() => onEdit(module)}
+                className="h-9 px-4 bg-[#1E1548] text-white rounded-[8px] text-[13px] font-semibold hover:bg-[#2D2166] transition-colors flex items-center gap-1.5"
+              >
+                <Pencil className="w-3.5 h-3.5" /> Modifier
+              </button>
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="h-9 w-9 flex items-center justify-center bg-white border-2 border-[rgba(30,21,72,0.12)] text-[#6B7280] rounded-[8px] hover:border-red-300 hover:text-red-500 hover:bg-red-50 transition-all"
+                title="Supprimer le module"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── ProofsSection ─────────────────────────────────────────────────────────────
+
+const PROOF_TYPE_LABEL: Record<string, { label: string; color: string }> = {
+  quiz_result:          { label: 'Quiz',      color: 'bg-[#FFF4CC] text-[#B45309]' },
+  exercise_submission:  { label: 'Exercice',  color: 'bg-[#E8ECFF] text-[#1E1548]' },
+  attendance:           { label: 'Présence',  color: 'bg-[#F0FDF4] text-[#10B981]' },
+  document:             { label: 'Document',  color: 'bg-[#F3F4F6] text-[#6B7280]' },
+};
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('fr-FR', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
+interface ProofsSectionProps {
+  modules: Module[];
+  students: any[];
+  adminId: string;
+}
+
+function ProofsSection({ modules, students, adminId }: ProofsSectionProps) {
+  const [proofs, setProofs] = useState<PedagogicalProof[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [validating, setValidating] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | 'pending' | 'validated'>('all');
+
+  useEffect(() => {
+    proofsService.getAllProofs()
+      .then(setProofs)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleValidate = async (proofId: string) => {
+    setValidating(proofId);
+    try {
+      const updated = await proofsService.validateProof(proofId, adminId);
+      setProofs(prev => prev.map(p => p.id === proofId ? updated : p));
+    } catch {
+      alert('Erreur lors de la validation.');
+    } finally {
+      setValidating(null);
+    }
+  };
+
+  const getStudentName = (userId: string) => {
+    const s = students.find((st: any) => st.id === userId);
+    if (!s) return userId.slice(0, 8) + '…';
+    return [s.firstName, s.lastName].filter(Boolean).join(' ') || s.email || userId.slice(0, 8) + '…';
+  };
+
+  const getModuleName = (moduleId: string | null) => {
+    if (!moduleId) return '—';
+    return modules.find(m => m.id === moduleId)?.title ?? moduleId.slice(0, 8) + '…';
+  };
+
+  const filtered = proofs.filter(p => {
+    if (filter === 'pending') return !p.validatedAt;
+    if (filter === 'validated') return !!p.validatedAt;
+    return true;
   });
 
-  // Thématiques disponibles pour le parcours TBEE
-  const thematics = [
-    'CV et candidature',
-    'Entretien',
-    'Alternance',
-    'Recherche d\'emploi',
-    'Posture professionnelle',
-    'Compétences transversales',
-    'Droits et devoirs',
-    'Réseau professionnel'
-  ];
+  const pendingCount = proofs.filter(p => !p.validatedAt).length;
 
-  // Semaines du parcours
-  const weeks = [
-    'Semaine 1',
-    'Semaine 2',
-    'Semaine 3',
-    'Semaine 4',
-    'Semaine 5'
-  ];
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-10 h-10 text-[#FFD600] animate-spin" />
+      </div>
+    );
+  }
 
-  const handleCreateModule = () => {
-    if (!newModule.name || !newModule.description || !newModule.thematic || !newModule.week) {
-      alert('Veuillez remplir tous les champs obligatoires');
+  return (
+    <div className="space-y-4">
+      {/* Summary */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[12px] p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#E8ECFF] flex items-center justify-center flex-shrink-0">
+            <ShieldCheck className="w-5 h-5 text-[#1E1548]" />
+          </div>
+          <div>
+            <p className="text-[12px] text-[#6B7280]">Total preuves</p>
+            <p className="text-[22px] font-bold text-[#1E1548]">{proofs.length}</p>
+          </div>
+        </div>
+        <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[12px] p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#FFF4CC] flex items-center justify-center flex-shrink-0">
+            <Clock className="w-5 h-5 text-[#B45309]" />
+          </div>
+          <div>
+            <p className="text-[12px] text-[#6B7280]">En attente</p>
+            <p className="text-[22px] font-bold text-[#B45309]">{pendingCount}</p>
+          </div>
+        </div>
+        <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[12px] p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#F0FDF4] flex items-center justify-center flex-shrink-0">
+            <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
+          </div>
+          <div>
+            <p className="text-[12px] text-[#6B7280]">Validées</p>
+            <p className="text-[22px] font-bold text-[#10B981]">{proofs.length - pendingCount}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter tabs */}
+      <div className="flex gap-2">
+        {(['all', 'pending', 'validated'] as const).map(f => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`h-9 px-4 rounded-[8px] text-[13px] font-semibold border-2 transition-all ${
+              filter === f
+                ? 'border-[#FFD600] bg-[#FFF4CC] text-[#1E1548]'
+                : 'border-[rgba(30,21,72,0.08)] bg-white text-[#6B7280] hover:border-[#FFD600]/50'
+            }`}
+          >
+            {f === 'all' ? 'Toutes' : f === 'pending' ? 'En attente' : 'Validées'}
+            {f === 'pending' && pendingCount > 0 && (
+              <span className="ml-1.5 bg-[#B45309] text-white text-[11px] font-bold px-1.5 py-0.5 rounded-full">
+                {pendingCount}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* List */}
+      {filtered.length === 0 ? (
+        <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[16px] p-12 text-center">
+          <AlertCircle className="w-12 h-12 text-[#E8ECFF] mx-auto mb-3" />
+          <p className="text-[15px] font-semibold text-[#1E1548] mb-1">Aucune preuve trouvée</p>
+          <p className="text-[13px] text-[#6B7280]">
+            {filter === 'pending' ? 'Aucune preuve en attente de validation.' : 'Les preuves apparaîtront ici quand les étudiants progressent dans les modules.'}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map(proof => {
+            const typeInfo = PROOF_TYPE_LABEL[proof.proofType] ?? { label: proof.proofType, color: 'bg-[#F3F4F6] text-[#6B7280]' };
+            const isValidated = !!proof.validatedAt;
+            const stepTitle = (proof.data as any)?.stepTitle as string | undefined;
+
+            return (
+              <div
+                key={proof.id}
+                className={`bg-white border rounded-[14px] p-4 sm:p-5 transition-all ${
+                  isValidated
+                    ? 'border-[rgba(30,21,72,0.08)]'
+                    : 'border-[#FFD600]/40 shadow-[0_2px_8px_rgba(255,214,0,0.12)]'
+                }`}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold ${typeInfo.color}`}>
+                        {typeInfo.label}
+                      </span>
+                      {isValidated ? (
+                        <span className="text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-[#F0FDF4] text-[#10B981] flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> Validée
+                        </span>
+                      ) : (
+                        <span className="text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-[#FFF4CC] text-[#B45309] flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> En attente
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[15px] font-bold text-[#1E1548] truncate">
+                      {getStudentName(proof.userId)}
+                    </p>
+                    <div className="flex flex-wrap gap-3 text-[12px] text-[#6B7280]">
+                      <span>📦 {getModuleName(proof.moduleId)}</span>
+                      {stepTitle && <span>📌 {stepTitle}</span>}
+                      <span>🕐 {formatDate(proof.createdAt)}</span>
+                    </div>
+                    {isValidated && proof.validatedAt && (
+                      <p className="text-[11px] text-[#10B981]">
+                        Validée le {formatDate(proof.validatedAt)}
+                      </p>
+                    )}
+                  </div>
+
+                  {!isValidated && (
+                    <button
+                      onClick={() => handleValidate(proof.id)}
+                      disabled={validating === proof.id}
+                      className="flex-shrink-0 h-9 px-4 bg-[#1E1548] text-white rounded-[8px] text-[13px] font-semibold hover:bg-[#2D2166] transition-colors flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {validating === proof.id
+                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        : <><ShieldCheck className="w-4 h-4" /> Valider</>
+                      }
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── AdminModulesPage ───────────────────────────────────────────────────────────
+
+export function AdminModulesPage() {
+  const { modules, loading, createModule, updateModule, togglePublish, deleteModule, students } = useAdminData();
+  const { user } = useAuth();
+
+  // Page-level tab
+  const [pageTab, setPageTab] = useState<'modules' | 'preuves'>('modules');
+
+  // Modal state
+  const [activeModal, setActiveModal] = useState<'create' | 'edit' | null>(null);
+  const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'infos' | 'resources'>('infos');
+
+  // Form state (shared between create and edit)
+  const [formInfo, setFormInfo] = useState<ModuleInfoForm>(EMPTY_INFO);
+  const [resources, setResources] = useState<ModuleResource[]>([]);
+
+  // UI
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  // ── Open/close ─────────────────────────────────────────────────────────────
+
+  const openCreate = useCallback(() => {
+    setFormInfo(EMPTY_INFO);
+    setResources([]);
+    setActiveTab('infos');
+    setEditingModuleId(null);
+    setFormError(null);
+    setActiveModal('create');
+  }, []);
+
+  const openEdit = useCallback((mod: Module) => {
+    setFormInfo({
+      title: mod.title,
+      description: mod.description ?? '',
+      weekNumber: mod.weekNumber,
+      orderIndex: mod.orderIndex,
+      isPublished: mod.isPublished,
+    });
+    setResources(Array.isArray(mod.resources) ? (mod.resources as ModuleResource[]) : []);
+    setActiveTab('infos');
+    setEditingModuleId(mod.id);
+    setFormError(null);
+    setActiveModal('edit');
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setActiveModal(null);
+    setEditingModuleId(null);
+    setFormError(null);
+  }, []);
+
+  // ── Info field change ──────────────────────────────────────────────────────
+
+  const handleInfoChange = useCallback((
+    field: keyof ModuleInfoForm,
+    value: string | number | boolean,
+  ) => {
+    setFormInfo(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  // ── Resource actions ───────────────────────────────────────────────────────
+
+  const handleAddResource = useCallback((resource: ModuleResource) => {
+    setResources(prev => [...prev, resource]);
+  }, []);
+
+  const handleRemoveResource = useCallback((id: string) => {
+    setResources(prev => prev.filter(r => r.id !== id));
+  }, []);
+
+  const handleUpdateResource = useCallback((id: string, resource: ModuleResource) => {
+    setResources(prev => prev.map(r => r.id === id ? resource : r));
+  }, []);
+
+  const handleMoveResource = useCallback((id: string, direction: 'up' | 'down') => {
+    setResources(prev => {
+      const index = prev.findIndex(r => r.id === id);
+      if (index === -1) return prev;
+      const newIndex = direction === 'up' ? index - 1 : index + 1;
+      if (newIndex < 0 || newIndex >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[newIndex]] = [next[newIndex], next[index]];
+      return next;
+    });
+  }, []);
+
+  const handleDeleteModule = useCallback(async (mod: Module) => {
+    try {
+      await deleteModule(mod.id);
+    } catch (err: any) {
+      alert(`Erreur lors de la suppression : ${err?.message ?? 'Vérifiez les politiques RLS dans Supabase.'}`);
+    }
+  }, [deleteModule]);
+
+  // ── File upload ────────────────────────────────────────────────────────────
+
+  const handleFileUpload = useCallback(async (file: File): Promise<string> => {
+    setUploading(true);
+    try {
+      return await moduleService.uploadModuleResource(file);
+    } finally {
+      setUploading(false);
+    }
+  }, []);
+
+  // ── Save ───────────────────────────────────────────────────────────────────
+
+  const handleSave = async () => {
+    if (!formInfo.title.trim() || !formInfo.description.trim()) {
+      setFormError('Le nom et la description sont obligatoires.');
       return;
     }
-
-    const module: Module = {
-      id: Date.now().toString(),
-      name: newModule.name,
-      status: newModule.status,
-      users: 0,
-      completion: 0,
-      description: newModule.description,
-      thematic: newModule.thematic,
-      week: newModule.week,
-      order: newModule.order
-    };
-
-    setModules([...modules, module]);
-    setShowCreateModal(false);
-    setNewModule({
-      name: '',
-      description: '',
-      thematic: '',
-      week: '',
-      order: 1,
-      status: 'Brouillon'
-    });
+    setSaving(true);
+    setFormError(null);
+    try {
+      if (activeModal === 'create') {
+        await createModule({
+          ...formInfo,
+          resources: resources.length > 0 ? resources : undefined,
+        });
+      } else if (editingModuleId) {
+        await updateModule(editingModuleId, {
+          ...formInfo,
+          resources: resources.length > 0 ? resources : null,
+        });
+      }
+      closeModal();
+    } catch {
+      setFormError('Erreur lors de la sauvegarde. Veuillez réessayer.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handlePublishModule = (moduleId: string) => {
-    setModules(modules.map(m => 
-      m.id === moduleId ? { ...m, status: 'Publié' as const } : m
-    ));
-  };
+  // ── Toggle publish ─────────────────────────────────────────────────────────
+
+  const handleTogglePublish = useCallback(async (mod: Module) => {
+    await togglePublish(mod.id, !mod.isPublished);
+  }, [togglePublish]);
+
+  // ── Modal header title ─────────────────────────────────────────────────────
+
+  const modalTitle = activeModal === 'create'
+    ? 'Créer un nouveau module'
+    : `Modifier : ${formInfo.title || '…'}`;
+
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-[#F8F9FD] pb-16">
@@ -150,18 +1232,19 @@ export function AdminModulesPage({ onNavigate }: AdminModulesPageProps) {
       <div className="bg-white border-b border-[rgba(30,21,72,0.08)] sticky top-0 z-30">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex items-start gap-3 sm:gap-6">
-            <button
-              onClick={() => onNavigate('admin-dashboard')}
-              className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
-              aria-label="Retour"
-            >
-              <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
-            </button>
+            <Link to={routes.AdminDashboard.path}>
+              <button
+                className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
+                aria-label="Retour"
+              >
+                <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
+              </button>
+            </Link>
             <div className="flex-1 min-w-0">
-              <h1 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold leading-tight text-[#1E1548] mb-1 sm:mb-2">
+              <h1 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold leading-tight text-[#1E1548] mb-1">
                 Gestion des modules
               </h1>
-              <p className="text-[14px] sm:text-[16px] leading-[20px] sm:leading-[24px] text-[#6B7280]">
+              <p className="text-[14px] sm:text-[16px] text-[#6B7280]">
                 Créez et gérez les modules de formation TBEE
               </p>
             </div>
@@ -170,266 +1253,182 @@ export function AdminModulesPage({ onNavigate }: AdminModulesPageProps) {
       </div>
 
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-8">
-        {/* Action Button */}
-        <div className="mb-6">
-          <Button className="flex items-center gap-2" onClick={() => setShowCreateModal(true)}>
-            <Plus className="w-5 h-5" />
-            Créer un nouveau module
-          </Button>
+        {/* Page tabs */}
+        <div className="flex gap-1 mb-6 bg-[#F0F0F8] p-1 rounded-[10px] w-fit">
+          <button
+            onClick={() => setPageTab('modules')}
+            className={`h-9 px-5 rounded-[8px] text-[14px] font-semibold transition-all ${
+              pageTab === 'modules'
+                ? 'bg-white text-[#1E1548] shadow-sm'
+                : 'text-[#6B7280] hover:text-[#1E1548]'
+            }`}
+          >
+            Modules
+          </button>
+          <button
+            onClick={() => setPageTab('preuves')}
+            className={`h-9 px-5 rounded-[8px] text-[14px] font-semibold transition-all flex items-center gap-1.5 ${
+              pageTab === 'preuves'
+                ? 'bg-white text-[#1E1548] shadow-sm'
+                : 'text-[#6B7280] hover:text-[#1E1548]'
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4" /> Preuves FSE
+          </button>
         </div>
 
-        {/* Modules List */}
-        <div className="space-y-4">
-          {modules.map((module, index) => (
-            <div 
-              key={index} 
-              className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[16px] p-4 sm:p-6 shadow-[0_2px_8px_rgba(30,21,72,0.04)] hover:shadow-[0_4px_12px_rgba(30,21,72,0.08)] transition-shadow"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex flex-wrap items-center gap-3 mb-2">
-                    <FileText className="w-5 h-5 text-[#FFD600] flex-shrink-0" />
-                    <h3 className="text-[18px] sm:text-[20px] font-bold text-[#1E1548]">
-                      {module.name}
-                    </h3>
-                    <span className={`px-3 py-1 rounded-full text-[12px] font-semibold flex-shrink-0 ${
-                      module.status === 'Publié' 
-                        ? 'bg-[#F0FDF4] text-[#10B981]' 
-                        : 'bg-[#FFF4CC] text-[#B45309]'
-                    }`}>
-                      {module.status}
-                    </span>
-                  </div>
-                  <p className="text-[14px] text-[#6B7280] mb-3">
-                    {module.description}
-                  </p>
-                  
-                  {/* Module Organization Info */}
-                  <div className="flex flex-wrap gap-4 mb-4 pb-3 border-b border-[rgba(30,21,72,0.06)]">
-                    <div className="flex items-center gap-2 text-[13px]">
-                      <BookOpen className="w-4 h-4 text-[#6B7280]" />
-                      <span className="text-[#1E1548] font-medium">{module.thematic}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-[13px]">
-                      <Calendar className="w-4 h-4 text-[#6B7280]" />
-                      <span className="text-[#1E1548] font-medium">{module.week}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-[13px]">
-                      <Target className="w-4 h-4 text-[#6B7280]" />
-                      <span className="text-[#1E1548] font-medium">Position {module.order}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-6 text-[14px] text-[#6B7280]">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-[#1E1548]">{module.users}</span>
-                      <span>utilisateurs inscrits</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-[#1E1548]">{module.completion}%</span>
-                      <span>taux de complétion</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex gap-2 flex-shrink-0">
-                  <Button variant="outline" size="sm" className="flex items-center gap-2">
-                    Modifier
-                  </Button>
-                  {module.status === 'Brouillon' && (
-                    <Button size="sm" className="flex items-center gap-2" onClick={() => handlePublishModule(module.id)}>
-                      Publier
-                    </Button>
-                  )}
-                </div>
-              </div>
+        {/* Modules tab */}
+        {pageTab === 'modules' && (
+          <>
+            <div className="mb-6 flex justify-end">
+              <button
+                onClick={openCreate}
+                className="h-10 px-5 bg-[#FFD600] text-[#1E1548] rounded-[10px] text-[14px] font-semibold hover:bg-[#FDC700] transition-colors flex items-center gap-2"
+              >
+                <Plus className="w-5 h-5" />
+                Créer un nouveau module
+              </button>
             </div>
-          ))}
-        </div>
 
-        {/* Empty State for when no modules exist */}
-        {modules.length === 0 && (
-          <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[16px] p-12 text-center">
-            <FileText className="w-16 h-16 text-[#E8ECFF] mx-auto mb-4" />
-            <h3 className="text-[20px] font-bold text-[#1E1548] mb-2">
-              Aucun module pour le moment
-            </h3>
-            <p className="text-[14px] text-[#6B7280] mb-6">
-              Commencez par créer votre premier module de formation
-            </p>
-            <Button className="flex items-center gap-2 mx-auto" onClick={() => setShowCreateModal(true)}>
-              <Plus className="w-5 h-5" />
-              Créer un module
-            </Button>
-          </div>
+            {loading && (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-10 h-10 text-[#FFD600] animate-spin" />
+              </div>
+            )}
+
+            {!loading && (
+              <div className="space-y-4">
+                {modules.map(mod => (
+                  <ModuleCard
+                    key={mod.id}
+                    module={mod}
+                    onEdit={openEdit}
+                    onTogglePublish={handleTogglePublish}
+                    onDelete={handleDeleteModule}
+                  />
+                ))}
+
+                {modules.length === 0 && (
+                  <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[16px] p-12 text-center">
+                    <FileText className="w-14 h-14 text-[#E8ECFF] mx-auto mb-4" />
+                    <h3 className="text-[18px] font-bold text-[#1E1548] mb-2">Aucun module pour le moment</h3>
+                    <p className="text-[14px] text-[#6B7280] mb-6">Commencez par créer votre premier module de formation</p>
+                    <button
+                      onClick={openCreate}
+                      className="h-10 px-5 bg-[#FFD600] text-[#1E1548] rounded-[10px] text-[14px] font-semibold hover:bg-[#FDC700] transition-colors flex items-center gap-2 mx-auto"
+                    >
+                      <Plus className="w-5 h-5" /> Créer un module
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Preuves FSE tab */}
+        {pageTab === 'preuves' && (
+          <ProofsSection
+            modules={modules}
+            students={students}
+            adminId={user?.id ?? ''}
+          />
         )}
       </div>
 
-      {/* Create Module Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto">
+      {/* ── Create / Edit modal ───────────────────────────────────────────────── */}
+      {activeModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] overflow-y-auto">
           <div className="min-h-screen flex items-start justify-center p-4 py-8">
-            <div className="bg-white rounded-[16px] shadow-[0_8px_24px_rgba(30,21,72,0.12)] max-w-[600px] w-full">
-              {/* Modal Header */}
-              <div className="bg-white border-b border-[rgba(30,21,72,0.08)] px-4 sm:px-6 py-4 rounded-t-[16px]">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#FFD600] flex items-center justify-center flex-shrink-0">
-                      <Plus className="w-5 h-5 text-[#1E1548]" />
-                    </div>
-                    <h2 className="text-[18px] sm:text-[24px] font-bold text-[#1E1548]">
-                      Créer un nouveau module
-                    </h2>
+            <div className="bg-white rounded-[16px] shadow-[0_8px_32px_rgba(30,21,72,0.14)] w-full max-w-[740px]">
+
+              {/* Modal header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(30,21,72,0.08)]">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-[#FFD600] flex items-center justify-center flex-shrink-0">
+                    {activeModal === 'create'
+                      ? <Plus className="w-5 h-5 text-[#1E1548]" />
+                      : <Pencil className="w-4 h-4 text-[#1E1548]" />}
                   </div>
-                  <button
-                    onClick={() => setShowCreateModal(false)}
-                    className="w-8 h-8 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
-                    aria-label="Fermer"
-                  >
-                    <X className="w-5 h-5 text-[#1E1548]" />
-                  </button>
+                  <h2 className="text-[17px] sm:text-[20px] font-bold text-[#1E1548] truncate max-w-[380px]">
+                    {modalTitle}
+                  </h2>
                 </div>
+                <button
+                  onClick={closeModal}
+                  className="w-8 h-8 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors"
+                >
+                  <X className="w-5 h-5 text-[#1E1548]" />
+                </button>
               </div>
 
-              {/* Modal Content */}
-              <div className="p-4 sm:p-6 space-y-6">
-                {/* Informations générales */}
-                <div className="space-y-4">
-                  <h3 className="text-[16px] font-semibold text-[#1E1548] flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-[#FFD600]" />
-                    Informations générales
-                  </h3>
-                  
-                  <div>
-                    <label className="block text-[13px] sm:text-[14px] font-semibold text-[#1E1548] mb-2">
-                      Nom du module <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ex: Rédiger son CV"
-                      value={newModule.name}
-                      onChange={(e) => setNewModule({ ...newModule, name: e.target.value })}
-                      className="w-full h-12 px-4 border-2 border-[rgba(30,21,72,0.08)] rounded-[12px] text-[14px] text-[#1E1548] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#FFD600] transition-colors"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[13px] sm:text-[14px] font-semibold text-[#1E1548] mb-2">
-                      Description <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      placeholder="Décrivez les objectifs et le contenu du module..."
-                      value={newModule.description}
-                      onChange={(e) => setNewModule({ ...newModule, description: e.target.value })}
-                      className="w-full min-h-[100px] px-4 py-3 border-2 border-[rgba(30,21,72,0.08)] rounded-[12px] text-[14px] text-[#1E1548] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#FFD600] transition-colors resize-y"
-                      rows={4}
-                    />
-                  </div>
-                </div>
-
-                {/* Organisation dans le parcours */}
-                <div className="space-y-4 pt-4 border-t border-[rgba(30,21,72,0.08)]">
-                  <h3 className="text-[16px] font-semibold text-[#1E1548] flex items-center gap-2">
-                    <Target className="w-4 h-4 text-[#FFD600]" />
-                    Organisation dans le parcours
-                  </h3>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[13px] sm:text-[14px] font-semibold text-[#1E1548] mb-2">
-                        Thématique <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6B7280] pointer-events-none z-10" />
-                        <select
-                          value={newModule.thematic}
-                          onChange={(e) => setNewModule({ ...newModule, thematic: e.target.value })}
-                          className="w-full h-12 pl-11 pr-4 border-2 border-[rgba(30,21,72,0.08)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:border-[#FFD600] transition-colors appearance-none bg-white cursor-pointer relative z-0"
-                        >
-                          <option value="">Sélectionner...</option>
-                          {thematics.map(thematic => (
-                            <option key={thematic} value={thematic}>{thematic}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-[13px] sm:text-[14px] font-semibold text-[#1E1548] mb-2">
-                        Semaine <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6B7280] pointer-events-none z-10" />
-                        <select
-                          value={newModule.week}
-                          onChange={(e) => setNewModule({ ...newModule, week: e.target.value })}
-                          className="w-full h-12 pl-11 pr-4 border-2 border-[rgba(30,21,72,0.08)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:border-[#FFD600] transition-colors appearance-none bg-white cursor-pointer relative z-0"
-                        >
-                          <option value="">Sélectionner...</option>
-                          {weeks.map(week => (
-                            <option key={week} value={week}>{week}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[13px] sm:text-[14px] font-semibold text-[#1E1548] mb-2">
-                        Ordre dans la semaine
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={newModule.order}
-                        onChange={(e) => setNewModule({ ...newModule, order: parseInt(e.target.value) || 1 })}
-                        className="w-full h-12 px-4 border-2 border-[rgba(30,21,72,0.08)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:border-[#FFD600] transition-colors"
-                      />
-                      <p className="text-[12px] text-[#6B7280] mt-1">Position du module dans la semaine</p>
-                    </div>
-
-                    <div>
-                      <label className="block text-[13px] sm:text-[14px] font-semibold text-[#1E1548] mb-2">
-                        Statut de publication
-                      </label>
-                      <select
-                        value={newModule.status}
-                        onChange={(e) => setNewModule({ ...newModule, status: e.target.value as 'Publié' | 'Brouillon' })}
-                        className="w-full h-12 px-4 border-2 border-[rgba(30,21,72,0.08)] rounded-[12px] text-[14px] text-[#1E1548] focus:outline-none focus:border-[#FFD600] transition-colors appearance-none bg-white cursor-pointer"
-                      >
-                        <option value="Brouillon">Brouillon</option>
-                        <option value="Publié">Publié</option>
-                      </select>
-                      <p className="text-[12px] text-[#6B7280] mt-1">Les brouillons ne sont pas visibles aux étudiants</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Info Box */}
-                <div className="bg-[#E8ECFF] border-2 border-[#1E1548]/10 rounded-[12px] p-4">
-                  <p className="text-[13px] text-[#1E1548] leading-relaxed">
-                    💡 <strong>Astuce :</strong> Organisez vos modules de manière cohérente en respectant la progression pédagogique du parcours TBEE. Chaque module doit s'inscrire dans une thématique claire et une semaine précise.
-                  </p>
-                </div>
+              {/* Tabs */}
+              <div className="flex border-b border-[rgba(30,21,72,0.08)]">
+                {(['infos', 'resources'] as const).map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`px-6 py-3 text-[14px] font-semibold border-b-2 transition-all ${
+                      activeTab === tab
+                        ? 'border-[#FFD600] text-[#1E1548]'
+                        : 'border-transparent text-[#6B7280] hover:text-[#1E1548]'
+                    }`}
+                  >
+                    {tab === 'infos' ? 'Informations' : (
+                      <>
+                        Ressources
+                        {resources.length > 0 && (
+                          <span className="ml-1.5 bg-[#FFD600] text-[#1E1548] text-[11px] font-bold px-1.5 py-0.5 rounded-full">
+                            {resources.length}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </button>
+                ))}
               </div>
 
-              {/* Modal Footer */}
-              <div className="bg-white border-t border-[rgba(30,21,72,0.08)] px-4 sm:px-6 py-4 rounded-b-[16px]">
-                <div className="flex flex-col sm:flex-row gap-3 justify-end">
-                  <button
-                    onClick={() => setShowCreateModal(false)}
-                    className="h-12 px-6 bg-white border-2 border-[#E5E7EB] text-[#6B7280] rounded-[10px] text-[14px] font-semibold hover:bg-[#F8F9FD] transition-all"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    onClick={handleCreateModule}
-                    className="h-12 px-6 bg-[#FFD600] text-[#1E1548] rounded-[10px] text-[14px] font-semibold hover:bg-[#FDC700] transition-all flex items-center justify-center gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Créer le module
-                  </button>
+              {/* Tab content */}
+              <div className="p-6">
+                {activeTab === 'infos' ? (
+                  <InfoTab form={formInfo} onChange={handleInfoChange} />
+                ) : (
+                  <ResourcesTab
+                    resources={resources}
+                    uploading={uploading}
+                    onRemove={handleRemoveResource}
+                    onAddResource={handleAddResource}
+                    onUpdateResource={handleUpdateResource}
+                    onMoveResource={handleMoveResource}
+                    onFileUpload={handleFileUpload}
+                  />
+                )}
+              </div>
+
+              {/* Error */}
+              {formError && (
+                <div className="mx-6 mb-4 px-4 py-2.5 bg-red-50 border border-red-200 rounded-[8px] text-[13px] text-red-600">
+                  {formError}
                 </div>
+              )}
+
+              {/* Footer */}
+              <div className="flex gap-3 justify-end px-6 py-4 border-t border-[rgba(30,21,72,0.08)]">
+                <button
+                  onClick={closeModal}
+                  className="h-10 px-5 bg-white border-2 border-[#E5E7EB] text-[#6B7280] rounded-[10px] text-[14px] font-semibold hover:bg-[#F8F9FD] transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="h-10 px-5 bg-[#FFD600] text-[#1E1548] rounded-[10px] text-[14px] font-semibold hover:bg-[#FDC700] transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {saving
+                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Enregistrement…</>
+                    : activeModal === 'create' ? <><Plus className="w-4 h-4" /> Créer le module</> : 'Enregistrer'}
+                </button>
               </div>
             </div>
           </div>

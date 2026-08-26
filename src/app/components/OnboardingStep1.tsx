@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ChevronRight, Search, Target, ArrowLeft } from 'lucide-react';
 
-interface OnboardingStep1Props {
+interface OnboardingStep1Props { 
   onComplete: (data: { hasFormation: boolean; formationChoice?: string; questionnaireResults?: any }) => void;
 }
 

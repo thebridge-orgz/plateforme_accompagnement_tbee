@@ -1,88 +1,101 @@
 import { useState } from 'react';
-import { ArrowLeft, CheckCircle2, FileText, Download, Eye, Upload } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, FileText, Download, Eye, Upload, LayoutTemplate, Target, BarChart2, SpellCheck } from 'lucide-react';
 import { Button } from './Button';
 import { FileUploader } from './FileUploader';
-import { useUserData } from '@/context/UserDataContext';
-
-interface CVUploadPageProps {
-  onNavigate: (page: string) => void;
-}
+import { routes } from '../router/routes';
+import { Link } from 'react-router-dom';
+import { useCvs } from '../../hooks/useCvs'
 
 const cvTips = [
   {
     title: 'Mise en page',
     description: 'Utilisez une structure claire avec des sections bien définies',
-    icon: '📐'
+    Icon: LayoutTemplate,
   },
   {
     title: 'Contenu ciblé',
     description: 'Adaptez votre CV à chaque offre d\'alternance',
-    icon: '🎯'
+    Icon: Target,
   },
   {
     title: 'Expériences',
     description: 'Privilégiez les verbes d\'action et les résultats mesurables',
-    icon: '📊'
+    Icon: BarChart2,
   },
   {
     title: 'Relecture',
     description: 'Vérifiez l\'orthographe et la grammaire',
-    icon: '✓'
-  }
+    Icon: SpellCheck,
+  },
 ];
 
-export function CVUploadPage({ onNavigate }: CVUploadPageProps) {
-  // TODO: fetch from Supabase - using context for now
-  const { cvData, updateCVData } = useUserData();
-
-  const [isUploading, setIsUploading] = useState(false);
+export function CVUploadPage() {
+  const { cvs, uploadCV, deleteCV, loading, MAX_SIZE, ALLOWED_TYPES } = useCvs();
 
   const handleFileUpload = async (file: File) => {
-    // TODO: Upload to Supabase Storage
-    setIsUploading(true);
-    
+    // Validation du type de fichier
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      alert('Format de fichier non supporté. Veuillez uploader un fichier PDF, DOC ou DOCX.');
+      return;
+    }
+
+    // Validation de la taille (5MB max)
+    if (file.size > MAX_SIZE) {
+      alert(`Le fichier est trop volumineux. Taille maximum : 5MB (${(file.size / (1024 * 1024)).toFixed(2)}MB)`);
+      return;
+    }
+
+    // Validation du nom du fichier (optionnel)
+    const fileName = file.name;
+    if (!fileName.match(/\.(pdf|doc|docx)$/i)) {
+      alert('Extension de fichier non valide. Utilisez .pdf, .doc ou .docx');
+      return;
+    }
+
     try {
-      // Simuler l'upload
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // TODO: Remplacer par vrai upload Supabase Storage
-      // const { data, error } = await supabase.storage
-      //   .from('user-cvs')
-      //   .upload(`${userId}/${file.name}`, file);
-      
-      await updateCVData({
-        fileName: file.name,
-        fileUrl: URL.createObjectURL(file), // TODO: remplacer par URL Supabase
-        status: 'uploaded',
-        uploadedAt: new Date().toISOString(),
-      });
-    } catch (error) {
-      alert('Erreur lors de l\'upload du CV');
-      console.error(error);
-    } finally {
-      setIsUploading(false);
+      await uploadCV(file);
+    } catch (error: any) {
+      const message = error?.message || error?.error_description || JSON.stringify(error);
+      alert(`Erreur upload CV: ${message}`);
+      console.error('CV upload error:', error);
     }
   };
 
-  const handleFileDelete = async () => {
-    if (confirm('Supprimer votre CV ?')) {
-      try {
-        // TODO: Delete from Supabase Storage
-        await updateCVData({
-          fileName: null,
-          fileUrl: null,
-          status: 'not_uploaded',
-          uploadedAt: null,
-        });
-      } catch (error) {
-        alert('Erreur lors de la suppression');
-        console.error(error);
-      }
+  const handleFileDelete = async (id: string, path: string) => {
+    try {
+      await deleteCV(id, path);
+    } catch (error: any) {
+      const message = error?.message || error?.error_description || JSON.stringify(error);
+      alert(`Erreur delete CV: ${message}`);
+      console.error('CV delete error:', error);
     }
   };
 
-  const hasCV = cvData.status !== 'not_uploaded' && cvData.fileName;
-  const hasFeedback = cvData.status === 'approved' || cvData.status === 'needs_revision';
+  // Récupérer le premier CV ou un objet par défaut
+  const currentCV = cvs[0] || {
+    status: 'not_uploaded',
+    fileName: null,
+    fileUrl: null,
+    adminFeedback: null,
+    uploadedAt: null,
+    updatedAt: new Date().toISOString()
+  };
+  //console.log(`currentCV : ${JSON.stringify(currentCV, null, 2)}`)
+
+  const hasCV = currentCV.status !== 'not_uploaded' && currentCV.fileName;
+  const hasFeedback = currentCV.status === 'approved' || currentCV.status === 'needs_revision';
+
+  // Afficher un état de chargement
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F8F9FD] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement de votre CV...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8F9FD] pb-16">
@@ -90,20 +103,21 @@ export function CVUploadPage({ onNavigate }: CVUploadPageProps) {
       <div className="bg-white border-b border-[rgba(30,21,72,0.08)] sticky top-0 z-30">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex items-start gap-3 sm:gap-6">
-            <button
-              onClick={() => onNavigate('student-dashboard')}
-              className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
-              aria-label="Retour"
-            >
-              <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
-            </button>
-            
+            <Link to={routes.StudentDashboard.path}>
+              <button
+                className="w-10 h-10 rounded-full hover:bg-[#F8F9FD] flex items-center justify-center transition-colors flex-shrink-0"
+                aria-label="Retour"
+              >
+                <ArrowLeft className="w-5 h-5 text-[#1E1548]" />
+              </button>
+            </Link>
+
             <div className="flex-1 min-w-0">
               <h1 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold leading-tight text-[#1E1548] mb-1 sm:mb-2">
                 Mon CV
               </h1>
               <p className="text-[14px] sm:text-[16px] leading-[20px] sm:leading-[24px] text-[#6B7280]">
-                {hasCV 
+                {hasCV
                   ? 'Gérez votre CV et recevez des conseils personnalisés'
                   : 'Téléchargez votre CV et recevez des conseils personnalisés'}
               </p>
@@ -134,7 +148,6 @@ export function CVUploadPage({ onNavigate }: CVUploadPageProps) {
                   maxSizeMB={5}
                   onFileUpload={handleFileUpload}
                   existingFiles={[]}
-                  onFileDelete={handleFileDelete}
                 />
               </div>
             )}
@@ -149,51 +162,50 @@ export function CVUploadPage({ onNavigate }: CVUploadPageProps) {
                       <h3 className="mb-2">CV actuel</h3>
                       <div className="flex items-center gap-3">
                         <FileText className="w-5 h-5 text-primary" />
-                        <span className="text-sm font-medium">{cvData.fileName}</span>
+                        <span className="text-sm font-medium">{currentCV.fileName}</span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-2">
-                        Téléchargé le {cvData.uploadedAt ? new Date(cvData.uploadedAt).toLocaleDateString('fr-FR') : 'N/A'}
+                        Téléchargé le {currentCV.uploadedAt ? new Date(currentCV.uploadedAt).toLocaleDateString('fr-FR') : 'N/A'}
                       </p>
                     </div>
-                    
+
                     {/* Status Badge */}
-                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      cvData.status === 'approved' 
-                        ? 'bg-green-100 text-green-800'
-                        : cvData.status === 'under_review'
+                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${currentCV.status === 'approved'
+                      ? 'bg-green-100 text-green-800'
+                      : currentCV.status === 'pending'
                         ? 'bg-blue-100 text-blue-800'
-                        : cvData.status === 'needs_revision'
-                        ? 'bg-orange-100 text-orange-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {cvData.status === 'approved' && '✓ Validé'}
-                      {cvData.status === 'under_review' && '⏳ En cours d\'analyse'}
-                      {cvData.status === 'needs_revision' && '⚠ À améliorer'}
-                      {cvData.status === 'uploaded' && '📄 Téléchargé'}
+                        : currentCV.status === 'needs_revision'
+                          ? 'bg-orange-100 text-orange-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                      {currentCV.status === 'approved' && '✓ Validé'}
+                      {currentCV.status === 'pending' && '⏳ En cours d\'analyse'}
+                      {currentCV.status === 'needs_revision' && '⚠ À améliorer'}
+                      {currentCV.status === 'uploaded' && '📄 Téléchargé'}
                     </div>
                   </div>
 
                   <div className="flex gap-3">
-                    {cvData.fileUrl && (
+                    {currentCV.fileUrl && (
                       <Button
-                        variant="outline"
+                        variant="secondary"
                         className="flex-1"
-                        onClick={() => window.open(cvData.fileUrl!, '_blank')}
+                        onClick={() => window.open(currentCV.fileUrl!, '_blank')}
                       >
                         <Eye className="w-4 h-4 mr-2" />
                         Visualiser
                       </Button>
                     )}
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       className="flex-1"
-                      onClick={handleFileDelete}
+                      onClick={() => handleFileDelete(currentCV.id!, currentCV.filePath!)}
                     >
                       Supprimer
                     </Button>
                   </div>
-                  
-                  {cvData.status === 'uploaded' && (
+
+                  {currentCV.status === 'uploaded' && (
                     <p className="text-xs text-muted-foreground mt-4 text-center">
                       💡 L'équipe Admission analysera ton CV sous 48h
                     </p>
@@ -201,11 +213,11 @@ export function CVUploadPage({ onNavigate }: CVUploadPageProps) {
                 </div>
 
                 {/* CV Feedback - Only if reviewed */}
-                {hasFeedback && cvData.adminFeedback && (
+                {hasFeedback && currentCV.adminFeedback && (
                   <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
                     <div className="flex items-center justify-between">
                       <h3>Retour de l'équipe Admission</h3>
-                      {cvData.status === 'approved' && (
+                      {currentCV.status === 'approved' && (
                         <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
                           <CheckCircle2 className="w-6 h-6 text-green-600" />
                         </div>
@@ -214,11 +226,11 @@ export function CVUploadPage({ onNavigate }: CVUploadPageProps) {
 
                     <div className="bg-secondary/50 rounded-xl p-4">
                       <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                        {cvData.adminFeedback}
+                        {currentCV.adminFeedback}
                       </p>
                     </div>
 
-                    {cvData.status === 'needs_revision' && (
+                    {currentCV.status === 'needs_revision' && (
                       <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
                         <p className="text-sm text-orange-800 mb-3">
                           📝 Améliore ton CV selon ces recommandations et télécharge une nouvelle version
@@ -230,7 +242,6 @@ export function CVUploadPage({ onNavigate }: CVUploadPageProps) {
                           maxSizeMB={5}
                           onFileUpload={handleFileUpload}
                           existingFiles={[]}
-                          onFileDelete={handleFileDelete}
                         />
                       </div>
                     )}
@@ -238,7 +249,7 @@ export function CVUploadPage({ onNavigate }: CVUploadPageProps) {
                 )}
 
                 {/* No feedback yet */}
-                {!hasFeedback && cvData.status === 'under_review' && (
+                {!hasFeedback && currentCV.status === 'pending' && (
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
                     <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
                       <Eye className="w-6 h-6 text-blue-600" />
@@ -261,7 +272,9 @@ export function CVUploadPage({ onNavigate }: CVUploadPageProps) {
               <div className="space-y-4">
                 {cvTips.map((tip, index) => (
                   <div key={index} className="flex items-start gap-3">
-                    <span className="text-2xl">{tip.icon}</span>
+                    <div className="w-9 h-9 bg-[#E8ECFF] rounded-full flex items-center justify-center shrink-0">
+                      <tip.Icon className="w-4 h-4 text-[#1E1548]" />
+                    </div>
                     <div>
                       <p className="font-medium text-sm mb-1">{tip.title}</p>
                       <p className="text-xs text-muted-foreground">{tip.description}</p>
@@ -272,29 +285,39 @@ export function CVUploadPage({ onNavigate }: CVUploadPageProps) {
             </div>
 
             {/* Templates */}
-            <div className="bg-gradient-to-br from-primary/10 to-secondary rounded-2xl p-6">
-              <h4 className="mb-2">Modèles de CV</h4>
+            <div className="bg-card border border-border rounded-2xl p-6">
+              <h4 className="mb-1">Modèles de CV</h4>
               <p className="text-sm text-muted-foreground mb-4">
                 Téléchargez nos modèles professionnels pour créer votre CV
               </p>
-              <Button variant="outline" className="w-full">
-                Voir les modèles
-              </Button>
-            </div>
 
-            {/* Module Link */}
-            <div className="bg-card border border-border rounded-2xl p-6">
-              <h4 className="mb-2">Formation CV</h4>
-              <p className="text-sm text-muted-foreground mb-4">
-                Suivez notre module complet sur la rédaction de CV
+              {/* Grille de modèles — à remplir avec de vrais fichiers */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                {[
+                  { label: 'Moderne', tag: 'Populaire', color: 'bg-blue-50 border-blue-200' },
+                  { label: 'Classique', tag: null, color: 'bg-gray-50 border-gray-200' },
+                  { label: 'Créatif', tag: 'Nouveau', color: 'bg-purple-50 border-purple-200' },
+                  { label: 'Tech', tag: null, color: 'bg-green-50 border-green-200' },
+                ].map((template) => (
+                  <div
+                    key={template.label}
+                    className={`relative border-2 border-dashed ${template.color} rounded-xl p-4 flex flex-col items-center justify-center gap-2 min-h-[100px] cursor-not-allowed opacity-70`}
+                  >
+                    {template.tag && (
+                      <span className="absolute top-1.5 right-1.5 text-[10px] font-bold bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">
+                        {template.tag}
+                      </span>
+                    )}
+                    <Download className="w-6 h-6 text-muted-foreground" />
+                    <p className="text-xs font-medium text-center text-muted-foreground">{template.label}</p>
+                    <p className="text-[10px] text-muted-foreground">Bientôt disponible</p>
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-xs text-muted-foreground text-center">
+                Les modèles seront disponibles prochainement
               </p>
-              <Button 
-                variant="primary" 
-                className="w-full"
-                onClick={() => onNavigate('module-week2')}
-              >
-                Accéder au module
-              </Button>
             </div>
           </div>
         </div>

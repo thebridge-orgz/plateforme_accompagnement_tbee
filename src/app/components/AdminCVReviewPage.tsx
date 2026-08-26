@@ -1,19 +1,37 @@
-import { ArrowLeft, FileText, Download, CheckCircle2, AlertCircle, Star, Send } from 'lucide-react';
+﻿import { ArrowLeft, FileText, Download, CheckCircle2, AlertCircle, Star, Send, Sparkles, Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { useAdminData } from '@/context/AdminDataContext';
+import { useAdminData } from '../../hooks/useAdminData';
+import { Link } from 'react-router-dom';
+import { routes } from '../router/routes';
+import { supabase } from '../../config/supabaseClient';
 
-interface AdminCVReviewPageProps {
-  onNavigate: (page: string) => void;
-}
-
-export function AdminCVReviewPage({ onNavigate }: AdminCVReviewPageProps) {
+export function AdminCVReviewPage() {
   const { cvSubmissions, reviewCV } = useAdminData();
-  
+
   const [selectedCVId, setSelectedCVId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'needs_revision'>('pending');
   const [reviewScore, setReviewScore] = useState<number>(0);
   const [reviewFeedback, setReviewFeedback] = useState<string>('');
   const [reviewStatus, setReviewStatus] = useState<'approved' | 'needs_revision'>('approved');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const handleAiAnalyze = async () => {
+    if (!selectedCV?.fileUrl) return;
+    setIsAnalyzing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-cv', {
+        body: { fileUrl: selectedCV.fileUrl },
+      });
+      if (error) throw error;
+      if (data?.analysis) {
+        setReviewFeedback(data.analysis);
+      }
+    } catch (err: any) {
+      alert(`Erreur analyse IA : ${err?.message ?? String(err)}`);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const filteredCVs = cvSubmissions.filter(cv => {
     if (filter === 'all') return true;
@@ -24,12 +42,12 @@ export function AdminCVReviewPage({ onNavigate }: AdminCVReviewPageProps) {
 
   const handleSubmitReview = () => {
     if (!selectedCVId) return;
-    
+
     if (!reviewFeedback.trim()) {
       alert('Veuillez entrer un feedback avant de valider');
       return;
     }
-    
+
     if (reviewScore === 0) {
       alert('Veuillez attribuer une note avant de valider');
       return;
@@ -37,7 +55,7 @@ export function AdminCVReviewPage({ onNavigate }: AdminCVReviewPageProps) {
 
     reviewCV(selectedCVId, reviewStatus, reviewFeedback, reviewScore);
     alert('CV évalué avec succès !');
-    
+
     setSelectedCVId(null);
     setReviewScore(0);
     setReviewFeedback('');
@@ -47,14 +65,15 @@ export function AdminCVReviewPage({ onNavigate }: AdminCVReviewPageProps) {
   return (
     <div className="min-h-screen bg-[#F8F9FD] pb-16">
       <div className="bg-white border-b border-[rgba(30,21,72,0.08)]">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-6 sm:pt-20 sm:pb-8 lg:pt-8 lg:pb-8">
-          <button
-            onClick={() => onNavigate('admin-dashboard')}
-            className="flex items-center gap-2 text-[#1E1548] hover:text-[#FFD600] transition-colors mb-4"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span className="text-[14px] sm:text-[16px] font-medium">Retour au tableau de bord</span>
-          </button>
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8 lg:pt-8 lg:pb-8">
+          <Link to={routes.AdminDashboard.path}>
+            <button
+              className="flex items-center gap-2 text-[#1E1548] hover:text-[#FFD600] transition-colors mb-4"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="text-[14px] sm:text-[16px] font-medium">Retour au tableau de bord</span>
+            </button>
+          </Link>
           <h1 className="text-[28px] sm:text-[32px] lg:text-[36px] font-bold leading-tight text-[#1E1548] mb-2">
             Validation des CVs
           </h1>
@@ -69,41 +88,37 @@ export function AdminCVReviewPage({ onNavigate }: AdminCVReviewPageProps) {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-[10px] text-[14px] font-medium transition-all ${
-                filter === 'all'
-                  ? 'bg-[#1E1548] text-white'
-                  : 'bg-[#F8F9FD] text-[#6B7280] hover:bg-[#E8ECFF]'
-              }`}
+              className={`px-4 py-2 rounded-[10px] text-[14px] font-medium transition-all ${filter === 'all'
+                ? 'bg-[#1E1548] text-white'
+                : 'bg-[#F8F9FD] text-[#6B7280] hover:bg-[#E8ECFF]'
+                }`}
             >
               Tous ({cvSubmissions.length})
             </button>
             <button
               onClick={() => setFilter('pending')}
-              className={`px-4 py-2 rounded-[10px] text-[14px] font-medium transition-all ${
-                filter === 'pending'
-                  ? 'bg-[#FFD600] text-[#1E1548]'
-                  : 'bg-[#F8F9FD] text-[#6B7280] hover:bg-[#E8ECFF]'
-              }`}
+              className={`px-4 py-2 rounded-[10px] text-[14px] font-medium transition-all ${filter === 'pending'
+                ? 'bg-[#FFD600] text-[#1E1548]'
+                : 'bg-[#F8F9FD] text-[#6B7280] hover:bg-[#E8ECFF]'
+                }`}
             >
               En attente ({cvSubmissions.filter(cv => cv.status === 'pending').length})
             </button>
             <button
               onClick={() => setFilter('approved')}
-              className={`px-4 py-2 rounded-[10px] text-[14px] font-medium transition-all ${
-                filter === 'approved'
-                  ? 'bg-[#10B981] text-white'
-                  : 'bg-[#F8F9FD] text-[#6B7280] hover:bg-[#E8ECFF]'
-              }`}
+              className={`px-4 py-2 rounded-[10px] text-[14px] font-medium transition-all ${filter === 'approved'
+                ? 'bg-[#10B981] text-white'
+                : 'bg-[#F8F9FD] text-[#6B7280] hover:bg-[#E8ECFF]'
+                }`}
             >
               Validés ({cvSubmissions.filter(cv => cv.status === 'approved').length})
             </button>
             <button
               onClick={() => setFilter('needs_revision')}
-              className={`px-4 py-2 rounded-[10px] text-[14px] font-medium transition-all ${
-                filter === 'needs_revision'
-                  ? 'bg-[#EF4444] text-white'
-                  : 'bg-[#F8F9FD] text-[#6B7280] hover:bg-[#E8ECFF]'
-              }`}
+              className={`px-4 py-2 rounded-[10px] text-[14px] font-medium transition-all ${filter === 'needs_revision'
+                ? 'bg-[#EF4444] text-white'
+                : 'bg-[#F8F9FD] text-[#6B7280] hover:bg-[#E8ECFF]'
+                }`}
             >
               À réviser ({cvSubmissions.filter(cv => cv.status === 'needs_revision').length})
             </button>
@@ -131,25 +146,23 @@ export function AdminCVReviewPage({ onNavigate }: AdminCVReviewPageProps) {
                       setReviewFeedback(cv.feedback || '');
                     }
                   }}
-                  className={`w-full bg-white border-2 rounded-[16px] p-4 text-left transition-all hover:shadow-lg ${
-                    selectedCVId === cv.id
-                      ? 'border-[#FFD600] shadow-lg'
-                      : 'border-[rgba(30,21,72,0.08)] hover:border-[#E8ECFF]'
-                  }`}
+                  className={`w-full bg-white border-2 rounded-[16px] p-4 text-left transition-all hover:shadow-lg ${selectedCVId === cv.id
+                    ? 'border-[#FFD600] shadow-lg'
+                    : 'border-[rgba(30,21,72,0.08)] hover:border-[#E8ECFF]'
+                    }`}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <p className="text-[15px] font-bold text-[#1E1548] mb-1">{cv.candidateName}</p>
+                      <p className="text-[15px] font-bold text-[#1E1548] mb-1">{cv.studentName}</p>
                       <p className="text-[13px] text-[#6B7280]">{cv.fileName}</p>
                     </div>
                     <span
-                      className={`px-2 py-1 rounded-[6px] text-[11px] font-semibold flex-shrink-0 ${
-                        cv.status === 'pending'
-                          ? 'bg-[#FFF4CC] text-[#1E1548]'
-                          : cv.status === 'approved'
+                      className={`px-2 py-1 rounded-[6px] text-[11px] font-semibold flex-shrink-0 ${cv.status === 'pending'
+                        ? 'bg-[#FFF4CC] text-[#1E1548]'
+                        : cv.status === 'approved'
                           ? 'bg-[#F0FDF4] text-[#10B981]'
                           : 'bg-[#FEF2F2] text-[#EF4444]'
-                      }`}
+                        }`}
                     >
                       {cv.status === 'pending' ? 'En attente' : cv.status === 'approved' ? 'Validé' : 'À réviser'}
                     </span>
@@ -194,7 +207,27 @@ export function AdminCVReviewPage({ onNavigate }: AdminCVReviewPageProps) {
                 {selectedCV.status === 'pending' && (
                   <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[16px] p-6">
                     <h3 className="text-[18px] font-bold text-[#1E1548] mb-4">Évaluation du CV</h3>
-                    
+
+                    {/* Bouton analyse IA */}
+                    <div className="mb-6 p-4 bg-[#F8F9FD] border border-[#E8ECFF] rounded-[12px]">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-[14px] font-semibold text-[#1E1548] mb-1">Analyse IA</p>
+                          <p className="text-[12px] text-[#6B7280]">Génère automatiquement un retour structuré sur le CV</p>
+                        </div>
+                        <button
+                          onClick={handleAiAnalyze}
+                          disabled={isAnalyzing}
+                          className="flex items-center gap-2 px-4 py-2 bg-[#1E1548] text-white rounded-[10px] text-[13px] font-semibold hover:bg-[#2D2166] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {isAnalyzing
+                            ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyse en cours…</>
+                            : <><Sparkles className="w-4 h-4" /> Analyser avec l'IA</>
+                          }
+                        </button>
+                      </div>
+                    </div>
+
                     <div className="mb-6">
                       <label className="block text-[14px] font-medium text-[#1E1548] mb-3">
                         Note sur 100
@@ -217,9 +250,8 @@ export function AdminCVReviewPage({ onNavigate }: AdminCVReviewPageProps) {
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className={`w-6 h-6 ${
-                              reviewScore >= (i + 1) * 20 ? 'text-[#FFD600] fill-[#FFD600]' : 'text-[#E8ECFF]'
-                            }`}
+                            className={`w-6 h-6 ${reviewScore >= (i + 1) * 20 ? 'text-[#FFD600] fill-[#FFD600]' : 'text-[#E8ECFF]'
+                              }`}
                           />
                         ))}
                       </div>
@@ -232,22 +264,20 @@ export function AdminCVReviewPage({ onNavigate }: AdminCVReviewPageProps) {
                       <div className="grid grid-cols-2 gap-3">
                         <button
                           onClick={() => setReviewStatus('approved')}
-                          className={`h-12 rounded-[12px] text-[14px] font-semibold transition-all flex items-center justify-center gap-2 ${
-                            reviewStatus === 'approved'
-                              ? 'bg-[#10B981] text-white'
-                              : 'bg-[#F8F9FD] text-[#6B7280] hover:bg-[#F0FDF4]'
-                          }`}
+                          className={`h-12 rounded-[12px] text-[14px] font-semibold transition-all flex items-center justify-center gap-2 ${reviewStatus === 'approved'
+                            ? 'bg-[#10B981] text-white'
+                            : 'bg-[#F8F9FD] text-[#6B7280] hover:bg-[#F0FDF4]'
+                            }`}
                         >
                           <CheckCircle2 className="w-5 h-5" />
                           Valider
                         </button>
                         <button
                           onClick={() => setReviewStatus('needs_revision')}
-                          className={`h-12 rounded-[12px] text-[14px] font-semibold transition-all flex items-center justify-center gap-2 ${
-                            reviewStatus === 'needs_revision'
-                              ? 'bg-[#EF4444] text-white'
-                              : 'bg-[#F8F9FD] text-[#6B7280] hover:bg-[#FEF2F2]'
-                          }`}
+                          className={`h-12 rounded-[12px] text-[14px] font-semibold transition-all flex items-center justify-center gap-2 ${reviewStatus === 'needs_revision'
+                            ? 'bg-[#EF4444] text-white'
+                            : 'bg-[#F8F9FD] text-[#6B7280] hover:bg-[#FEF2F2]'
+                            }`}
                         >
                           <AlertCircle className="w-5 h-5" />
                           Demander révision

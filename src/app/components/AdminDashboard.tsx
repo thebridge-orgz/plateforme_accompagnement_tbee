@@ -1,5 +1,5 @@
-import { Users, BookOpen, TrendingUp, Award, Clock, AlertTriangle, CheckCircle2, FileText, Briefcase, Target } from 'lucide-react';
-import { useAdminData } from '@/context/AdminDataContext';
+﻿import { Users, BookOpen, TrendingUp, Award, Clock, AlertTriangle, CheckCircle2, FileText, Briefcase, Target } from 'lucide-react';
+import { useAdminData } from '../../hooks/useAdminData';
 
 interface AdminDashboardProps {
   onNavigate: (page: string) => void;
@@ -10,56 +10,47 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
   // ============================================
   // DONNÉES RÉELLES DEPUIS LE CONTEXTE
   // ============================================
-  const {
-    candidates,
-    globalStats,
-    recentActivities,
-    cvSubmissions,
-    exerciseSubmissions,
-    offerTrackings
-  } = useAdminData();
+  const { globalStats, recentActivities } = useAdminData();
 
-  // Calculer les tâches urgentes à partir des vraies données
+  const inactiveStudents = globalStats.totalStudents - globalStats.activeStudents;
+
   const urgentTasks = [
-    { 
-      id: '1', 
-      label: 'CVs en attente de validation', 
-      count: globalStats.pendingCVs, 
-      action: 'admin-cv-review' 
+    {
+      id: '1',
+      label: 'CVs en attente de validation',
+      count: globalStats.pendingCVs,
+      action: 'admin-cv-review'
     },
-    { 
-      id: '2', 
-      label: 'Exercices à corriger', 
-      count: globalStats.pendingExercises, 
-      action: 'admin-exercise-review' 
+    {
+      id: '2',
+      label: 'Exercices à corriger',
+      count: 0,
+      action: 'admin-exercise-review'
     },
-    { 
-      id: '3', 
-      label: 'Demandes d\'aide sur offres', 
-      count: globalStats.offersNeedingHelp, 
-      action: 'admin-offer-support' 
+    {
+      id: '3',
+      label: 'Demandes d\'aide sur offres',
+      count: globalStats.offersNeedingHelp,
+      action: 'admin-offer-support'
     },
-    { 
-      id: '4', 
-      label: 'Étudiants inactifs (+7j)', 
-      count: globalStats.totalCandidates - globalStats.activeCandidates, 
-      action: 'admin-tracking' 
+    {
+      id: '4',
+      label: 'Étudiants inactifs (+7j)',
+      count: inactiveStudents,
+      action: 'admin-tracking'
     }
   ];
 
-  // Calculer les statistiques admin depuis les vraies données
   const adminStats = {
-    totalStudents: globalStats.totalCandidates,
-    activeStudents: globalStats.activeCandidates,
-    pendingReviews: globalStats.pendingCVs + globalStats.pendingExercises,
+    totalStudents: globalStats.totalStudents,
+    activeStudents: globalStats.activeStudents,
+    pendingReviews: globalStats.pendingCVs,
     completionRate: Math.round(globalStats.completionRate),
     averageProgress: Math.round(globalStats.averageProgress),
     cvToReview: globalStats.pendingCVs,
-    exercisesToGrade: globalStats.pendingExercises,
+    exercisesToGrade: 0,
     offerSupport: globalStats.offersNeedingHelp
   };
-
-  const inactiveCandidates = globalStats.totalCandidates - globalStats.activeCandidates;
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -80,7 +71,7 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
     <div className="min-h-screen bg-[#F8F9FD] pb-16">
       {/* Header */}
       <div className="bg-white border-b border-[rgba(30,21,72,0.08)]">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-6 sm:pt-20 sm:pb-8 lg:pt-8 lg:pb-8">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 sm:pt-8 sm:pb-8 lg:pt-8 lg:pb-8">
           <div>
             <h1 className="text-[28px] sm:text-[32px] lg:text-[36px] font-bold leading-tight text-[#1E1548] mb-2">
               {adminName ? `Bonjour, ${adminName} 👋` : 'Tableau de bord administrateur'}
@@ -95,7 +86,7 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-          {/* Total Students */}
+          {/* Total students */}
           <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[16px] p-4 sm:p-6 shadow-[0_2px_8px_rgba(30,21,72,0.04)]">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-12 h-12 rounded-[12px] bg-[#E8ECFF] flex items-center justify-center">
@@ -112,7 +103,7 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
             </p>
           </div>
 
-          {/* Active Students */}
+          {/* Active students */}
           <div className="bg-white border border-[rgba(30,21,72,0.08)] rounded-[16px] p-4 sm:p-6 shadow-[0_2px_8px_rgba(30,21,72,0.04)]">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-12 h-12 rounded-[12px] bg-[#FFF4CC] flex items-center justify-center">
@@ -161,9 +152,9 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
             <p className="text-[32px] sm:text-[36px] font-bold text-white">
               {adminStats.pendingReviews}
             </p>
-            {adminStats.pendingReviews > 0 && (
+            {/*adminStats.pendingReviews > 0 && (
               <p className="text-[13px] text-[#FFD600] mt-1">Action requise</p>
-            )}
+            )*/}
           </div>
         </div>
 
@@ -215,18 +206,17 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
                 {recentActivities.map((activity) => (
                   <div
                     key={activity.id}
-                    className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-[12px] transition-all ${
-                      activity.urgent
-                        ? 'bg-[#FFF4CC] border-2 border-[#FFD600]'
-                        : 'bg-[#F8F9FD] border border-[rgba(30,21,72,0.08)]'
-                    }`}
+                    className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-[12px] transition-all ${activity.urgent
+                      ? 'bg-[#FFF4CC] border-2 border-[#FFD600]'
+                      : 'bg-[#F8F9FD] border border-[rgba(30,21,72,0.08)]'
+                      }`}
                   >
                     <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
                       {getActivityIcon(activity.type)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[14px] sm:text-[15px] font-semibold text-[#1E1548] mb-1">
-                        {activity.candidateName}
+                        {activity.studentName}
                       </p>
                       <p className="text-[13px] sm:text-[14px] text-[#6B7280]">
                         {activity.message}
@@ -300,13 +290,6 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
                 </button>
 
                 <button
-                  onClick={() => onNavigate('admin-tracking')}
-                  className="w-full h-12 bg-white border-2 border-[#E8ECFF] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#E8ECFF] transition-all flex items-center justify-center px-4"
-                >
-                  👥 Tous les étudiants
-                </button>
-
-                <button
                   onClick={() => onNavigate('admin-settings')}
                   className="w-full h-12 bg-white border-2 border-[#E8ECFF] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#E8ECFF] transition-all flex items-center justify-center px-4"
                 >
@@ -374,7 +357,7 @@ export function AdminDashboard({ onNavigate, adminName }: AdminDashboardProps) {
                     ⚠️ Étudiants inactifs
                   </h3>
                   <p className="text-[13px] sm:text-[14px] text-[#6B7280] leading-[20px]">
-                    {inactiveCandidates} étudiants n'ont pas été actifs depuis plus de 7 jours
+                    {inactiveStudents} étudiant(s) n'ont pas été actifs depuis plus de 7 jours
                   </p>
                 </div>
               </div>
