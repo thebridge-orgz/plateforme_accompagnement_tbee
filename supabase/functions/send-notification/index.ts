@@ -2,7 +2,8 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!;
-const FROM_EMAIL = 'TBEE <noreply@tbee.fr>';
+// Temporaire : domaine de test Resend (remplacer par noreply@tbee.fr après vérification DNS)
+const FROM_EMAIL = 'TBEE <onboarding@resend.dev>';
 
 interface NotificationPayload {
   type: 'module_completed' | 'new_module' | 'weekly_report' | 'cv_reviewed';
