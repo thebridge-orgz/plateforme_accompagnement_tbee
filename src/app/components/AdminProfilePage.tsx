@@ -74,6 +74,7 @@ export function AdminProfilePage() {
   };
 
   return (
+    <>
     <div className="min-h-screen bg-[#F8F9FD] pb-16">
       {/* Header */}
       <div className="bg-white border-b border-[rgba(30,21,72,0.08)] sticky top-0 z-30">
@@ -426,5 +427,6 @@ export function AdminProfilePage() {
         </div>
       </div>
     )}
+    </>
   );
 }

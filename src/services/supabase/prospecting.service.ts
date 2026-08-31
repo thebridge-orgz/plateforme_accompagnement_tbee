@@ -122,6 +122,33 @@ class ProspectingService {
     if (error) throw error;
   }
 
+  async getAllEntriesAdmin(): Promise<ProspectingEntryWithStudent[]> {
+    const { data, error } = await supabase
+      .from('prospecting_entries')
+      .select('*')
+      .order('updated_at', { ascending: false });
+
+    if (error) throw error;
+    if (!data || data.length === 0) return [];
+
+    const userIds = [...new Set(data.map((e: any) => e.user_id))];
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, email')
+      .in('id', userIds);
+
+    const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+
+    return data.map((raw: any) => {
+      const profile = profileMap.get(raw.user_id);
+      return {
+        ...this.mapFromDB(raw),
+        studentName: profile ? [profile.first_name, profile.last_name].filter(Boolean).join(' ') : '—',
+        studentEmail: profile?.email || '—',
+      };
+    });
+  }
+
   async getNeedingHelp(): Promise<ProspectingEntryWithStudent[]> {
     const { data, error } = await supabase
       .from('prospecting_entries')

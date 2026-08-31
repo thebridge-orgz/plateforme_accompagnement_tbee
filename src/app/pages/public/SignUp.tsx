@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Eye, EyeOff, Info } from "lucide-react";
 import { useAuth } from "../../../hooks/useAuth";
+import { authService } from "../../../services/supabase/auth.service";
 import { Navbar } from "../../components/Navbar";
 import { Footer } from "../../components/Footer";
 import { Link, useNavigate } from 'react-router-dom';
@@ -16,6 +17,8 @@ function SignUp() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [resendLoading, setResendLoading] = useState(false);
+    const [resendMessage, setResendMessage] = useState("");
 
     // Rediriger si l'utilisateur est déjà connecté
     useEffect(() => {
@@ -90,6 +93,19 @@ function SignUp() {
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
+    const handleResend = async () => {
+        setResendLoading(true);
+        setResendMessage("");
+        try {
+            await authService.resendConfirmation(formData.email);
+            setResendMessage("Email renvoyé ! Vérifie ta boîte mail.");
+        } catch {
+            setResendMessage("Impossible de renvoyer l'email. Réessaie dans quelques minutes.");
+        } finally {
+            setResendLoading(false);
+        }
+    };
+
     if (success) {
         return (
             <div className="w-full min-h-screen bg-[#F8F9FD] flex items-center justify-center py-12 px-4">
@@ -100,21 +116,31 @@ function SignUp() {
                         </svg>
                     </div>
                     <h2 className="text-[28px] font-bold text-[#1E1548] mb-2">
-                        Bienvenue sur TBEE ! 🎉
+                        Bienvenue sur TBEE !
                     </h2>
-                    <p className="text-[16px] text-[#6B7280] mb-6">
-                        Ton compte a été créé avec succès. Vérifie ton email pour confirmer ton inscription, puis connecte-toi pour commencer ton parcours.
+                    <p className="text-[16px] text-[#6B7280] mb-3">
+                        Ton compte a été créé avec succès. Un email de confirmation a été envoyé à <strong className="text-[#1E1548]">{formData.email}</strong>.
                     </p>
-                    <p className="text-[14px] text-[#6B7280] mb-4">
-                        Redirection vers la page de connexion dans quelques secondes...
+                    <p className="text-[14px] text-[#6B7280] mb-6">
+                        Clique sur le lien dans l'email pour activer ton compte, puis connecte-toi. Pense à vérifier tes spams si tu ne le reçois pas.
                     </p>
+                    {resendMessage && (
+                        <p className={`text-[13px] mb-4 font-medium ${resendMessage.includes("renvoyé") ? "text-green-600" : "text-red-500"}`}>
+                            {resendMessage}
+                        </p>
+                    )}
                     <Link to={routes.SignIn.path}>
-                        <button
-                            className="w-full h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[16px] font-semibold hover:bg-[#FDC700] transition-all"
-                        >
-                            Se connecter maintenant →
+                        <button className="w-full h-12 bg-[#FFD600] text-[#1E1548] rounded-[12px] text-[16px] font-semibold hover:bg-[#FDC700] transition-all mb-3">
+                            Aller à la page de connexion →
                         </button>
                     </Link>
+                    <button
+                        onClick={handleResend}
+                        disabled={resendLoading}
+                        className="w-full h-10 text-[14px] text-[#6B7280] hover:text-[#1E1548] transition-colors disabled:opacity-50"
+                    >
+                        {resendLoading ? "Envoi en cours..." : "Renvoyer l'email de confirmation"}
+                    </button>
                 </div>
             </div>
         );

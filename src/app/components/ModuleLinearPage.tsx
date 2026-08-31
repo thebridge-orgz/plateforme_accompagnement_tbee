@@ -10,211 +10,6 @@ interface ModuleLinearPageProps {
   moduleId: string;
 }
 
-// Structure statique des contenus de modules (sera remplacé par Supabase)
-export const moduleStaticContent: Record<string, any> = {
-  'week1': {
-    weekNumber: 1,
-    title: 'Identifier mon projet',
-    description: 'Clarifier tes objectifs et découvrir les formations The Bridge',
-    estimatedHours: '4h',
-    steps: [
-      {
-        id: 'step1',
-        type: 'video',
-        title: 'Bienvenue dans ton parcours',
-        description: 'Introduction au programme et à la plateforme',
-        duration: '8min',
-        content: { videoUrl: 'https://www.youtube.com/embed/jNQXAC9IVRw', pdfUrl: null }
-      },
-      {
-        id: 'step2',
-        type: 'video',
-        title: 'Les formations The Bridge',
-        description: 'Découvre tous les domaines proposés',
-        duration: '15min',
-        content: { videoUrl: 'https://www.youtube.com/embed/jNQXAC9IVRw', pdfUrl: '/pdf/formations.pdf' }
-      },
-      {
-        id: 'step3',
-        type: 'exercise',
-        title: 'Test de positionnement',
-        description: 'Évalue tes compétences et objectifs',
-        duration: '20min',
-        content: { questions: ['Question 1...', 'Question 2...'] }
-      },
-      {
-        id: 'step4',
-        type: 'upload',
-        title: 'Questionnaire projet',
-        description: 'Partage ton projet professionnel',
-        duration: '15min',
-        content: { acceptedFormats: ['.pdf', '.doc', '.docx'] }
-      },
-      {
-        id: 'step5',
-        type: 'video',
-        title: 'Plan d\'action personnalisé',
-        description: 'Validation de ton parcours',
-        duration: '10min',
-        content: { videoUrl: 'https://www.youtube.com/embed/jNQXAC9IVRw' }
-      }
-    ]
-  },
-  'week2': {
-    weekNumber: 2,
-    title: 'Construire mon CV',
-    description: 'CV, LinkedIn et stratégies de recherche',
-    estimatedHours: '6h',
-    steps: [
-      {
-        id: 'step1',
-        type: 'video',
-        title: 'Les fondamentaux du CV',
-        description: 'Structure, mise en page et contenu',
-        duration: '12min',
-        content: { videoUrl: 'https://www.youtube.com/embed/jNQXAC9IVRw', pdfUrl: '/pdf/cv-guide.pdf' }
-      },
-      {
-        id: 'step2',
-        type: 'upload',
-        title: 'Upload ton CV',
-        description: 'Envoie ton CV pour validation',
-        duration: '5min',
-        reviewStatus: 'pending',
-        content: { acceptedFormats: ['.pdf'] }
-      },
-      {
-        id: 'step3',
-        type: 'video',
-        title: 'Optimiser son LinkedIn',
-        description: 'Bonnes pratiques et visibilité',
-        duration: '15min',
-        content: { videoUrl: '#', pdfUrl: '/pdf/linkedin-guide.pdf' }
-      },
-      {
-        id: 'step4',
-        type: 'text',
-        title: 'Lien LinkedIn',
-        description: 'Renseigne l\'URL de ton profil',
-        duration: '2min',
-        reviewStatus: null,
-        content: { placeholder: 'https://linkedin.com/in/...' }
-      },
-      {
-        id: 'step5',
-        type: 'video',
-        title: 'Le marché caché',
-        description: 'Stratégies de recherche efficaces',
-        duration: '18min',
-        content: { videoUrl: 'https://www.youtube.com/embed/jNQXAC9IVRw' }
-      },
-      {
-        id: 'step6',
-        type: 'exercise',
-        title: 'Identifier 5 offres pertinentes',
-        description: 'Alimentation de ta base de candidatures',
-        duration: '30min',
-        content: {}
-      },
-      {
-        id: 'step7',
-        type: 'video',
-        title: 'Lettres de motivation efficaces',
-        description: 'Personnalisation et impact',
-        duration: '12min',
-        content: { videoUrl: 'https://www.youtube.com/embed/jNQXAC9IVRw' }
-      },
-      {
-        id: 'step8',
-        type: 'exercise',
-        title: 'Rédiger ta première lettre',
-        description: 'Exercice pratique',
-        duration: '25min',
-        content: {}
-      }
-    ]
-  },
-  'week3': {
-    weekNumber: 3,
-    title: 'Rechercher mon entreprise',
-    description: 'Apprends à chercher et cibler les bonnes entreprises',
-    estimatedHours: '5h',
-    steps: [
-      {
-        id: 'step1',
-        type: 'video',
-        title: 'Comprendre le marché de l\'alternance',
-        description: 'Vue d\'ensemble des opportunités',
-        duration: '15min',
-        content: { videoUrl: 'https://www.youtube.com/embed/jNQXAC9IVRw' }
-      },
-      {
-        id: 'step2',
-        type: 'video',
-        title: 'Identifier les entreprises cibles',
-        description: 'Méthodologie de recherche',
-        duration: '12min',
-        content: { videoUrl: '#' }
-      },
-      {
-        id: 'step3',
-        type: 'exercise',
-        title: 'Créer ta liste d\'entreprises',
-        description: 'Exercice pratique de ciblage',
-        duration: '30min',
-        content: {}
-      },
-      {
-        id: 'step4',
-        type: 'video',
-        title: 'Utiliser les réseaux sociaux',
-        description: 'LinkedIn, Twitter et autres plateformes',
-        duration: '18min',
-        content: { videoUrl: '#' }
-      },
-      {
-        id: 'step5',
-        type: 'text',
-        title: 'Préparer ton approche',
-        description: 'Template de message de prise de contact',
-        duration: '20min',
-        content: {}
-      }
-    ]
-  },
-  'week4': {
-    weekNumber: 4,
-    title: 'Réussir mon entretien',
-    description: 'Maîtrise les techniques d\'entretien et décroche ton contrat',
-    estimatedHours: '4h',
-    steps: [
-      {
-        id: 'step1',
-        type: 'video',
-        title: 'Les fondamentaux de l\'entretien',
-        description: 'Comprendre les attentes des recruteurs',
-        duration: '15min',
-        content: { videoUrl: '#' }
-      },
-      {
-        id: 'step2',
-        type: 'video',
-        title: 'Construire son pitch',
-        description: 'Structure et contenu',
-        duration: '12min',
-        content: { videoUrl: '#' }
-      },
-      {
-        id: 'step3',
-        type: 'exercise',
-        title: 'Rédiger ton pitch',
-        description: 'Exercice de préparation',
-        duration: '20min',
-        content: {}
-      }
-    ]
-  }
-};
 
 export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
   const { modules, totalCount, nextModule, startModule, updateProgress, updateCompletedSteps, completeModule, unlockModule } = useModules();
@@ -224,17 +19,9 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
   const userModule = modules.find(module => module.id === moduleId);
   //console.log('userModule', userModule);
 
-  const staticModule = moduleStaticContent[`week${userModule?.weekNumber}`];
-
-  // Priorité aux ressources admin sur le contenu statique codé en dur.
-  // Cela rend les modules créés via l'interface admin pleinement fonctionnels.
-  const adminResources = Array.isArray(userModule?.resources) && (userModule?.resources?.length ?? 0) > 0
-    ? userModule!.resources!
-    : null;
-
-  const effectiveContent = adminResources
+  const effectiveContent = Array.isArray(userModule?.resources) && (userModule?.resources?.length ?? 0) > 0
     ? {
-        steps: adminResources.map(r => ({
+        steps: userModule!.resources!.map(r => ({
           id: r.id,
           type: r.type,
           title: r.title,
@@ -243,7 +30,7 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
           content: r,
         })),
       }
-    : staticModule;
+    : null;
 
   // Initialiser avec les steps déjà complétés (persistés en DB)
   const [completedStepsLocal, setCompletedStepsLocal] = useState<string[]>(
@@ -367,16 +154,37 @@ export function ModuleLinearPage({ moduleId }: ModuleLinearPageProps) {
 
   // -------------------- GUARDS --------------------
 
-  if (!userModule || userModule.status === 'locked' || !effectiveContent) {
+  if (!userModule || userModule.status === 'locked') {
     return (
-      <div className="min-h-screen bg-[#ffffff] flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-[16px] text-[#6B7280]">Ce module n'est pas encore disponible</p>
-          <Link to={routes.StudentDashboard.path}>
-            <button
-              className="mt-4 text-[#FFD600] hover:underline"
-            >
-              Retour au dashboard
+      <div className="min-h-screen bg-[#F8F9FD] flex items-center justify-center">
+        <div className="text-center px-4">
+          <div className="w-16 h-16 bg-[#E8ECFF] rounded-full flex items-center justify-center mx-auto mb-4">
+            <Lock className="w-8 h-8 text-[#1E1548]" />
+          </div>
+          <p className="text-[18px] font-semibold text-[#1E1548] mb-2">Module verrouillé</p>
+          <p className="text-[14px] text-[#6B7280] mb-6">Complète le module précédent pour débloquer celui-ci.</p>
+          <Link to={routes.StudentModules.path}>
+            <button className="h-10 px-5 bg-[#1E1548] text-white rounded-[10px] text-[14px] font-semibold hover:bg-[#2D2166] transition-all">
+              Retour au parcours
+            </button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!effectiveContent) {
+    return (
+      <div className="min-h-screen bg-[#F8F9FD] flex items-center justify-center">
+        <div className="text-center px-4">
+          <div className="w-16 h-16 bg-[#FFF4CC] rounded-full flex items-center justify-center mx-auto mb-4">
+            <Clock className="w-8 h-8 text-[#1E1548]" />
+          </div>
+          <p className="text-[18px] font-semibold text-[#1E1548] mb-2">Contenu en cours de préparation</p>
+          <p className="text-[14px] text-[#6B7280] mb-6">L'équipe TBEE finalise le contenu de ce module. Reviens bientôt !</p>
+          <Link to={routes.StudentModules.path}>
+            <button className="h-10 px-5 bg-[#1E1548] text-white rounded-[10px] text-[14px] font-semibold hover:bg-[#2D2166] transition-all">
+              Retour au parcours
             </button>
           </Link>
         </div>

@@ -7,7 +7,8 @@ import {
     moduleService
 } from '../services/supabase';
 
-import { UserProfile, CVData, TrackedOffer, Module, CVStatus, ModuleResource } from '../types/index';
+import { UserProfile, TrackedOffer, Module, CVStatus, ModuleResource } from '../types/index';
+import { prospectingService } from '../services/supabase';
 import { useAuth } from './useAuth';
 
 // Types spécifiques à l'admin
@@ -59,6 +60,7 @@ interface AdminDataState {
     offerTrackings: TrackedOfferWithStudent[];
     modules: Module[];
     recentActivities: AdminActivity[];
+    prospectingHelpCount: number;
     loading: boolean;
     error: Error | null;
 }
@@ -93,6 +95,7 @@ export function useAdminData(): UseAdminDataReturn {
         offerTrackings: [],
         modules: [],
         recentActivities: [],
+        prospectingHelpCount: 0,
         loading: true,
         error: null,
     });
@@ -168,6 +171,10 @@ export function useAdminData(): UseAdminDataReturn {
             // Charger les modules (admin : tous, y compris brouillons)
             const modules = await moduleService.getAllModulesAdmin();
 
+            // Compter les demandes d'aide dans le Pokédex (prospecting_entries)
+            const helpEntries = await prospectingService.getNeedingHelp();
+            const prospectingHelpCount = helpEntries.length;
+
             // Charger les progressions pour calculer les stats
             const studentsWithStats = await Promise.all(
                 students.map(async (student) => {
@@ -220,6 +227,7 @@ export function useAdminData(): UseAdminDataReturn {
                 offerTrackings,
                 modules,
                 recentActivities: activities.slice(0, 20),
+                prospectingHelpCount,
                 loading: false,
                 error: null,
             });
@@ -379,7 +387,7 @@ export function useAdminData(): UseAdminDataReturn {
             return daysSinceActive < 7;
         }).length,
         pendingCVs: state.cvSubmissions.filter(cv => cv.status === 'pending').length,
-        offersNeedingHelp: state.offerTrackings.filter(o => o.needsHelp).length,
+        offersNeedingHelp: state.prospectingHelpCount,
         averageProgress: (() => {
             if (state.students.length === 0) return 0;
             const total = state.students.reduce((sum, student) => {

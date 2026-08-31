@@ -1,4 +1,4 @@
-import { Award, BookOpen, TrendingUp, Users, AlertTriangle, Clock, FileText, Briefcase, CheckCircle2, Target, Settings, BarChart2 } from 'lucide-react';
+import { Award, BookOpen, TrendingUp, Users, AlertTriangle, Clock, FileText, Briefcase, CheckCircle2, Target, Settings, BarChart2, MapPin } from 'lucide-react';
 import { StatCard } from '../../components/StatCard';
 import { routes } from '../../router/routes';
 import { Link } from 'react-router-dom';
@@ -88,7 +88,7 @@ export function AdminDashboard({ user }: AdminDashboardProps) {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 {[
                                     { label: 'CVs en attente de validation', count: globalStats.pendingCVs, path: routes.AdminCvReview.path },
-                                    { label: 'Demandes d\'aide sur offres', count: globalStats.offersNeedingHelp, path: routes.AdminOfferSupport.path },
+                                    { label: 'Demandes d\'aide candidatures', count: globalStats.offersNeedingHelp, path: routes.AdminProspection.path },
                                     { label: 'Étudiants inactifs (+7j)', count: inactiveStudents, path: routes.AdminStudentList.path },
                                 ].map((task, i) => (
                                     <Link key={i} to={task.path} className="block w-full">
@@ -179,19 +179,14 @@ export function AdminDashboard({ user }: AdminDashboardProps) {
                                     </button>
                                 </Link>
 
-                                <Link to={routes.AdminOfferSupport.path} className="block w-full">
-                                    <button className="w-full h-12 bg-white border-2 border-[#E8ECFF] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#E8ECFF] transition-all flex items-center justify-between px-4">
-                                        <span className="flex items-center gap-2">
-                                            <Briefcase className="w-4 h-4" />
-                                            Suivi des offres
-                                        </span>
-                                        <span className="w-6 h-6 rounded-full bg-[#1E1548] text-white text-[12px] font-bold flex items-center justify-center">
-                                            {globalStats.offersNeedingHelp}
-                                        </span>
+                                <Link to={routes.AdminProspection.path} className="block w-full">
+                                    <button className="w-full h-12 bg-[#FFF4CC] border-2 border-[#FFD600] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#FFE566] transition-all flex items-center justify-center gap-2 px-4 whitespace-nowrap">
+                                        <MapPin className="w-4 h-4 flex-shrink-0" />
+                                        Pokédex candidatures
                                     </button>
                                 </Link>
 
-                                <Link to={routes.AdminSettings.path} className="block w-full">
+<Link to={routes.AdminSettings.path} className="block w-full">
                                     <button className="w-full h-12 bg-white border-2 border-[#E8ECFF] text-[#1E1548] rounded-[12px] text-[14px] sm:text-[16px] font-semibold hover:bg-[#E8ECFF] transition-all flex items-center justify-center gap-2 px-4">
                                         <Settings className="w-4 h-4" />
                                         Paramètres

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, X, Pencil, Trash2, ExternalLink, Briefcase, Trophy, Target, TrendingUp, Loader2, ClipboardList, Send, Users, CheckCircle2, XCircle, Search, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Plus, X, Pencil, Trash2, ExternalLink, Briefcase, Trophy, Target, TrendingUp, Loader2, ClipboardList, Send, Users, CheckCircle2, XCircle, Search, AlertCircle, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { routes } from '../router/routes';
 import { useAuth } from '../../hooks/useAuth';
@@ -349,7 +349,10 @@ export function ProspectionPage() {
                   {(entry.appliedAt || entry.offerUrl) && (
                     <div className="flex items-center gap-3 mt-3 text-[12px] text-[#6B7280]">
                       {entry.appliedAt && (
-                        <span>📅 {new Date(entry.appliedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}</span>
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(entry.appliedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+                        </span>
                       )}
                       {entry.offerUrl && (
                         <a href={entry.offerUrl} target="_blank" rel="noopener noreferrer"
@@ -412,7 +415,9 @@ export function ProspectionPage() {
       {confirmDeleteId && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-[16px] p-6 max-w-sm w-full shadow-xl text-center">
-            <div className="text-4xl mb-3">🗑️</div>
+            <div className="w-12 h-12 bg-[#FEF2F2] rounded-full flex items-center justify-center mx-auto mb-3">
+              <Trash2 className="w-6 h-6 text-red-500" />
+            </div>
             <h3 className="text-[17px] font-bold text-[#1E1548] mb-2">Supprimer cette entrée ?</h3>
             <p className="text-[13px] text-[#6B7280] mb-5">Cette action est irréversible.</p>
             <div className="flex gap-3">

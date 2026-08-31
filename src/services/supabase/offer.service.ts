@@ -48,6 +48,8 @@ class OfferService {
         if (updates.companyName !== undefined) dbUpdates.company_name = updates.companyName;
         if (updates.positionTitle !== undefined) dbUpdates.position_title = updates.positionTitle;
         if (updates.offerUrl !== undefined) dbUpdates.offer_url = updates.offerUrl;
+        if (updates.needsHelp !== undefined) dbUpdates.needs_help = updates.needsHelp;
+        if (updates.helpRequest !== undefined) dbUpdates.help_request = updates.helpRequest;
 
         const { error } = await supabase
             .from('user_tracked_offers')

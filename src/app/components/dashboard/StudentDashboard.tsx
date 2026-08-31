@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Award, BookOpen, Clock, MessageSquare, Star, Flame, CheckCheck, Target, FileText, Briefcase } from 'lucide-react';
+import { Award, BookOpen, Clock, MessageSquare, Star, Flame, CheckCheck, FileText, Briefcase } from 'lucide-react';
 import { StatCard } from '../../components/StatCard';
 import { ProgressBar } from '../ui/ProgressBar';
 import { Button } from '../ui/button';
 import { useModules } from '../../../hooks/useModules';
 import { formatStudyTime } from '../../../utils/initialState';
-import { moduleStaticContent } from '../ModuleLinearPage';
 import { routes } from '../../router/routes';
 import { Link } from 'react-router-dom';
 import { UserProfile } from '../../../types/user';
@@ -51,9 +50,6 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
   // Parcours entièrement complété ?
   const allModulesCompleted = totalCount > 0 && completedCount === totalCount;
 
-  // Calcul dynamique du temps d'étude à partir des étapes réellement complétées.
-  // Pour les modules statiques : on lit les durées dans moduleStaticContent.
-  // Pour les modules admin : on lit module.resources[].duration.
   const parseDurationMin = (dur: string | undefined): number => {
     if (!dur) return 0;
     const m = dur.match(/(\d+)/);
@@ -62,35 +58,18 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
 
   const totalStudyMinutes = modules.reduce((total, module) => {
     if (!module.completedSteps || module.completedSteps.length === 0) return total;
-
-    // Modules créés via l'admin (ressources en DB)
-    if (Array.isArray(module.resources) && module.resources.length > 0) {
-      return total + (module.resources as any[])
-        .filter(r => module.completedSteps.includes(r.id))
-        .reduce((s: number, r: any) => s + parseDurationMin(r.duration), 0);
-    }
-
-    // Modules statiques codés en dur
-    const staticContent = moduleStaticContent[`week${module.weekNumber}`];
-    if (staticContent?.steps) {
-      return total + staticContent.steps
-        .filter((s: any) => module.completedSteps.includes(s.id))
-        .reduce((s: number, step: any) => s + parseDurationMin(step.duration), 0);
-    }
-
-    return total;
+    if (!Array.isArray(module.resources) || module.resources.length === 0) return total;
+    return total + (module.resources as any[])
+      .filter(r => module.completedSteps.includes(r.id))
+      .reduce((s: number, r: any) => s + parseDurationMin(r.duration), 0);
   }, 0);
 
   const studyTimeFormatted = totalStudyMinutes > 0
     ? formatStudyTime(totalStudyMinutes)
     : completedCount === 0 ? '–' : '0min';
 
-  // Score TBEE : 10 XP par étape + 50 XP bonus par module complété
-  const tbeeScore = modules.reduce((sum, m) => {
-    const stepsXp = (m.completedSteps?.length ?? 0) * 10;
-    const bonusXp = m.status === 'completed' ? 50 : 0;
-    return sum + stepsXp + bonusXp;
-  }, 0);
+  // Score TBEE : même calcul que la page Parcours (250 XP par module complété, stocké en DB)
+  const tbeeScore = modules.reduce((sum, m) => sum + (m.xp || 0), 0);
 
   const streakDisplay = streakDays > 0
     ? `${streakDays} jour${streakDays > 1 ? 's' : ''}`
@@ -153,7 +132,7 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
             title="Score TBEE"
             value={tbeeScore > 0 ? `${tbeeScore} XP` : '–'}
             icon={<Star className="w-6 h-6 text-primary" />}
-            subtitle={tbeeScore === 0 ? 'Commence pour gagner des XP' : '10 XP/étape · 50 XP/module'}
+            subtitle={tbeeScore === 0 ? 'Commence pour gagner des XP' : '250 XP par module complété'}
           />
           <StatCard
             title="Série active"
@@ -249,37 +228,58 @@ export function StudentDashboard({ user }: StudentDashboardProps) {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Recent Achievements - Hide if new user */}
-            {completedCount > 0 && (
-              <div className="bg-card border border-border rounded-2xl p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Award className="w-5 h-5 text-primary" />
-                  <h4>Récentes réussites</h4>
+            {/* Recent Achievements - dynamic */}
+            {completedCount > 0 && (() => {
+              type Achievement = { Icon: any; iconBg: string; title: string; sub: string };
+              const items: Achievement[] = [];
+
+              // Modules complétés (les 3 plus récents = les derniers dans la liste ordonnée)
+              const completedModules = modules.filter(m => m.status === 'completed');
+              completedModules.slice(-3).reverse().forEach(m => {
+                items.push({
+                  Icon: CheckCheck,
+                  iconBg: 'bg-[#D1FAE5]',
+                  title: `${m.title}`,
+                  sub: `Module terminé · +${m.xp > 0 ? m.xp : 250} XP`,
+                });
+              });
+
+              // Milestones
+              if (allModulesCompleted) {
+                items.unshift({ Icon: Award, iconBg: 'bg-[#FFF4CC]', title: 'Parcours complet !', sub: `${totalCount}/${totalCount} modules` });
+              } else if (totalCount > 1 && completedCount >= Math.ceil(totalCount / 2)) {
+                items.unshift({ Icon: Star, iconBg: 'bg-[#E8ECFF]', title: 'Mi-parcours atteint', sub: `${completedCount}/${totalCount} modules` });
+              }
+
+              // Streak
+              if (streakDays >= 3) {
+                items.unshift({ Icon: Flame, iconBg: 'bg-[#FEF2F2]', title: `${streakDays} jours consécutifs`, sub: 'Continue comme ça !' });
+              }
+
+              const displayed = items.slice(0, 4);
+
+              return (
+                <div className="bg-card border border-border rounded-2xl p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Award className="w-5 h-5 text-primary" />
+                    <h4>Récentes réussites</h4>
+                  </div>
+                  <div className="space-y-3">
+                    {displayed.map((a, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 bg-secondary/50 rounded-xl">
+                        <div className={`w-9 h-9 ${a.iconBg} rounded-full flex items-center justify-center shrink-0`}>
+                          <a.Icon className="w-4 h-4 text-[#1E1548]" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{a.title}</p>
+                          <p className="text-xs text-muted-foreground">{a.sub}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  {completedCount >= 1 && (
-                    <div className="flex items-start gap-3 p-3 bg-secondary/50 rounded-xl">
-                      <div className="w-9 h-9 bg-[#E8ECFF] rounded-full flex items-center justify-center shrink-0">
-                        <Target className="w-4 h-4 text-[#1E1548]" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Premier module terminé</p>
-                        <p className="text-xs text-muted-foreground">Bravo !</p>
-                      </div>
-                    </div>
-                  )}
-                  {/*statistics.currentStreakDays >= 3 && (
-                    <div className="flex items-start gap-3 p-3 bg-secondary/50 rounded-xl">
-                      <span className="text-2xl">🔥</span>
-                      <div>
-                        <p className="text-sm font-medium">statistics.currentStreakDays jours consécutifs</p>
-                        <p className="text-xs text-muted-foreground">Continue comme ça !</p>
-                      </div>
-                    </div>
-                  )*/}
-                </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Notes de l'admin */}
             {adminNotes.length > 0 && (() => {

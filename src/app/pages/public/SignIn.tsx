@@ -39,7 +39,12 @@ function SignIn() {
             // La redirection se fera via l'useEffect ci-dessus
             // quand user sera mis à jour
         } catch (err: any) {
-            setError(err.message || "Erreur de connexion. Vérifiez vos identifiants.");
+            const msg: string = err.message || '';
+            if (msg.toLowerCase().includes('email not confirmed')) {
+                setError("Ton adresse email n'a pas encore été confirmée. Vérifie ta boîte mail (y compris les spams) et clique sur le lien de confirmation.");
+            } else {
+                setError(msg || "Erreur de connexion. Vérifiez vos identifiants.");
+            }
         } finally {
             setLoading(false);
         }

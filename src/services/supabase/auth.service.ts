@@ -26,10 +26,22 @@ class AuthService {
             password,
             options: {
                 data: { first_name: firstName.trim().replace(firstName.charAt(0), firstName.charAt(0).toUpperCase()), last_name: lastName.trim().toUpperCase(), role },
+                emailRedirectTo: `${window.location.origin}/sign-in`,
             },
         });
         if (error) throw error;
         return data;
+    }
+
+    async resendConfirmation(email: string) {
+        const { error } = await supabase.auth.resend({
+            type: 'signup',
+            email,
+            options: {
+                emailRedirectTo: `${window.location.origin}/sign-in`,
+            },
+        });
+        if (error) throw error;
     }
 
     /**

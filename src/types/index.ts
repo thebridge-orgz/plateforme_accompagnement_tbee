@@ -153,6 +153,8 @@ export interface TrackedOffer {
   reminderDate: string | null;
   trackedAt: string;
   updatedAt: string;
+  needsHelp?: boolean;
+  helpRequest?: string | null;
 }
 
 // Onboarding

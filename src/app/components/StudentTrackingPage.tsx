@@ -178,10 +178,14 @@ export function StudentTrackingPage() {
             <h2>Suivi de {fullName}</h2>
             <p className="text-muted-foreground">Suivi personnalisé et accompagnement</p>
           </div>
-          <Button variant="secondary" className="flex items-center gap-2">
-            <MessageSquare className="w-5 h-5" />
-            Contacter
-          </Button>
+          {student?.email && (
+            <a href={`mailto:${student.email}`}>
+              <Button variant="secondary" className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5" />
+                Contacter
+              </Button>
+            </a>
+          )}
         </div>
 
         {/* Student Info Card — gradient premium */}

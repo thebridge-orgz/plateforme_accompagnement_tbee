@@ -11,7 +11,6 @@ import {
   X,
   CheckSquare,
   GraduationCap,
-  MessageSquare,
   UserCog,
   MapPin,
 } from 'lucide-react';
@@ -57,7 +56,7 @@ export function DashboardSidebar({
       { label: 'Vue d\'ensemble', icon: <BarChart3 className="w-5 h-5" />, path: routes.AdminDashboard.path },
       { label: 'Validation CVs', icon: <CheckSquare className="w-5 h-5" />, path: routes.AdminCvReview.path },
       { label: 'Gestion modules', icon: <FileText className="w-5 h-5" />, path: routes.AdminModules.path },
-      { label: 'Support offres', icon: <MessageSquare className="w-5 h-5" />, path: routes.AdminOfferSupport.path },
+      { label: 'Pokédex candidatures', icon: <MapPin className="w-5 h-5" />, path: routes.AdminProspection.path },
       { label: 'Suivi étudiants', icon: <Users className="w-5 h-5" />, path: routes.AdminStudentList.path },
       { label: 'Mon profil', icon: <UserCog className="w-5 h-5" />, path: routes.AdminProfile.path },
       { label: 'Paramètres', icon: <Settings className="w-5 h-5" />, path: routes.AdminSettings.path },

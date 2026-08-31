@@ -117,6 +117,12 @@ export const routes = {
         isProtected: true,
         allowedRoles: ['admin']
     },
+    AdminProspection: {
+        path: '/admin/candidatures',
+        label: 'Pokédex candidatures',
+        isProtected: true,
+        allowedRoles: ['admin']
+    },
     AdminOfferSupport: {
         path: '/admin/support-offres',
         label: 'Support offres',

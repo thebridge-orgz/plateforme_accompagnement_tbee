@@ -33,6 +33,7 @@ import AdminDashboard from './app/pages/admin/Dashboard';
 import AdminCvReview from './app/pages/admin/CvReview';
 import AdminExerciceReview from './app/pages/admin/ExerciceReview';
 import AdminModules from './app/pages/admin/Modules';
+import AdminProspection from './app/pages/admin/Prospection';
 import AdminOfferSupport from './app/pages/admin/OfferSupport';
 import AdminStudentTracking from './app/pages/admin/Tracking';
 import AdminStudentList from './app/pages/admin/StudentList';
@@ -158,6 +159,12 @@ function App() {
         <Route path={routes.AdminModules.path} element={
           <ProtectedRoute allowedRoles={['admin']} requireOnboarding={false}>
             <AdminModules />
+          </ProtectedRoute>
+        } />
+
+        <Route path={routes.AdminProspection.path} element={
+          <ProtectedRoute allowedRoles={['admin']} requireOnboarding={false}>
+            <AdminProspection />
           </ProtectedRoute>
         } />
 
